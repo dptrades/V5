@@ -1,0 +1,156 @@
+[
+  {
+    "id": "QQQ   260320P00600000",
+    "ticker": "QQQ   ",
+    "companyName": "Invesco QQQ Trust",
+    "strike": 600,
+    "expiry": "2026-03-20",
+    "type": "PUT",
+    "entryPremium": 12.559999999999999,
+    "entryStockPrice": 605.67,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price < EMA50",
+      "EMA Stack Bearish (Short < Mid < Long)",
+      "MACD Bearish Cross",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 12.559999999999999,
+        "stockPrice": 605.67
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "CAT   260327C00770000",
+    "ticker": "CAT   ",
+    "companyName": "Caterpillar Inc.",
+    "strike": 770,
+    "expiry": "2026-03-27",
+    "type": "CALL",
+    "entryPremium": 31,
+    "entryStockPrice": 752.21,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Strong Bullish Momentum",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 31,
+        "stockPrice": 752.21
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "WMT   260327C00130000",
+    "ticker": "WMT   ",
+    "companyName": "Walmart Inc.",
+    "strike": 130,
+    "expiry": "2026-03-27",
+    "type": "CALL",
+    "entryPremium": 3.9000000000000004,
+    "entryStockPrice": 126.61,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 3.9000000000000004,
+        "stockPrice": 126.61
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "PG    260327C00160000",
+    "ticker": "PG    ",
+    "companyName": "The Procter & Gamble Company",
+    "strike": 160,
+    "expiry": "2026-03-27",
+    "type": "CALL",
+    "entryPremium": 2.825,
+    "entryStockPrice": 156.76,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 2.825,
+        "stockPrice": 156.76
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "MCW   260320C00007500",
+    "ticker": "MCW   ",
+    "companyName": "Mister Car Wash, Inc.",
+    "strike": 7.5,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 0.05,
+    "entryStockPrice": 6.985,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "MACD Bullish Cross"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 0.05,
+        "stockPrice": 6.985
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "LIN   260320C00490000",
+    "ticker": "LIN   ",
+    "companyName": "Linde plc",
+    "strike": 490,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 10.15,
+    "entryStockPrice": 485.07,
+    "entryDate": "2026-02-18",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "MACD Bullish Cross"
+    ],
+    "history": [
+      {
+        "date": "2026-02-18",
+        "optionPremium": 10.15,
+        "stockPrice": 485.07
+      }
+    ],
+    "status": "ACTIVE"
+  }
+]
