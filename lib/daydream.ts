@@ -125,6 +125,7 @@ export async function getDayDreamPicks(): Promise<DayDreamPick[]> {
                         volume: opt.volume,
                         openInterest: opt.openInterest,
                         symbol: opt.symbol,
+                        entryPrice: currentPrice,
                         strategy: "Golden Strike"
                     });
                 }
@@ -137,18 +138,33 @@ export async function getDayDreamPicks(): Promise<DayDreamPick[]> {
                             const greeks = await publicClient.getGreeks(cand.symbol);
                             if (greeks) {
                                 const delta = Math.abs(greeks.delta);
-                                if (delta >= 0.20 && delta <= 0.80) {
+                                // The "Sweet Spot": Delta between 0.25 and 0.55 for weekly/monthly setups
+                                if (delta >= 0.20 && delta <= 0.70) {
+                                    // MULTI-FACTOR SCORING (0-100)
+                                    // 1. Delta Score (Perfect = 0.45)
+                                    const deltaScore = (1 - Math.abs(delta - 0.45)) * 40;
+
+                                    // 2. Liquidity Score (Vol/OI momentum)
+                                    const volWeight = Math.min(cand.volume / 100, 1) * 30;
+                                    const oiWeight = Math.min(cand.openInterest / 500, 1) * 10;
+
+                                    // 3. IV Efficiency (Score higher if IV is not absurdly high compared to proxy)
+                                    const ivProxy = calculateVolatilityProxy(currentPrice, undefined, symbol);
+                                    const ivEfficiency = Math.max(0, 20 - (Math.abs(greeks.impliedVolatility - ivProxy) * 20));
+
+                                    const finalScore = deltaScore + volWeight + oiWeight + ivEfficiency;
+
                                     candidates.push({
                                         ...cand,
-                                        confidence: Math.round(totalScore),
-                                        reason: `Delta ${delta.toFixed(2)} | Vol/OI: ${(cand.openInterest > 0 ? cand.volume / cand.openInterest : 0).toFixed(1)}x`,
+                                        confidence: Math.round(finalScore), // Local score for this strike
+                                        reason: `Delta ${delta.toFixed(2)} | Vol/OI Flux: ${(cand.openInterest > 0 ? cand.volume / cand.openInterest : 0).toFixed(1)}x`,
                                         probabilityITM: delta,
                                         iv: greeks.impliedVolatility
                                     } as any);
                                 }
                             }
                             // Small delay to prevent 403
-                            await new Promise(r => setTimeout(r, 200));
+                            await new Promise(r => setTimeout(r, 150));
                         } catch (e) {
                             console.error(`[DayDream] Greek error for ${cand.symbol}:`, e);
                         }
@@ -157,8 +173,9 @@ export async function getDayDreamPicks(): Promise<DayDreamPick[]> {
 
                 console.log(`[DayDream] 🎯 ${symbol} found ${candidates.length} candidate options`);
 
+                // Always return top 3 based on our multi-factor score
                 const topOptions = candidates
-                    .sort((a, b) => ((b.volume || 0) + (b.openInterest || 0)) - ((a.volume || 0) + (a.openInterest || 0)))
+                    .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
                     .slice(0, 3);
 
                 results.push({

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Loader2, TrendingUp, TrendingDown, Zap, Activity, BarChart2, Calendar, Target, ShieldCheck } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Zap, Activity, BarChart2, Calendar, Target, ShieldCheck, Pin, Check, RefreshCw } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import LoginOverlay from '@/components/LoginOverlay';
 import { Loading } from '@/components/ui/Loading';
 import { DayDreamPick } from '@/lib/daydream';
 import { getMarketStatus, MarketStatus } from '@/lib/market';
 import { REFRESH_INTERVALS, isMarketActive } from '../../lib/refresh-utils';
+import { OptionRecommendation } from '@/lib/options';
 
 export default function DayDreamPage() {
     const [picks, setPicks] = useState<DayDreamPick[]>([]);
@@ -15,6 +16,34 @@ export default function DayDreamPage() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [trackedSymbols, setTrackedSymbols] = useState<Record<string, boolean>>({});
+    const [trackLoading, setTrackLoading] = useState<Record<string, boolean>>({});
+
+    // ... (keep existing useEffects for market status and auth)
+
+    const handleTrack = async (option: OptionRecommendation, symbol: string) => {
+        if (!option.symbol) return;
+        const key = option.symbol;
+        setTrackLoading(prev => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch('/api/options/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    option,
+                    companyName: symbol,
+                    underlyingPrice: option.entryPrice // Use the entry price stored in the pick
+                })
+            });
+            if (res.ok) {
+                setTrackedSymbols(prev => ({ ...prev, [key]: true }));
+            }
+        } catch (e) {
+            console.error('Failed to track option:', e);
+        } finally {
+            setTrackLoading(prev => ({ ...prev, [key]: false }));
+        }
+    };
 
     // Update market status every minute
     useEffect(() => {
@@ -219,7 +248,26 @@ export default function DayDreamPage() {
                                             {pick.options.map((opt, i) => (
                                                 <div key={i} className="p-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-2xl transition-all cursor-default group/opt">
                                                     <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-lg font-bold">${opt.strike} {opt.type}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg font-bold">${opt.strike} {opt.type}</span>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleTrack(opt, pick.symbol); }}
+                                                                disabled={trackedSymbols[opt.symbol || ''] || trackLoading[opt.symbol || '']}
+                                                                className={`p-1 rounded-md border transition-all flex items-center gap-1 ${trackedSymbols[opt.symbol || '']
+                                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                                                    : 'bg-white/5 border-white/10 hover:border-blue-500/50 text-gray-400 hover:text-white'
+                                                                    }`}
+                                                                title={trackedSymbols[opt.symbol || ''] ? "Tracked" : "Track Performance"}
+                                                            >
+                                                                {trackLoading[opt.symbol || ''] ? (
+                                                                    <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                                                                ) : trackedSymbols[opt.symbol || ''] ? (
+                                                                    <Check className="w-2.5 h-2.5" />
+                                                                ) : (
+                                                                    <Pin className="w-2.5 h-2.5" />
+                                                                )}
+                                                            </button>
+                                                        </div>
                                                         <span className="text-xs font-mono text-blue-400">${opt.contractPrice?.toFixed(2) || '0.00'}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center text-[10px] text-gray-300 font-medium">

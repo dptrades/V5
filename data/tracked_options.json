@@ -247,5 +247,27 @@
       }
     ],
     "status": "ACTIVE"
+  },
+  {
+    "id": "KO    260417C00080000",
+    "ticker": "KO    ",
+    "companyName": "The Coca-Cola Company",
+    "strike": 80,
+    "expiry": "2026-04-17",
+    "type": "CALL",
+    "entryPremium": 1.73,
+    "entryStockPrice": 79.11,
+    "entryDate": "2026-02-19",
+    "reasoning": [
+      "Institutional flow at $80. (Live IV: 19.1%)"
+    ],
+    "history": [
+      {
+        "date": "2026-02-19",
+        "optionPremium": 1.73,
+        "stockPrice": 79.11
+      }
+    ],
+    "status": "ACTIVE"
   }
 ]
