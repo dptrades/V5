@@ -25,6 +25,11 @@
         "date": "2026-02-19",
         "optionPremium": 13.25,
         "stockPrice": 603.3528
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 10.9,
+        "stockPrice": 608.71
       }
     ],
     "status": "ACTIVE"
@@ -57,6 +62,11 @@
         "date": "2026-02-19",
         "optionPremium": 35.05,
         "stockPrice": 760.6
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 35.05,
+        "stockPrice": 759.74
       }
     ],
     "status": "ACTIVE"
@@ -88,9 +98,14 @@
         "date": "2026-02-19",
         "optionPremium": 2.25,
         "stockPrice": 124.99
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 1.37,
+        "stockPrice": 122.9999
       }
     ],
-    "status": "ACTIVE"
+    "status": "LOSS"
   },
   {
     "id": "PG    260327C00160000",
@@ -119,9 +134,14 @@
         "date": "2026-02-19",
         "optionPremium": 3.42,
         "stockPrice": 158.48
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 4.37,
+        "stockPrice": 160.78
       }
     ],
-    "status": "ACTIVE"
+    "status": "PROFIT"
   },
   {
     "id": "MCW   260320C00007500",
@@ -149,6 +169,11 @@
         "date": "2026-02-19",
         "optionPremium": 0.05,
         "stockPrice": 6.97
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.05,
+        "stockPrice": 7.03
       }
     ],
     "status": "ACTIVE"
@@ -179,9 +204,14 @@
         "date": "2026-02-19",
         "optionPremium": 11.9,
         "stockPrice": 490
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 14.3,
+        "stockPrice": 496.51
       }
     ],
-    "status": "ACTIVE"
+    "status": "PROFIT"
   },
   {
     "id": "RELY  260320C00017500",
@@ -203,6 +233,11 @@
         "date": "2026-02-19",
         "optionPremium": 0.85,
         "stockPrice": 17.019
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.72,
+        "stockPrice": 17.15
       }
     ],
     "status": "ACTIVE"
@@ -225,6 +260,11 @@
         "date": "2026-02-19",
         "optionPremium": 5.89,
         "stockPrice": 760.6
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 5.5,
+        "stockPrice": 759.74
       }
     ],
     "status": "ACTIVE"
@@ -252,9 +292,14 @@
         "date": "2026-02-19",
         "optionPremium": 6.02,
         "stockPrice": 204.86
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 4.35,
+        "stockPrice": 210.11
       }
     ],
-    "status": "ACTIVE"
+    "status": "LOSS"
   },
   {
     "id": "MRK   260320C00130000",
@@ -274,6 +319,11 @@
         "date": "2026-02-19",
         "optionPremium": 0.83,
         "stockPrice": 121.77
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.81,
+        "stockPrice": 121.53
       }
     ],
     "status": "ACTIVE"
@@ -296,6 +346,11 @@
         "date": "2026-02-19",
         "optionPremium": 1.68,
         "stockPrice": 78.85
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 1.94,
+        "stockPrice": 79.8
       }
     ],
     "status": "ACTIVE"
@@ -321,6 +376,11 @@
         "date": "2026-02-19",
         "optionPremium": 14.75,
         "stockPrice": 603.3528
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 12.5,
+        "stockPrice": 608.71
       }
     ],
     "status": "ACTIVE"
@@ -343,6 +403,11 @@
         "date": "2026-02-19",
         "optionPremium": 7.16,
         "stockPrice": 264.6425
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 6.62,
+        "stockPrice": 264.6
       }
     ],
     "status": "ACTIVE"
@@ -365,6 +430,11 @@
         "date": "2026-02-19",
         "optionPremium": 1.2,
         "stockPrice": 92.97
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 1.25,
+        "stockPrice": 93.55
       }
     ],
     "status": "ACTIVE"
@@ -389,9 +459,14 @@
         "date": "2026-02-19",
         "optionPremium": 0.7,
         "stockPrice": 13.8894
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.8,
+        "stockPrice": 13.08
       }
     ],
-    "status": "ACTIVE"
+    "status": "PROFIT"
   },
   {
     "id": "NVDA  260327C00190000",
@@ -415,6 +490,11 @@
         "date": "2026-02-19",
         "optionPremium": 10.5,
         "stockPrice": 187.81
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 11.18,
+        "stockPrice": 189.84
       }
     ],
     "status": "ACTIVE"
@@ -442,6 +522,11 @@
         "date": "2026-02-19",
         "optionPremium": 3.96,
         "stockPrice": 75.57
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 3.35,
+        "stockPrice": 76
       }
     ],
     "status": "ACTIVE"
@@ -469,6 +554,11 @@
         "date": "2026-02-19",
         "optionPremium": 6.45,
         "stockPrice": 134.98
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 6.2,
+        "stockPrice": 135.25
       }
     ],
     "status": "ACTIVE"
@@ -493,6 +583,11 @@
         "date": "2026-02-19",
         "optionPremium": 12.4,
         "stockPrice": 684.631
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 10.14,
+        "stockPrice": 689.37
       }
     ],
     "status": "ACTIVE"
@@ -515,6 +610,11 @@
         "date": "2026-02-19",
         "optionPremium": 1.58,
         "stockPrice": 370.85
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 2.05,
+        "stockPrice": 375.3501
       }
     ],
     "status": "ACTIVE"
@@ -538,6 +638,11 @@
         "date": "2026-02-19",
         "optionPremium": 1.89,
         "stockPrice": 25.76
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 1.65,
+        "stockPrice": 26.2402
       }
     ],
     "status": "ACTIVE"
@@ -560,9 +665,14 @@
         "date": "2026-02-19",
         "optionPremium": 1.15,
         "stockPrice": 150.92
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.43,
+        "stockPrice": 147.6
       }
     ],
-    "status": "ACTIVE"
+    "status": "LOSS"
   },
   {
     "id": "MSFT  260327P00390000",
@@ -587,6 +697,183 @@
         "date": "2026-02-19",
         "optionPremium": 10.22,
         "stockPrice": 398.4
+      },
+      {
+        "date": "2026-02-20",
+        "optionPremium": 9.94,
+        "stockPrice": 397.03
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "PM    260320C00190000",
+    "ticker": "PM",
+    "companyName": "Philip Morris International Inc.",
+    "strike": 190,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 2.2750000000000004,
+    "entryStockPrice": 182.56,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Institutional flow at $190. (Live IV: 25.5%)"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 2.2750000000000004,
+        "stockPrice": 182.56
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "GOOGL 260327P00310000",
+    "ticker": "GOOGL",
+    "companyName": "Alphabet Inc.",
+    "strike": 310,
+    "expiry": "2026-03-27",
+    "type": "PUT",
+    "entryPremium": 9.725000000000001,
+    "entryStockPrice": 314.765,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price < EMA50",
+      "MACD Bearish Cross",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 9.725000000000001,
+        "stockPrice": 314.765
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "FSM   260320C00012500",
+    "ticker": "FSM",
+    "companyName": "Fortuna Mining Corp.",
+    "strike": 12.5,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 0.7,
+    "entryStockPrice": 12.065,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Strong Bullish Momentum",
+      "MACD Bullish Cross"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 0.7,
+        "stockPrice": 12.065
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "COIN  260327P00165000",
+    "ticker": "COIN",
+    "companyName": "Coinbase Global, Inc.",
+    "strike": 165,
+    "expiry": "2026-03-27",
+    "type": "PUT",
+    "entryPremium": 11.3,
+    "entryStockPrice": 170.29,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price < EMA50",
+      "Price < EMA200",
+      "EMA Stack Bearish (Short < Mid < Long)",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 11.3,
+        "stockPrice": 170.29
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "BA    260327C00240000",
+    "ticker": "BA",
+    "companyName": "The Boeing Company",
+    "strike": 240,
+    "expiry": "2026-03-27",
+    "type": "CALL",
+    "entryPremium": 6.300000000000001,
+    "entryStockPrice": 232,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "Price at Lower BB (Support)",
+      "Pattern: Doji (Indecision)"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 6.300000000000001,
+        "stockPrice": 232
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "CRM   260327P00180000",
+    "ticker": "CRM",
+    "companyName": "Salesforce, Inc.",
+    "strike": 180,
+    "expiry": "2026-03-27",
+    "type": "PUT",
+    "entryPremium": 9.600000000000001,
+    "entryStockPrice": 185.22,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price < EMA50",
+      "Price < EMA200",
+      "EMA Stack Bearish (Short < Mid < Long)",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 9.600000000000001,
+        "stockPrice": 185.22
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "XOM   260327C00150000",
+    "ticker": "XOM",
+    "companyName": "Exxon Mobil Corporation",
+    "strike": 150,
+    "expiry": "2026-03-27",
+    "type": "CALL",
+    "entryPremium": 4.425000000000001,
+    "entryStockPrice": 147.3,
+    "entryDate": "2026-02-20",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-20",
+        "optionPremium": 4.425000000000001,
+        "stockPrice": 147.3
       }
     ],
     "status": "ACTIVE"

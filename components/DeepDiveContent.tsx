@@ -1,14 +1,16 @@
 import { useEffect, useState, ReactNode } from "react";
-import { Loader2, TrendingUp, TrendingDown, Activity, BarChart2, AlertCircle, Info, RefreshCw, Database } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Activity, BarChart2, AlertCircle, Info, RefreshCw, Database, X } from "lucide-react";
 import { MultiTimeframeAnalysis } from "@/lib/market-data";
 import { UnusualOption } from "@/lib/options-flow";
 import AIAnalysisWidget, { Fundamentals } from "./AIAnalysisWidget";
+import LivePriceDisplay from "./LivePriceDisplay";
 
 interface DeepDiveContentProps {
     symbol: string | null;
     showOptionsFlow?: boolean;
     onRefresh?: () => void;
     refreshKey?: number;
+    priceRefreshKey?: number;
 }
 
 interface DetailData {
@@ -21,10 +23,11 @@ interface DetailData {
     putCallRatio: { volumeRatio: number, oiRatio: number, totalCalls: number, totalPuts: number } | null;
 }
 
-export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefresh, refreshKey }: DeepDiveContentProps) {
+export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefresh, refreshKey, priceRefreshKey }: DeepDiveContentProps) {
     const [data, setData] = useState<DetailData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showFvgInfo, setShowFvgInfo] = useState(false);
 
     useEffect(() => {
         if (symbol) {
@@ -125,7 +128,13 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                                 </span>
                             )}
                             <div className="text-2xl font-bold text-white">
-                                ${data.analysis.currentPrice.toFixed(2)}
+                                <LivePriceDisplay
+                                    symbol={data.analysis.symbol || symbol}
+                                    fallbackPrice={data.analysis.currentPrice}
+                                    enabled={true}
+                                    showChange={false}
+                                    refreshKey={priceRefreshKey}
+                                />
                             </div>
                         </div>
 
@@ -241,7 +250,30 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                                     <th className="p-3">EMA 200</th>
                                     <th className="p-3 border-l border-gray-700/50">RSI</th>
                                     <th className="p-3">VWAP</th>
-                                    <th className="p-3 border-l border-gray-700/50">FVG</th>
+                                    <th className="p-3 border-l border-gray-700/50 relative">
+                                        <div className="flex items-center gap-1 cursor-pointer" onClick={() => setShowFvgInfo(!showFvgInfo)}>
+                                            FVG <Info className="w-3 h-3 text-gray-400 hover:text-white" />
+                                        </div>
+                                        {showFvgInfo && (
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 p-3 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 text-xs font-normal text-gray-200 normal-case" onClick={(e) => e.stopPropagation()}>
+                                                <div className="font-bold text-white mb-2 flex justify-between items-center whitespace-normal text-sm">
+                                                    Fair Value Gap (FVG)
+                                                    <X className="w-4 h-4 cursor-pointer text-gray-400 hover:text-white" onClick={() => setShowFvgInfo(false)} />
+                                                </div>
+                                                <div className="space-y-2 whitespace-normal leading-relaxed">
+                                                    <p>A gap created by rapid, impulsive price movement where the market moved too quickly to offer fair two-way trading.</p>
+                                                    <div className="bg-gray-800/50 p-2 rounded">
+                                                        <strong className="text-green-400 block mb-0.5">Bullish FVG</strong>
+                                                        Acts as <strong>hidden support</strong>. Price often drops back into this gap to find buyers before bouncing up.
+                                                    </div>
+                                                    <div className="bg-gray-800/50 p-2 rounded">
+                                                        <strong className="text-red-400 block mb-0.5">Bearish FVG</strong>
+                                                        Acts as <strong>hidden resistance</strong>. Price often rallies back into this gap to find sellers before rejecting lower.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </th>
                                     <th className="p-3">MACD</th>
                                     <th className="p-3">Bollinger</th>
                                 </tr>

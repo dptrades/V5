@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
 import { fetchAlpacaBars } from '@/lib/alpaca';
+import { calculateIndicators } from '@/lib/indicators';
 
 const yahooFinance = new YahooFinance();
 
@@ -91,7 +92,9 @@ export async function GET(request: Request) {
                         });
                     }
 
-                    return NextResponse.json({ data, companyName }, {
+                    const indicators = calculateIndicators(data);
+
+                    return NextResponse.json({ data: indicators, companyName }, {
                         headers: {
                             'Cache-Control': 'no-store, max-age=0, must-revalidate',
                             'Pragma': 'no-cache',
@@ -165,7 +168,10 @@ export async function GET(request: Request) {
         // Extract company name from Yahoo metadata
         const companyName = result.meta?.longName || result.meta?.shortName || ticker;
 
-        return NextResponse.json({ data, companyName }, {
+        // Calculate indicators
+        const indicators = calculateIndicators(data);
+
+        return NextResponse.json({ data: indicators, companyName }, {
             headers: {
                 'Cache-Control': 'no-store, max-age=0, must-revalidate',
                 'Pragma': 'no-cache',

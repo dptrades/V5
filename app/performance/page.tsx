@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, Clock, Activity, ChevronLeft, Target, Shield, Zap, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Activity, ChevronLeft, Target, Shield, Zap, Info, Trash2 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { Loading } from '@/components/ui/Loading';
 import { TrackedOption } from '@/lib/tracking';
@@ -32,6 +32,25 @@ export default function PerformancePage() {
         };
         fetchTracked();
     }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to stop tracking this option?')) return;
+
+        try {
+            const res = await fetch(`/api/options/tracked/${encodeURIComponent(id)}`, {
+                method: 'DELETE',
+            });
+            if (res.ok) {
+                setTrackedOptions(prev => prev.filter(o => o.id !== id));
+            } else {
+                alert('Failed to delete tracked option');
+            }
+        } catch (e) {
+            console.error('Error deleting option:', e);
+            alert('An error occurred while deleting');
+        }
+    };
+
 
     const calculateGainLoss = (option: TrackedOption) => {
         if (option.history.length === 0) return 0;
@@ -128,82 +147,166 @@ export default function PerformancePage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                            {trackedOptions.map((option) => {
-                                const performance = calculateGainLoss(option);
-                                const isPositive = performance >= 0;
+                        <div className="flex flex-col gap-12 pb-12">
+                            {/* Grouping Logic */}
+                            {(() => {
+                                const active: TrackedOption[] = [];
+                                const profit: TrackedOption[] = [];
+                                const loss: TrackedOption[] = [];
+
+                                trackedOptions.forEach(option => {
+                                    const perf = calculateGainLoss(option);
+                                    if (option.status === 'PROFIT' || perf >= 25) {
+                                        profit.push(option);
+                                    } else if (option.status === 'LOSS' || perf <= -25) {
+                                        loss.push(option);
+                                    } else {
+                                        active.push(option);
+                                    }
+                                });
+
+                                const renderOptionCard = (option: TrackedOption) => {
+                                    const performance = calculateGainLoss(option);
+                                    const isPositive = performance >= 0;
+
+                                    return (
+                                        <div key={option.id} className="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-6 backdrop-blur-sm hover:border-blue-500/30 transition-all group relative">
+                                            <button
+                                                onClick={() => handleDelete(option.id)}
+                                                className="absolute top-4 right-4 p-2 bg-gray-900/50 border border-gray-700/50 rounded-xl text-gray-500 hover:text-rose-400 hover:border-rose-500/50 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                                                title="Stop Tracking"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <Link
+                                                            href={`/?symbol=${(option.ticker || '').trim()}`}
+                                                            className="text-2xl font-black text-white tracking-tighter uppercase hover:text-blue-400 transition-colors cursor-pointer"
+                                                        >
+                                                            {(option.ticker || '').trim()}
+                                                        </Link>
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest ${option.type === 'CALL' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                                            {option.type}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide truncate max-w-[120px]">
+                                                            {option.companyName}
+                                                        </span>
+                                                        <span className="text-xs font-black text-blue-400 tracking-tight">
+                                                            ${option.strike} Strike
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className={`text-2xl font-black tracking-tighter ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        {isPositive ? '+' : ''}{performance.toFixed(1)}%
+                                                    </div>
+                                                    <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Premium ROI</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                                <div className="bg-gray-900/50 p-3 rounded-2xl border border-gray-700/30">
+                                                    <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" /> Expiry
+                                                    </div>
+                                                    <div className="text-sm font-bold text-gray-200">{option.expiry}</div>
+                                                </div>
+                                                <div className="bg-gray-900/50 p-3 rounded-2xl border border-gray-700/30">
+                                                    <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest flex items-center gap-1">
+                                                        <Shield className="w-3 h-3" /> Entry
+                                                    </div>
+                                                    <div className="text-sm font-bold text-gray-200">${option.entryPremium.toFixed(2)}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest flex items-center gap-2">
+                                                        Premium Trend
+                                                        {(option.status === 'PROFIT' || option.status === 'LOSS') && (
+                                                            <span className={`px-1.5 py-0.5 rounded text-[8px] border ${option.status === 'PROFIT' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
+                                                                LOCKED
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400 font-mono">{option.history.length} Data Points</span>
+                                                </div>
+                                                {renderChart(option)}
+                                            </div>
+
+                                            <div className="pt-4 border-t border-gray-700/30">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Info className="w-3 h-3 text-blue-400" />
+                                                    <span className="text-[10px] uppercase font-black text-gray-500 tracking-widest">Technical Logic</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {option.reasoning.map((reason, i) => (
+                                                        <span key={i} className="text-[9px] bg-gray-900/50 text-gray-400 px-2 py-0.5 rounded border border-gray-700/50 font-medium whitespace-nowrap">
+                                                            {reason}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                };
 
                                 return (
-                                    <div key={option.id} className="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-6 backdrop-blur-sm hover:border-blue-500/30 transition-all group">
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                    <Link
-                                                        href={`/?symbol=${(option.ticker || '').trim()}`}
-                                                        className="text-2xl font-black text-white tracking-tighter uppercase hover:text-blue-400 transition-colors cursor-pointer"
-                                                    >
-                                                        {(option.ticker || '').trim()}
-                                                    </Link>
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest ${option.type === 'CALL' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                                                        {option.type}
-                                                    </span>
+                                    <>
+                                        {/* Active Trackers */}
+                                        {active.length > 0 && (
+                                            <section>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="p-2 border border-blue-500/30 bg-blue-500/10 rounded-xl">
+                                                        <Activity className="w-5 h-5 text-blue-400" />
+                                                    </div>
+                                                    <h2 className="text-xl font-black text-white uppercase tracking-tighter">Active Trackers</h2>
+                                                    <div className="h-px bg-gray-800 flex-1 ml-4" />
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide truncate max-w-[120px]">
-                                                        {option.companyName}
-                                                    </span>
-                                                    <span className="text-xs font-black text-blue-400 tracking-tight">
-                                                        ${option.strike} Strike
-                                                    </span>
+                                                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                                    {active.map(renderOptionCard)}
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className={`text-2xl font-black tracking-tighter ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {isPositive ? '+' : ''}{performance.toFixed(1)}%
-                                                </div>
-                                                <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Premium ROI</div>
-                                            </div>
-                                        </div>
+                                            </section>
+                                        )}
 
-                                        <div className="grid grid-cols-2 gap-4 mb-6">
-                                            <div className="bg-gray-900/50 p-3 rounded-2xl border border-gray-700/30">
-                                                <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" /> Expiry
+                                        {/* Profit Targets Hit */}
+                                        {profit.length > 0 && (
+                                            <section>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="p-2 border border-emerald-500/30 bg-emerald-500/10 rounded-xl">
+                                                        <Target className="w-5 h-5 text-emerald-400" />
+                                                    </div>
+                                                    <h2 className="text-xl font-black text-emerald-400 uppercase tracking-tighter">Profit Targets Hit (+25%)</h2>
+                                                    <div className="h-px bg-gray-800 flex-1 ml-4" />
                                                 </div>
-                                                <div className="text-sm font-bold text-gray-200">{option.expiry}</div>
-                                            </div>
-                                            <div className="bg-gray-900/50 p-3 rounded-2xl border border-gray-700/30">
-                                                <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest flex items-center gap-1">
-                                                    <Shield className="w-3 h-3" /> Entry
+                                                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 opacity-80 hover:opacity-100 transition-opacity">
+                                                    {profit.map(renderOptionCard)}
                                                 </div>
-                                                <div className="text-sm font-bold text-gray-200">${option.entryPremium.toFixed(2)}</div>
-                                            </div>
-                                        </div>
+                                            </section>
+                                        )}
 
-                                        <div className="mb-4">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium Trend</span>
-                                                <span className="text-[10px] text-gray-400 font-mono">{option.history.length} Data Points</span>
-                                            </div>
-                                            {renderChart(option)}
-                                        </div>
-
-                                        <div className="pt-4 border-t border-gray-700/30">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Info className="w-3 h-3 text-blue-400" />
-                                                <span className="text-[10px] uppercase font-black text-gray-500 tracking-widest">Technical Logic</span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {option.reasoning.map((reason, i) => (
-                                                    <span key={i} className="text-[9px] bg-gray-900/50 text-gray-400 px-2 py-0.5 rounded border border-gray-700/50 font-medium whitespace-nowrap">
-                                                        {reason}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
+                                        {/* Stop Loss Hit */}
+                                        {loss.length > 0 && (
+                                            <section>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="p-2 border border-rose-500/30 bg-rose-500/10 rounded-xl">
+                                                        <TrendingDown className="w-5 h-5 text-rose-400" />
+                                                    </div>
+                                                    <h2 className="text-xl font-black text-rose-400 uppercase tracking-tighter">Stop Loss Hit (-25%)</h2>
+                                                    <div className="h-px bg-gray-800 flex-1 ml-4" />
+                                                </div>
+                                                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 opacity-80 hover:opacity-100 transition-opacity">
+                                                    {loss.map(renderOptionCard)}
+                                                </div>
+                                            </section>
+                                        )}
+                                    </>
                                 );
-                            })}
+                            })()}
                         </div>
                     )}
                 </div>

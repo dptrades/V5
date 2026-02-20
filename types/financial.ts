@@ -42,7 +42,7 @@ export interface IndicatorData extends OHLCVData {
   };
 
   pattern?: {
-    name: 'Doji' | 'Hammer' | 'Shooting Star' | 'Bullish Engulfing' | 'Bearish Engulfing' | 'None';
+    name: 'Doji' | 'Hammer' | 'Shooting Star' | 'Bullish Engulfing' | 'Bearish Engulfing' | 'Morning Star' | 'Evening Star' | 'Piercing Line' | 'Dark Cloud Cover' | 'None';
     signal: 'bullish' | 'bearish' | 'neutral';
   };
 }

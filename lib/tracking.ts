@@ -23,7 +23,7 @@ export interface TrackedOption {
     entryDate: string;
     reasoning: string[];
     history: PerformanceEntry[];
-    status: 'ACTIVE' | 'EXPIRED' | 'CLOSED';
+    status: 'ACTIVE' | 'EXPIRED' | 'CLOSED' | 'PROFIT' | 'LOSS';
 }
 
 export function getTrackedOptions(): TrackedOption[] {
@@ -130,6 +130,17 @@ export async function updateTrackedOptions(getLatestData: (option: TrackedOption
                             stockPrice: latest.stockPrice
                         });
                     }
+
+                    // Evaluate Profit/Loss (only if entryPremium is valid)
+                    if (option.entryPremium > 0) {
+                        const gainLossPct = ((latest.premium - option.entryPremium) / option.entryPremium) * 100;
+                        if (gainLossPct >= 25) {
+                            option.status = 'PROFIT';
+                        } else if (gainLossPct <= -25) {
+                            option.status = 'LOSS';
+                        }
+                    }
+
                     hasChanges = true;
                 }
             }
@@ -141,4 +152,14 @@ export async function updateTrackedOptions(getLatestData: (option: TrackedOption
     if (hasChanges) {
         saveTrackedOptions(tracked);
     }
+}
+
+export function deleteTrackedOption(id: string) {
+    const tracked = getTrackedOptions();
+    const updated = tracked.filter(o => o.id !== id);
+    if (tracked.length !== updated.length) {
+        saveTrackedOptions(updated);
+        return true;
+    }
+    return false;
 }

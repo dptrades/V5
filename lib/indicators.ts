@@ -1,8 +1,30 @@
 import { OHLCVData, IndicatorData } from '../types/financial';
 import { EMA, RSI, MACD, BollingerBands, ADX } from 'technicalindicators';
-import { calculateAnchoredVWAP, VWAPAnchor } from './vwap';
 
-export const calculateIndicators = (data: OHLCVData[], vwapAnchor: VWAPAnchor = 'none'): IndicatorData[] => {
+// @ts-ignore
+import { bullish } from 'technicalindicators/lib/candlestick/Bullish';
+// @ts-ignore
+import { bearish } from 'technicalindicators/lib/candlestick/Bearish';
+// @ts-ignore
+import { doji } from 'technicalindicators/lib/candlestick/Doji';
+// @ts-ignore
+import { hammerpattern } from 'technicalindicators/lib/candlestick/HammerPattern';
+// @ts-ignore
+import { shootingstar } from 'technicalindicators/lib/candlestick/ShootingStar';
+// @ts-ignore
+import { bullishengulfingpattern } from 'technicalindicators/lib/candlestick/BullishEngulfingPattern';
+// @ts-ignore
+import { bearishengulfingpattern } from 'technicalindicators/lib/candlestick/BearishEngulfingPattern';
+// @ts-ignore
+import { morningstar } from 'technicalindicators/lib/candlestick/MorningStar';
+// @ts-ignore
+import { eveningstar } from 'technicalindicators/lib/candlestick/EveningStar';
+// @ts-ignore
+import { piercingline } from 'technicalindicators/lib/candlestick/PiercingLine';
+// @ts-ignore
+import { darkcloudcover } from 'technicalindicators/lib/candlestick/DarkCloudCover';
+
+import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calculateIndicators = (data: OHLCVData[], vwapAnchor: VWAPAnchor = 'none'): IndicatorData[] => {
     // Extract arrays for technicalindicators
     const closes = data.map(d => d.close);
     const highs = data.map(d => d.high);
@@ -138,6 +160,65 @@ export const calculateIndicators = (data: OHLCVData[], vwapAnchor: VWAPAnchor = 
         } else {
             d.fvg = { type: 'NONE', gapLow: 0, gapHigh: 0 };
         }
+        // -------------------------------------------------------------------------
+        // 5. CANDLESTICK PATTERN DETECTION
+        // -------------------------------------------------------------------------
+        // We need previous candles for most patterns
+        // Some require 1, 2, 3 or more candles. We'll pass slices of the arrays
+
+        let patternName: NonNullable<IndicatorData['pattern']>['name'] = 'None';
+        let patternSignal: NonNullable<IndicatorData['pattern']>['signal'] = 'neutral';
+
+        if (i >= 4) { // Need at least 5 candles for some patterns to be reliable
+            const sliceStart = i - 4;
+            const sliceEnd = i + 1; // slice is exclusive of end
+
+            const pInput = {
+                open: data.slice(sliceStart, sliceEnd).map(c => c.open),
+                high: data.slice(sliceStart, sliceEnd).map(c => c.high),
+                low: data.slice(sliceStart, sliceEnd).map(c => c.low),
+                close: data.slice(sliceStart, sliceEnd).map(c => c.close),
+            };
+
+            // Evaluate patterns in reverse order of significance/complexity (most complex first)
+
+            // 3-Candle Patterns
+            if (morningstar(pInput)) {
+                patternName = 'Morning Star';
+                patternSignal = 'bullish';
+            } else if (eveningstar(pInput)) {
+                patternName = 'Evening Star';
+                patternSignal = 'bearish';
+            }
+            // 2-Candle Patterns
+            else if (bullishengulfingpattern(pInput)) {
+                patternName = 'Bullish Engulfing';
+                patternSignal = 'bullish';
+            } else if (bearishengulfingpattern(pInput)) {
+                patternName = 'Bearish Engulfing';
+                patternSignal = 'bearish';
+            } else if (piercingline(pInput)) {
+                patternName = 'Piercing Line';
+                patternSignal = 'bullish';
+            } else if (darkcloudcover(pInput)) {
+                patternName = 'Dark Cloud Cover';
+                patternSignal = 'bearish';
+            }
+            // 1-Candle Patterns
+            else if (hammerpattern(pInput)) {
+                patternName = 'Hammer';
+                patternSignal = 'bullish';
+            } else if (shootingstar(pInput)) {
+                patternName = 'Shooting Star';
+                patternSignal = 'bearish';
+            } else if (doji(pInput)) {
+                patternName = 'Doji';
+                patternSignal = 'neutral';
+            }
+        }
+
+        d.pattern = { name: patternName, signal: patternSignal };
+
     });
 
     return results;
@@ -247,6 +328,32 @@ export function calculateConfluenceScore(latest: IndicatorData): ConfluenceResul
         } else if (latest.bollinger.middle && price < latest.bollinger.middle && pb > 0.2) {
             bearScore += 5;
             bearSignals.push('Bollinger Downtrend');
+        }
+    }
+
+    // 5. CANDLESTICK PATTERN CONFIRMATION
+    if (latest.pattern && latest.pattern.name !== 'None') {
+        if (latest.pattern.signal === 'bullish') {
+            bullScore += 10;
+            bullSignals.push(`Pattern: ${latest.pattern.name} (Bullish)`);
+        } else if (latest.pattern.signal === 'bearish') {
+            bearScore += 10;
+            bearSignals.push(`Pattern: ${latest.pattern.name} (Bearish)`);
+        } else {
+            // Doji
+            if (latest.pattern.name === 'Doji') {
+                if (rsi > 65) {
+                    // Doji at top
+                    bearScore += 5;
+                    bearSignals.push('Doji at highs (Potential Reversal Bearish)');
+                } else if (rsi < 35) {
+                    // Doji at bottom
+                    bullScore += 5;
+                    bullSignals.push('Doji at lows (Potential Reversal Bullish)');
+                } else {
+                    bullSignals.push('Pattern: Doji (Indecision)');
+                }
+            }
         }
     }
 

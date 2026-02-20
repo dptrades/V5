@@ -270,6 +270,23 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
                             {data.rsi > 70 ? 'Overbought' : 'Oversold'}
                         </span>
                     )}
+                    {(() => {
+                        const patternStr = data.technicalDetails?.find(d => d.startsWith('Pattern:'));
+                        if (patternStr) {
+                            // Format: "Pattern: Bullish Engulfing (Bullish)" -> extract "Bullish Engulfing"
+                            const match = patternStr.match(/Pattern:\s*(.+?)\s*\(/);
+                            const name = match ? match[1] : patternStr.replace('Pattern: ', '');
+                            const isBull = patternStr.includes('(Bullish)');
+                            const isBear = patternStr.includes('(Bearish)');
+                            return (
+                                <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border ${isBull ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : isBear ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                                    }`}>
+                                    {name}
+                                </span>
+                            );
+                        }
+                        return null;
+                    })()}
                 </div>
             </div>
 

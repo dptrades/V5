@@ -552,7 +552,8 @@ export default function Dashboard() {
                       symbol={symbol}
                       showOptionsFlow={false}
                       onRefresh={handleManualRefresh}
-                      refreshKey={priceRefreshKey}
+                      refreshKey={refreshTrigger}
+                      priceRefreshKey={priceRefreshKey}
                     />
                   </div>
                 </div>
