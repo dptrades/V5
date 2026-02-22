@@ -349,6 +349,11 @@
         "date": "2026-02-20",
         "optionPremium": 0.81,
         "stockPrice": 121.53
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 0.81,
+        "stockPrice": 122.1
       }
     ],
     "status": "ACTIVE"
@@ -376,6 +381,11 @@
         "date": "2026-02-20",
         "optionPremium": 1.94,
         "stockPrice": 79.8
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 1.94,
+        "stockPrice": 79.85
       }
     ],
     "status": "ACTIVE"
@@ -438,6 +448,11 @@
         "date": "2026-02-20",
         "optionPremium": 6.62,
         "stockPrice": 264.6
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 6.85,
+        "stockPrice": 264.5
       }
     ],
     "status": "ACTIVE"
@@ -465,6 +480,11 @@
         "date": "2026-02-20",
         "optionPremium": 1.25,
         "stockPrice": 93.55
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 1.25,
+        "stockPrice": 94.97
       }
     ],
     "status": "ACTIVE"
@@ -562,6 +582,11 @@
         "date": "2026-02-20",
         "optionPremium": 3.35,
         "stockPrice": 76
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 3.35,
+        "stockPrice": 75.9458
       }
     ],
     "status": "ACTIVE"
@@ -594,6 +619,11 @@
         "date": "2026-02-20",
         "optionPremium": 6.2,
         "stockPrice": 135.25
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 6.2,
+        "stockPrice": 134.52
       }
     ],
     "status": "ACTIVE"
@@ -655,6 +685,11 @@
         "date": "2026-02-20",
         "optionPremium": 2.05,
         "stockPrice": 375.3501
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 2.05,
+        "stockPrice": 375.3
       }
     ],
     "status": "ACTIVE"
@@ -683,6 +718,11 @@
         "date": "2026-02-20",
         "optionPremium": 1.65,
         "stockPrice": 26.2402
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 1.65,
+        "stockPrice": 26.0597
       }
     ],
     "status": "ACTIVE"
@@ -769,6 +809,11 @@
         "date": "2026-02-20",
         "optionPremium": 2.2750000000000004,
         "stockPrice": 182.56
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 2.13,
+        "stockPrice": 184.21
       }
     ],
     "status": "ACTIVE"
@@ -824,6 +869,11 @@
         "date": "2026-02-20",
         "optionPremium": 0.7,
         "stockPrice": 12.065
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 0.75,
+        "stockPrice": 12.2607
       }
     ],
     "status": "ACTIVE"
@@ -849,6 +899,11 @@
         "date": "2026-02-20",
         "optionPremium": 11.3,
         "stockPrice": 170.29
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 10.7,
+        "stockPrice": 171
       }
     ],
     "status": "ACTIVE"
@@ -874,6 +929,11 @@
         "date": "2026-02-20",
         "optionPremium": 6.300000000000001,
         "stockPrice": 232
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 7,
+        "stockPrice": 231.95
       }
     ],
     "status": "ACTIVE"
@@ -899,6 +959,11 @@
         "date": "2026-02-20",
         "optionPremium": 9.600000000000001,
         "stockPrice": 185.22
+      },
+      {
+        "date": "2026-02-22",
+        "optionPremium": 8.7,
+        "stockPrice": 185.66
       }
     ],
     "status": "ACTIVE"
