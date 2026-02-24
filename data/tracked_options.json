@@ -40,6 +40,11 @@
         "date": "2026-02-23",
         "optionPremium": 13.71,
         "stockPrice": 601.7
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 10.5,
+        "stockPrice": 607.83
       }
     ],
     "status": "ACTIVE"
@@ -87,259 +92,14 @@
         "date": "2026-02-23",
         "optionPremium": 31.6,
         "stockPrice": 756.8178
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 33.75,
+        "stockPrice": 768.23
       }
     ],
     "status": "ACTIVE"
-  },
-  {
-    "id": "WMT   260327C00130000",
-    "ticker": "WMT   ",
-    "companyName": "Walmart Inc.",
-    "strike": 130,
-    "expiry": "2026-03-27",
-    "type": "CALL",
-    "entryPremium": 3.9000000000000004,
-    "entryStockPrice": 126.61,
-    "entryDate": "2026-02-18",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-18",
-        "optionPremium": 3.9000000000000004,
-        "stockPrice": 126.61
-      },
-      {
-        "date": "2026-02-19",
-        "optionPremium": 2.25,
-        "stockPrice": 124.99
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 1.37,
-        "stockPrice": 122.9999
-      }
-    ],
-    "status": "LOSS"
-  },
-  {
-    "id": "PG    260327C00160000",
-    "ticker": "PG    ",
-    "companyName": "The Procter & Gamble Company",
-    "strike": 160,
-    "expiry": "2026-03-27",
-    "type": "CALL",
-    "entryPremium": 2.825,
-    "entryStockPrice": 156.76,
-    "entryDate": "2026-02-18",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-18",
-        "optionPremium": 2.825,
-        "stockPrice": 156.76
-      },
-      {
-        "date": "2026-02-19",
-        "optionPremium": 3.42,
-        "stockPrice": 158.48
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 4.37,
-        "stockPrice": 160.78
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "LIN   260320C00490000",
-    "ticker": "LIN   ",
-    "companyName": "Linde plc",
-    "strike": 490,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 10.15,
-    "entryStockPrice": 485.07,
-    "entryDate": "2026-02-18",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross"
-    ],
-    "history": [
-      {
-        "date": "2026-02-18",
-        "optionPremium": 10.15,
-        "stockPrice": 485.07
-      },
-      {
-        "date": "2026-02-19",
-        "optionPremium": 11.9,
-        "stockPrice": 490
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 14.3,
-        "stockPrice": 496.51
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "AMZN  260327P00200000",
-    "ticker": "AMZN  ",
-    "companyName": "Amazon.com, Inc.",
-    "strike": 200,
-    "expiry": "2026-03-27",
-    "type": "PUT",
-    "entryPremium": 6.2,
-    "entryStockPrice": 204.36,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "Developing Bearish Momentum",
-      "MACD Bearish Cross",
-      "Bollinger Downtrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 6.02,
-        "stockPrice": 204.86
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 4.35,
-        "stockPrice": 210.11
-      }
-    ],
-    "status": "LOSS"
-  },
-  {
-    "id": "MRK   260320C00130000",
-    "ticker": "MRK   ",
-    "companyName": "Merck & Co., Inc.",
-    "strike": 130,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 0.76,
-    "entryStockPrice": 120.9,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Institutional flow at $130. (Live IV: 2659.3%)"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 0.83,
-        "stockPrice": 121.77
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 0.81,
-        "stockPrice": 121.53
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 0.81,
-        "stockPrice": 122.1
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 1.06,
-        "stockPrice": 123.75
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "KO    260417C00080000",
-    "ticker": "KO    ",
-    "companyName": "The Coca-Cola Company",
-    "strike": 80,
-    "expiry": "2026-04-17",
-    "type": "CALL",
-    "entryPremium": 1.73,
-    "entryStockPrice": 79.11,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Institutional flow at $80. (Live IV: 19.1%)"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 1.68,
-        "stockPrice": 78.85
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 1.94,
-        "stockPrice": 79.8
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 1.94,
-        "stockPrice": 79.85
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 2.46,
-        "stockPrice": 80.64
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "IWM   260320C00265000",
-    "ticker": "IWM   ",
-    "companyName": "IWM",
-    "strike": 265,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 6.665,
-    "entryStockPrice": 264.13,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Delta 0.48 | Vol/OI Flux: 0.0x"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 7.16,
-        "stockPrice": 264.6425
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 6.62,
-        "stockPrice": 264.6
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 6.85,
-        "stockPrice": 264.5
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 4.89,
-        "stockPrice": 260.669
-      }
-    ],
-    "status": "LOSS"
   },
   {
     "id": "SRE   260417C00100000",
@@ -374,79 +134,14 @@
         "date": "2026-02-23",
         "optionPremium": 1.2,
         "stockPrice": 93.6
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 1.31,
+        "stockPrice": 93.97
       }
     ],
     "status": "ACTIVE"
-  },
-  {
-    "id": "KLAR  260320P00012500",
-    "ticker": "KLAR",
-    "companyName": "Klarna Group plc",
-    "strike": 12.5,
-    "expiry": "2026-03-20",
-    "type": "PUT",
-    "entryPremium": 0.575,
-    "entryStockPrice": 14.265,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Price < EMA50",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "MACD Bearish Cross"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 0.7,
-        "stockPrice": 13.8894
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 0.8,
-        "stockPrice": 13.08
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "NVDA  260327C00190000",
-    "ticker": "NVDA",
-    "companyName": "NVIDIA Corporation",
-    "strike": 190,
-    "expiry": "2026-03-27",
-    "type": "CALL",
-    "entryPremium": 10,
-    "entryStockPrice": 186.57,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 10.5,
-        "stockPrice": 187.81
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 11.18,
-        "stockPrice": 189.84
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 11.18,
-        "stockPrice": 189.9999
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 12.6,
-        "stockPrice": 191.641
-      }
-    ],
-    "status": "PROFIT"
   },
   {
     "id": "HOOD  260327P00070000",
@@ -486,48 +181,11 @@
         "date": "2026-02-23",
         "optionPremium": 4.98,
         "stockPrice": 71.65
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "PLTR  260327P00130000",
-    "ticker": "PLTR",
-    "companyName": "Palantir Technologies Inc.",
-    "strike": 130,
-    "expiry": "2026-03-27",
-    "type": "PUT",
-    "entryPremium": 6.625,
-    "entryStockPrice": 134.9,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "Developing Bearish Momentum",
-      "MACD Bearish Cross",
-      "Bollinger Downtrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 6.45,
-        "stockPrice": 134.98
       },
       {
-        "date": "2026-02-20",
-        "optionPremium": 6.2,
-        "stockPrice": 135.25
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 6.2,
-        "stockPrice": 134.52
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 8.25,
-        "stockPrice": 130.52
+        "date": "2026-02-24",
+        "optionPremium": 4.18,
+        "stockPrice": 73.38
       }
     ],
     "status": "ACTIVE"
@@ -567,6 +225,11 @@
         "date": "2026-02-23",
         "optionPremium": 13.81,
         "stockPrice": 682.71
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 10.22,
+        "stockPrice": 687.3548
       }
     ],
     "status": "ACTIVE"
@@ -604,83 +267,14 @@
         "date": "2026-02-23",
         "optionPremium": 1.5,
         "stockPrice": 373.02
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 1.52,
+        "stockPrice": 377.93
       }
     ],
     "status": "ACTIVE"
-  },
-  {
-    "id": "MSFT  260327P00390000",
-    "ticker": "MSFT",
-    "companyName": "Microsoft Corporation",
-    "strike": 390,
-    "expiry": "2026-03-27",
-    "type": "PUT",
-    "entryPremium": 10.5,
-    "entryStockPrice": 397.12,
-    "entryDate": "2026-02-19",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "Developing Bearish Momentum",
-      "MACD Bearish Cross",
-      "Bollinger Downtrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-19",
-        "optionPremium": 10.22,
-        "stockPrice": 398.4
-      },
-      {
-        "date": "2026-02-20",
-        "optionPremium": 9.94,
-        "stockPrice": 397.03
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 9.94,
-        "stockPrice": 397.05
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 15.95,
-        "stockPrice": 384.93
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "PM    260320C00190000",
-    "ticker": "PM",
-    "companyName": "Philip Morris International Inc.",
-    "strike": 190,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 2.2750000000000004,
-    "entryStockPrice": 182.56,
-    "entryDate": "2026-02-20",
-    "reasoning": [
-      "Institutional flow at $190. (Live IV: 25.5%)"
-    ],
-    "history": [
-      {
-        "date": "2026-02-20",
-        "optionPremium": 2.2750000000000004,
-        "stockPrice": 182.56
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 2.13,
-        "stockPrice": 184.21
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 3.4,
-        "stockPrice": 187.22
-      }
-    ],
-    "status": "PROFIT"
   },
   {
     "id": "GOOGL 260327P00310000",
@@ -712,44 +306,14 @@
         "date": "2026-02-23",
         "optionPremium": 11.35,
         "stockPrice": 312.12
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 10.8,
+        "stockPrice": 310.9
       }
     ],
     "status": "ACTIVE"
-  },
-  {
-    "id": "COIN  260327P00165000",
-    "ticker": "COIN",
-    "companyName": "Coinbase Global, Inc.",
-    "strike": 165,
-    "expiry": "2026-03-27",
-    "type": "PUT",
-    "entryPremium": 11.3,
-    "entryStockPrice": 170.29,
-    "entryDate": "2026-02-20",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "Bollinger Downtrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-20",
-        "optionPremium": 11.3,
-        "stockPrice": 170.29
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 10.7,
-        "stockPrice": 171
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 16.05,
-        "stockPrice": 160.5618
-      }
-    ],
-    "status": "PROFIT"
   },
   {
     "id": "BA    260327C00240000",
@@ -782,101 +346,11 @@
         "date": "2026-02-23",
         "optionPremium": 5.03,
         "stockPrice": 230.25
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "CRM   260327P00180000",
-    "ticker": "CRM",
-    "companyName": "Salesforce, Inc.",
-    "strike": 180,
-    "expiry": "2026-03-27",
-    "type": "PUT",
-    "entryPremium": 9.600000000000001,
-    "entryStockPrice": 185.22,
-    "entryDate": "2026-02-20",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "EMA Stack Bearish (Short < Mid < Long)",
-      "Bollinger Downtrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-20",
-        "optionPremium": 9.600000000000001,
-        "stockPrice": 185.22
       },
       {
-        "date": "2026-02-22",
-        "optionPremium": 8.7,
-        "stockPrice": 185.66
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 13.16,
-        "stockPrice": 178.3383
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "XOM   260327C00150000",
-    "ticker": "XOM",
-    "companyName": "Exxon Mobil Corporation",
-    "strike": 150,
-    "expiry": "2026-03-27",
-    "type": "CALL",
-    "entryPremium": 4.425000000000001,
-    "entryStockPrice": 147.3,
-    "entryDate": "2026-02-20",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "Bollinger Uptrend"
-    ],
-    "history": [
-      {
-        "date": "2026-02-20",
-        "optionPremium": 4.425000000000001,
-        "stockPrice": 147.3
-      },
-      {
-        "date": "2026-02-22",
-        "optionPremium": 4.75,
-        "stockPrice": 147.6017
-      },
-      {
-        "date": "2026-02-23",
-        "optionPremium": 5.87,
-        "stockPrice": 150.92
-      }
-    ],
-    "status": "PROFIT"
-  },
-  {
-    "id": "SHLS  260320C00011000",
-    "ticker": "SHLS",
-    "companyName": "Shoals Technologies Group, Inc.",
-    "strike": 11,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 0.9,
-    "entryStockPrice": 10.62,
-    "entryDate": "2026-02-23",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross"
-    ],
-    "history": [
-      {
-        "date": "2026-02-23",
-        "optionPremium": 0.9,
-        "stockPrice": 10.62
+        "date": "2026-02-24",
+        "optionPremium": 6.55,
+        "stockPrice": 233.39
       }
     ],
     "status": "ACTIVE"
@@ -898,6 +372,11 @@
       {
         "date": "2026-02-23",
         "optionPremium": 4.95,
+        "stockPrice": 225.97
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 4.5,
         "stockPrice": 225.97
       }
     ],
@@ -926,6 +405,11 @@
         "date": "2026-02-23",
         "optionPremium": 1.5999999999999999,
         "stockPrice": 63.485
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 1.58,
+        "stockPrice": 65.11
       }
     ],
     "status": "ACTIVE"
@@ -954,6 +438,141 @@
         "date": "2026-02-23",
         "optionPremium": 5.050000000000001,
         "stockPrice": 176.11
+      },
+      {
+        "date": "2026-02-24",
+        "optionPremium": 5.9,
+        "stockPrice": 178.24
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "WELL  260320C00210000",
+    "ticker": "WELL",
+    "companyName": "Welltower Inc.",
+    "strike": 210,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 5.1,
+    "entryStockPrice": 209.52,
+    "entryDate": "2026-02-24",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Strong Bullish Momentum",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-24",
+        "optionPremium": 5.1,
+        "stockPrice": 209.52
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "IPGP  260320C00140000",
+    "ticker": "IPGP",
+    "companyName": "IPG Photonics Corporation",
+    "strike": 140,
+    "expiry": "2026-03-20",
+    "type": "CALL",
+    "entryPremium": 5.75,
+    "entryStockPrice": 134.62,
+    "entryDate": "2026-02-24",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Strong Bullish Momentum",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-24",
+        "optionPremium": 5.75,
+        "stockPrice": 134.62
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "MSFT  260402P00380000",
+    "ticker": "MSFT",
+    "companyName": "Microsoft Corporation",
+    "strike": 380,
+    "expiry": "2026-04-02",
+    "type": "PUT",
+    "entryPremium": 10,
+    "entryStockPrice": 388.165,
+    "entryDate": "2026-02-24",
+    "reasoning": [
+      "Price < EMA50",
+      "Price < EMA200",
+      "EMA Stack Bearish (Short < Mid < Long)",
+      "Developing Bearish Momentum",
+      "MACD Bearish Cross",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-24",
+        "optionPremium": 10,
+        "stockPrice": 388.165
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "ZETA  260402P00016000",
+    "ticker": "ZETA",
+    "companyName": "Zeta Global Holdings Corp.",
+    "strike": 16,
+    "expiry": "2026-04-02",
+    "type": "PUT",
+    "entryPremium": 1.495,
+    "entryStockPrice": 16.68,
+    "entryDate": "2026-02-24",
+    "reasoning": [
+      "Price < EMA50",
+      "Price < EMA200",
+      "EMA Stack Bearish (Short < Mid < Long)",
+      "Bollinger Downtrend"
+    ],
+    "history": [
+      {
+        "date": "2026-02-24",
+        "optionPremium": 1.495,
+        "stockPrice": 16.68
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "PYPL  260402P00046000",
+    "ticker": "PYPL",
+    "companyName": "PayPal Holdings, Inc.",
+    "strike": 46,
+    "expiry": "2026-04-02",
+    "type": "PUT",
+    "entryPremium": 2.525,
+    "entryStockPrice": 47.06,
+    "entryDate": "2026-02-24",
+    "reasoning": [
+      "Price < EMA50",
+      "Price < EMA200",
+      "EMA Stack Bearish (Short < Mid < Long)"
+    ],
+    "history": [
+      {
+        "date": "2026-02-24",
+        "optionPremium": 2.525,
+        "stockPrice": 47.06
       }
     ],
     "status": "ACTIVE"

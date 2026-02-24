@@ -98,13 +98,13 @@ const ALPHA_HUNTER_WATCHLIST = Array.from(new Set([
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes (Standard Auto-Refresh)
 
 declare global {
-    var _megaCapCacheV3: { data: ConvictionStock[], timestamp: number } | null;
-    var _alphaHunterCacheV2: { data: ConvictionStock[], timestamp: number } | null;
+    var _megaCapCacheV7: { data: ConvictionStock[], timestamp: number } | null;
+    var _alphaHunterCacheV6: { data: ConvictionStock[], timestamp: number } | null;
 }
 
 // Initialize global cache if not exists (V3 to force refresh with names)
-if (!global._megaCapCacheV3) global._megaCapCacheV3 = null;
-if (!global._alphaHunterCacheV2) global._alphaHunterCacheV2 = null;
+if (!global._megaCapCacheV7) global._megaCapCacheV7 = null;
+if (!global._alphaHunterCacheV6) global._alphaHunterCacheV6 = null;
 
 let isScanning = false;
 
@@ -113,19 +113,19 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
 
     // Logic: If market is OFF, only scan if cache is empty (one-time baseline fetch).
     // Otherwise, always serve cache during OFF hours to prevent redundant load.
-    if (marketSession === 'OFF' && global._megaCapCacheV3 && !forceRefresh) {
+    if (marketSession === 'OFF' && global._megaCapCacheV7 && !forceRefresh) {
         console.log("🌙 Market is CLOSED. Serving preserved Top Picks cache.");
-        return global._megaCapCacheV3.data;
+        return global._megaCapCacheV7.data;
     }
 
     // Return cached data if valid and not force-refresh
-    if (!forceRefresh && global._megaCapCacheV3 && (Date.now() - global._megaCapCacheV3.timestamp < CACHE_TTL)) {
+    if (!forceRefresh && global._megaCapCacheV7 && (Date.now() - global._megaCapCacheV7.timestamp < CACHE_TTL)) {
         console.log("⚡ Returning cached mega-cap conviction data");
-        return global._megaCapCacheV3.data;
+        return global._megaCapCacheV7.data;
     }
 
     // Clear old cache to force immediate update for user
-    if (forceRefresh) global._megaCapCacheV3 = null;
+    if (forceRefresh) global._megaCapCacheV7 = null;
 
     isScanning = true;
     const results: ConvictionStock[] = [];
@@ -410,7 +410,7 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
     const sorted = results.sort((a, b) => b.score - a.score);
 
     // Update Cache
-    global._megaCapCacheV3 = {
+    global._megaCapCacheV7 = {
         data: sorted,
         timestamp: Date.now()
     };
@@ -424,29 +424,29 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
     const marketSession = publicClient.getMarketSession();
 
     // Logic: If market is OFF, only scan if cache is empty.
-    if (marketSession === 'OFF' && global._alphaHunterCacheV2 && !forceRefresh) {
+    if (marketSession === 'OFF' && global._alphaHunterCacheV6 && !forceRefresh) {
         console.log("🌙 Market is CLOSED. Serving preserved Alpha Hunter cache.");
-        return global._alphaHunterCacheV2.data;
+        return global._alphaHunterCacheV6.data;
     }
 
     // Return cached data if valid
-    if (!forceRefresh && global._alphaHunterCacheV2 && (Date.now() - global._alphaHunterCacheV2.timestamp < CACHE_TTL)) {
+    if (!forceRefresh && global._alphaHunterCacheV6 && (Date.now() - global._alphaHunterCacheV6.timestamp < CACHE_TTL)) {
         console.log("⚡ Returning cached Alpha Hunter data");
-        return global._alphaHunterCacheV2.data;
+        return global._alphaHunterCacheV6.data;
     }
 
     // Clear old cache to force immediate update for user
-    if (forceRefresh) global._alphaHunterCacheV2 = null;
+    if (forceRefresh) global._alphaHunterCacheV6 = null;
 
     isScanning = true;
     const results: ConvictionStock[] = [];
 
-    // Updated score weightings (now includes discovery bonus)
+    // Updated score weightings to heavily favor Smart Discovery
     const W_TECH = 0.25;
-    const W_FUND = 0.20;
-    const W_ANALYST = 0.15;
+    const W_FUND = 0.10;
+    const W_ANALYST = 0.10;
     const W_SOCIAL = 0.15;
-    const W_DISCOVERY = 0.25; // Bonus for smart discovery signals
+    const W_DISCOVERY = 0.40; // Massive bonus for smart discovery signals
 
     console.log("🚀 Starting Alpha Hunter Scan (Full Market)...");
     console.log("🔑 Public.com API Status:", publicClient.isConfigured() ? "Configured (Live) ✅" : "Missing (Estimated) ⚠️");
@@ -474,7 +474,7 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
     const currentSectorMap = await getSectorMap();
 
     // Limit total symbols to prevent timeout
-    symbolsToScan = symbolsToScan.slice(0, 150);
+    symbolsToScan = symbolsToScan.slice(0, 300);
     console.log(`📊 Total symbols to scan: ${symbolsToScan.length}`);
 
     // 4. Batch Processing Helper
@@ -714,7 +714,7 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
     const sorted = results.sort((a, b) => b.score - a.score);
 
     // Update Cache
-    global._alphaHunterCacheV2 = {
+    global._alphaHunterCacheV6 = {
         data: sorted,
         timestamp: Date.now()
     };
@@ -724,5 +724,5 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
         return [];
     }
 
-    return sorted.slice(0, 50);
+    return sorted; // Return all processed Alpha Hunter picks
 }

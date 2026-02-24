@@ -88,7 +88,8 @@ export async function updateTrackedOptions(getLatestData: (option: TrackedOption
     let hasChanges = false;
 
     for (const option of tracked) {
-        if (option.status !== 'ACTIVE') continue;
+        // Skip tracking if the option is fully expired or manually closed
+        if (option.status === 'EXPIRED' || option.status === 'CLOSED') continue;
 
         // Check if expiry has passed
         if (new Date(option.expiry) < new Date(today)) {
@@ -134,9 +135,9 @@ export async function updateTrackedOptions(getLatestData: (option: TrackedOption
                     // Evaluate Profit/Loss (only if entryPremium is valid)
                     if (option.entryPremium > 0) {
                         const gainLossPct = ((latest.premium - option.entryPremium) / option.entryPremium) * 100;
-                        if (gainLossPct >= 25) {
+                        if (gainLossPct >= 25 && option.status !== 'PROFIT') {
                             option.status = 'PROFIT';
-                        } else if (gainLossPct <= -25) {
+                        } else if (gainLossPct <= -25 && option.status !== 'LOSS') {
                             option.status = 'LOSS';
                         }
                     }
