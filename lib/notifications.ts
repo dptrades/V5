@@ -4,6 +4,7 @@
  */
 
 import { env } from './env';
+import { localDateString } from './localdate';
 
 export interface NotificationPayload {
     subject: string;
@@ -245,7 +246,7 @@ export async function sendMorningBriefAlert(payload: MorningBriefPayload): Promi
             body: JSON.stringify({
                 from: 'DP TradeDesk <alerts@resend.dev>',
                 to: recipients,
-                subject: `🌅 Morning Briefing - ${new Date().toLocaleDateString()}`,
+                subject: `🌅 Morning Briefing - ${localDateString()}`,
                 html: html
             })
         });

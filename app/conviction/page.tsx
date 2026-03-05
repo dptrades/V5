@@ -143,9 +143,9 @@ export default function ConvictionPage() {
     return (
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
             <div className={`
-                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                ${isSidebarOpen ? 'w-[18vw] min-w-[200px]' : 'w-0'} 
+                ${isSidebarOpen ? 'w-[20vw] lg:w-[18vw] min-w-[200px]' : 'w-0'} 
                 h-full overflow-hidden flex-shrink-0 border-r border-gray-800
             `}>
                 <Sidebar
@@ -175,8 +175,8 @@ export default function ConvictionPage() {
                     </button>
                 )}
 
-                <div className="flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300">
-                    <header className="flex justify-between items-end mb-8">
+                <div className="flex-1 p-4 lg:p-8 overflow-y-auto transition-all duration-300">
+                    <header className="flex flex-col xl:flex-row xl:items-end justify-between mb-8 gap-4">
                         <div>
                             <div className="flex items-center gap-4">
                                 <h1 className="text-4xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
@@ -204,7 +204,7 @@ export default function ConvictionPage() {
                             </p>
                         </div>
 
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-start xl:items-end gap-2">
                             {isMarketActive() ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-blue-400 font-bold uppercase tracking-wider animate-pulse">
                                     <Activity className="w-3 h-3" />
@@ -273,7 +273,7 @@ export default function ConvictionPage() {
                                             <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-                                                    <span className="font-bold text-blue-400 text-sm">Technical Analysis (25%)</span>
+                                                    <span className="font-bold text-blue-400 text-sm">Technical Score (25%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
                                                     Evaluates Trend alignment, RSI momentum, MACD, and Bollinger Bands.
@@ -282,7 +282,7 @@ export default function ConvictionPage() {
                                             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                                                    <span className="font-bold text-emerald-400 text-sm">Fundamentals & Growth (20%)</span>
+                                                    <span className="font-bold text-emerald-400 text-sm">Fundamentals & Growth (10%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
                                                     Revenue Growth, Profit Margins, and healthy P/E ratios.
@@ -291,7 +291,7 @@ export default function ConvictionPage() {
                                             <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
-                                                    <span className="font-bold text-yellow-400 text-sm">Analyst Rating (15%)</span>
+                                                    <span className="font-bold text-yellow-400 text-sm">Analyst Rating (10%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
                                                     Wall Street analyst ratings and upside sentiment.
@@ -310,7 +310,7 @@ export default function ConvictionPage() {
                                         <div className="p-5 rounded-xl bg-white/5 border border-white/10">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-                                                <span className="font-bold text-white text-sm uppercase tracking-wider">Smart Discovery Multiplier (25%)</span>
+                                                <span className="font-bold text-white text-sm uppercase tracking-wider">Smart Discovery Multiplier (40%)</span>
                                             </div>
                                             <p className="text-sm text-gray-100 leading-relaxed">
                                                 Unusual Options Flow, Volume Breakouts, and Volatility News.

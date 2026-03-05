@@ -134,6 +134,7 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                                     enabled={true}
                                     showChange={false}
                                     refreshKey={priceRefreshKey}
+                                    displayMode="extended"
                                 />
                             </div>
                         </div>
@@ -155,7 +156,7 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                 </div>
 
                 {/* 1. UNIFIED METRICS ROW - High Density */}
-                <div className="flex flex-wrap md:flex-nowrap gap-2 items-stretch justify-center">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
                     {/* Range - Customized with Colors */}
                     <CompactMetric
                         label="Range"

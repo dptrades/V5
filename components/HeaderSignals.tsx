@@ -120,9 +120,9 @@ export default function HeaderSignals({ latestData, showRSI = true }: HeaderSign
     }
 
     return (
-        <div className={`flex items-center gap-6 px-4 py-2 rounded-xl border shadow-xl transition-all duration-500 ${widgetBg}`}>
+        <div className={`flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-2 rounded-xl border shadow-xl transition-all duration-500 ${widgetBg}`}>
             {/* 1. Trends Section */}
-            <div className={`flex items-center gap-3 border-r pr-6 ${stTrend === 'BULLISH' ? 'border-green-500/20' : stTrend === 'BEARISH' ? 'border-red-500/20' : 'border-gray-800'}`}>
+            <div className={`flex items-center gap-3 border-r-0 lg:border-r pr-0 lg:pr-6 ${stTrend === 'BULLISH' ? 'border-green-500/20' : stTrend === 'BEARISH' ? 'border-red-500/20' : 'border-gray-800'}`}>
                 <TrendingUp className={`w-4 h-4 ${isGoldenCross ? 'text-yellow-400' : 'text-blue-400'}`} />
                 <div className="flex gap-4">
                     <div className="flex flex-col gap-1">
@@ -149,7 +149,7 @@ export default function HeaderSignals({ latestData, showRSI = true }: HeaderSign
             </div>
 
             {/* 2. Technical Matrix */}
-            <div className="flex items-center gap-5 uppercase font-bold text-[10px]">
+            <div className="flex flex-wrap items-center gap-4 lg:gap-5 uppercase font-bold text-[10px]">
                 <div className="flex flex-col gap-1">
                     <span className="text-[8px] text-gray-200 tracking-widest leading-none">RSI</span>
                     <span className={`${rsiColor} leading-none`}>{rsiStatus} <span className="text-[8px] opacity-40">({latestData.rsi14?.toFixed(0)})</span></span>

@@ -9,8 +9,9 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const forceRefresh = searchParams.get('refresh') === 'true';
+        const returnAll = searchParams.get('all') === 'true';
 
-        const data = await scanConviction(forceRefresh);
+        const data = await scanConviction(forceRefresh, returnAll);
         return NextResponse.json(data);
     } catch (error) {
         console.error("Error in conviction API:", error);

@@ -117,9 +117,8 @@ export default function Sidebar({
             : pathname.startsWith('/picks') ? 'picks'
                 : pathname.startsWith('/conviction') ? 'conviction'
                     : pathname.startsWith('/social-pulse') ? 'social'
-                        : pathname.startsWith('/daydream') ? 'daydream'
-                            : pathname.startsWith('/performance') ? 'performance'
-                                : 'dashboard';
+                        : pathname.startsWith('/performance') ? 'performance'
+                            : 'dashboard';
 
     // Calculate Options Signal
     const latest = data[data.length - 1];
@@ -214,15 +213,6 @@ export default function Sidebar({
                 </Link>
                 {enableBetaFeatures && (
                     <>
-                        <Link
-                            href="/daydream"
-                            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'daydream'
-                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 border border-transparent'
-                                }`}
-                        >
-                            <span className="truncate">✨ DayDream</span>
-                        </Link>
                         <Link
                             href="/performance"
                             className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'performance'

@@ -98,34 +98,34 @@ const ALPHA_HUNTER_WATCHLIST = Array.from(new Set([
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes (Standard Auto-Refresh)
 
 declare global {
-    var _megaCapCacheV8: { data: ConvictionStock[], timestamp: number } | null;
-    var _alphaHunterCacheV7: { data: ConvictionStock[], timestamp: number } | null;
+    var _megaCapCacheV9: { data: ConvictionStock[], rawData: ConvictionStock[], timestamp: number } | null;
+    var _alphaHunterCacheV8: { data: ConvictionStock[], rawData: ConvictionStock[], timestamp: number } | null;
 }
 
 // Initialize global cache if not exists
-if (!global._megaCapCacheV8) global._megaCapCacheV8 = null;
-if (!global._alphaHunterCacheV7) global._alphaHunterCacheV7 = null;
+if (!global._megaCapCacheV9) global._megaCapCacheV9 = null;
+if (!global._alphaHunterCacheV8) global._alphaHunterCacheV8 = null;
 
 let isScanning = false;
 
-export async function scanConviction(forceRefresh = false): Promise<ConvictionStock[]> {
+export async function scanConviction(forceRefresh = false, returnAll = false): Promise<ConvictionStock[]> {
     const marketSession = publicClient.getMarketSession();
 
     // Logic: If market is OFF, only scan if cache is empty (one-time baseline fetch).
     // Otherwise, always serve cache during OFF hours to prevent redundant load.
-    if (marketSession === 'OFF' && global._megaCapCacheV8 && !forceRefresh) {
+    if (marketSession === 'OFF' && global._megaCapCacheV9 && !forceRefresh) {
         console.log("🌙 Market is CLOSED. Serving preserved Top Picks cache.");
-        return global._megaCapCacheV8.data;
+        return returnAll ? global._megaCapCacheV9.rawData : global._megaCapCacheV9.data;
     }
 
     // Return cached data if valid and not force-refresh
-    if (!forceRefresh && global._megaCapCacheV8 && (Date.now() - global._megaCapCacheV8.timestamp < CACHE_TTL)) {
+    if (!forceRefresh && global._megaCapCacheV9 && (Date.now() - global._megaCapCacheV9.timestamp < CACHE_TTL)) {
         console.log("⚡ Returning cached mega-cap conviction data");
-        return global._megaCapCacheV8.data;
+        return returnAll ? global._megaCapCacheV9.rawData : global._megaCapCacheV9.data;
     }
 
     // Clear old cache to force immediate update for user
-    if (forceRefresh) global._megaCapCacheV8 = null;
+    if (forceRefresh) global._megaCapCacheV9 = null;
 
     isScanning = true;
     const results: ConvictionStock[] = [];
@@ -168,6 +168,19 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
     // Fetch Dynamic Sector Map
     const currentSectorMap = await getSectorMap();
 
+    // Pre-fetch SPY 20-day return for relative strength calculation
+    let spy20dReturn = 0;
+    try {
+        const spyBars = await fetchAlpacaBars('SPY', '1Day', 30);
+        if (spyBars && spyBars.length >= 21) {
+            const spyClose = spyBars.map((b: any) => b.c);
+            spy20dReturn = (spyClose[spyClose.length - 1] / spyClose[spyClose.length - 21]) - 1;
+            console.log(`📈 [Scanner] SPY 20d return: ${(spy20dReturn * 100).toFixed(2)}%`);
+        }
+    } catch (e) {
+        console.warn('[Scanner] SPY fetch failed for relative strength, skipping RS signal');
+    }
+
     // Limit total symbols to prevent timeout (Raised limit for Sectors + Picks coverage)
     symbolsToScan = symbolsToScan.slice(0, 300);
     console.log(`📊 [Scanner] Total symbols to scan: ${symbolsToScan.length}`);
@@ -186,7 +199,7 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
                 // 1. Fetch Data (Hybrid: Alpaca for Live Price/Chart, Yahoo for Fundamentals)
                 console.log(`[Conviction] Fetching data for ${symbol}...`);
                 const [quote, yahooChart, alpacaBars, socialNews] = await Promise.all([
-                    (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
+                    (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile', 'earningsTrend'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
                     (yahooFinance.chart(symbol, { period1: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), interval: '1d' }) as Promise<any>).catch(e => { console.error(`[Yahoo] Chart Error ${symbol}:`, e.message); return null; }),
                     (fetchAlpacaBars(symbol, '1Day', 253).then(b => { return b; })),
                     (getNewsData(symbol, 'social') as Promise<any>).catch(e => [])
@@ -224,9 +237,32 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
 
                 // Synchronized Technical Scoring
                 const confluence = calculateConfluenceScore(latest);
-                const techScore = confluence.strength;
+                let techScore = confluence.strength;
                 const trend = confluence.trend;
                 const rsi = latest.rsi14 || 50;
+
+                // Overbought penalty: extreme RSI is a warning sign, not a strength
+                if (rsi > 80) techScore = Math.max(0, techScore - 10);
+
+                // 52-week high proximity bonus (+10 if within 5% of 52w high)
+                let near52wHigh = false;
+                if (cleanData.length >= 50) {
+                    const high52w = Math.max(...cleanData.slice(-252).map((d: any) => d.high || 0));
+                    if (high52w > 0 && latest.close >= high52w * 0.95) {
+                        techScore = Math.min(100, techScore + 10);
+                        near52wHigh = true;
+                    }
+                }
+
+                // Relative strength vs SPY (20-day): +10 if outperforming by >5%, -5 if underperforming by >5%
+                let outperformingSPY = false;
+                let volumeSurge = false;
+                if (cleanData.length >= 21 && spy20dReturn !== 0) {
+                    const stock20dReturn = (cleanData[cleanData.length - 1].close / cleanData[cleanData.length - 21].close) - 1;
+                    const relStrength = stock20dReturn - spy20dReturn;
+                    if (relStrength > 0.05) { techScore = Math.min(100, techScore + 10); outperformingSPY = true; }
+                    else if (relStrength < -0.05) techScore = Math.max(0, techScore - 5);
+                }
 
 
                 // 3. Process Fundamentals (Graceful Fallback)
@@ -241,6 +277,19 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
                 if (pe > 100) fundScore -= 10;
                 const margins = financialData.profitMargins || 0;
                 if (margins > 0.20) fundScore += 10;
+                // EPS growth bonus
+                const epsGrowth = financialData.earningsGrowth || 0;
+                if (epsGrowth > 0.10) fundScore += 10;
+                // Free cash flow margin bonus (>15% FCF/Revenue = capital-efficient business)
+                const fcf = financialData.freeCashflow || 0;
+                const totalRevenue = financialData.totalRevenue || 0;
+                if (fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
+                // Debt-to-equity penalty (high leverage = risk)
+                const debtToEquity = financialData.debtToEquity || 0;
+                if (debtToEquity > 2.0) fundScore -= 10;
+                // Insider ownership bonus (aligned incentives)
+                const insiderPct = stats.heldPercentInsiders || 0;
+                if (insiderPct > 0.05) fundScore += 5;
                 fundScore = Math.max(0, Math.min(100, fundScore));
 
 
@@ -263,6 +312,19 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
                     const upside = ((targetPrice - finalPrice) / finalPrice) * 100;
                     if (upside > 10) analystScore += 10;
                 }
+
+                // EPS surprise / earnings momentum
+                let epsSurpriseCount = 0;
+                const earningsTrendData = (quote as any)?.earningsTrend?.trend || [];
+                for (const et of earningsTrendData.slice(0, 2)) {
+                    const actual = et?.actual?.raw ?? et?.actual;
+                    const estimate = et?.estimate?.raw ?? et?.estimate;
+                    if (actual != null && estimate != null && Number(actual) > Number(estimate)) {
+                        epsSurpriseCount++;
+                    }
+                }
+                if (epsSurpriseCount >= 2) analystScore = Math.min(100, analystScore + 15);
+                else if (epsSurpriseCount === 1) analystScore = Math.min(100, analystScore + 8);
 
 
                 // 5. Process Social
@@ -331,8 +393,13 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
                 if (discovery) reasons.push(`🔍 ${discovery.signal}`);
                 if (trend === 'BULLISH') reasons.push("Strong Technical Uptrend");
                 if (techScore > 70) reasons.push("Bullish Momentum (RSI)");
+                if (near52wHigh) reasons.push('🏔️ Near 52W High');
+                if (outperformingSPY) reasons.push('📈 Outperforming SPY');
+                if (volumeSurge) reasons.push('🔥 Volume Surge');
                 if (fundScore > 70) reasons.push("Solid Fundamentals");
                 if (analystScore > 80) reasons.push(`Analyst Consensus: ${ratingText}`);
+                if (epsSurpriseCount >= 2) reasons.push('📊 2x EPS Beat');
+                else if (epsSurpriseCount === 1) reasons.push('📊 EPS Beat');
                 if (socialScore > 75) reasons.push("High Social Interest");
                 if (volumeDiff > 50) reasons.push(`High Volume (+${Math.round(volumeDiff)}%)`);
 
@@ -406,49 +473,67 @@ export async function scanConviction(forceRefresh = false): Promise<ConvictionSt
         }
     }
 
-    // Sort by score desc and filter >= 75
-    const sorted = results
-        .filter(r => r.score >= 75)
-        .sort((a, b) => b.score - a.score);
+    // Sort by score desc
+    const sortedRaw = results.sort((a, b) => b.score - a.score);
+
+    // Quality gate: require minimum sub-scores to avoid technically broken stocks
+    // (Alpha Hunter intentionally skips this to stay broader)
+    const qualityGated = sortedRaw.filter(r =>
+        r.technicalScore >= 50 && r.analystScore >= 50
+    );
+    console.log(`✅ [Top Picks] Quality gate: ${sortedRaw.length} → ${qualityGated.length} stocks (technicalScore ≥50 & analystScore ≥50)`);
+
+    // Sector diversity cap: max 3 stocks per sector
+    const sectorCounts: Record<string, number> = {};
+    const diversified = qualityGated.filter(r => {
+        const sector = r.sector || 'Other';
+        sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
+        return sectorCounts[sector] <= 3;
+    });
+    console.log(`🏦 [Top Picks] Sector cap applied: ${qualityGated.length} → ${diversified.length} stocks (max 3 per sector)`);
+
+    // Score >= 75 threshold
+    const sortedFiltered = diversified.filter(r => r.score >= 75);
 
     // Update Cache
-    global._megaCapCacheV8 = {
-        data: sorted,
+    global._megaCapCacheV9 = {
+        data: sortedFiltered,
+        rawData: sortedRaw,
         timestamp: Date.now()
     };
     isScanning = false;
-    console.log(`🏁 [Scanner] Scan complete. Found ${results.length} stocks. Returning all ${sorted.length} tracked companies.`);
-    return sorted;
+    console.log(`🏁 [Scanner] Scan complete. Found ${sortedRaw.length} total → ${sortedFiltered.length} Top Picks (quality + sector + score filtered).`);
+    return returnAll ? sortedRaw : sortedFiltered;
 }
 
 // Alpha Hunter - Broader Market Scan with Smart Discovery
-export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionStock[]> {
+export async function scanAlphaHunter(forceRefresh = false, returnAll = false): Promise<ConvictionStock[]> {
     const marketSession = publicClient.getMarketSession();
 
     // Logic: If market is OFF, only scan if cache is empty.
-    if (marketSession === 'OFF' && global._alphaHunterCacheV7 && !forceRefresh) {
+    if (marketSession === 'OFF' && global._alphaHunterCacheV8 && !forceRefresh) {
         console.log("🌙 Market is CLOSED. Serving preserved Alpha Hunter cache.");
-        return global._alphaHunterCacheV7.data;
+        return returnAll ? global._alphaHunterCacheV8.rawData : global._alphaHunterCacheV8.data;
     }
 
     // Return cached data if valid
-    if (!forceRefresh && global._alphaHunterCacheV7 && (Date.now() - global._alphaHunterCacheV7.timestamp < CACHE_TTL)) {
+    if (!forceRefresh && global._alphaHunterCacheV8 && (Date.now() - global._alphaHunterCacheV8.timestamp < CACHE_TTL)) {
         console.log("⚡ Returning cached Alpha Hunter data");
-        return global._alphaHunterCacheV7.data;
+        return returnAll ? global._alphaHunterCacheV8.rawData : global._alphaHunterCacheV8.data;
     }
 
     // Clear old cache to force immediate update for user
-    if (forceRefresh) global._alphaHunterCacheV7 = null;
+    if (forceRefresh) global._alphaHunterCacheV8 = null;
 
     isScanning = true;
     const results: ConvictionStock[] = [];
 
-    // Updated score weightings to heavily favor Smart Discovery
+    // Score weightings - balanced to prevent social/discovery dominance
     const W_TECH = 0.25;
-    const W_FUND = 0.10;
+    const W_FUND = 0.20; // Raised from 0.10 — fundamentals now matters more
     const W_ANALYST = 0.10;
     const W_SOCIAL = 0.15;
-    const W_DISCOVERY = 0.40; // Massive bonus for smart discovery signals
+    const W_DISCOVERY = 0.30; // Reduced from 0.40 — discovery still important but balanced
 
     console.log("🚀 Starting Alpha Hunter Scan (Full Market)...");
     console.log("🔑 Public.com API Status:", publicClient.isConfigured() ? "Configured (Live) ✅" : "Missing (Estimated) ⚠️");
@@ -474,6 +559,19 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
 
     // Fetch Dynamic Sector Map
     const currentSectorMap = await getSectorMap();
+
+    // Pre-fetch SPY 20-day return for relative strength calculation
+    let spy20dReturn = 0;
+    try {
+        const spyBars = await fetchAlpacaBars('SPY', '1Day', 30);
+        if (spyBars && spyBars.length >= 21) {
+            const spyClose = spyBars.map((b: any) => b.c);
+            spy20dReturn = (spyClose[spyClose.length - 1] / spyClose[spyClose.length - 21]) - 1;
+            console.log(`📈 [Alpha Hunter] SPY 20d return: ${(spy20dReturn * 100).toFixed(2)}%`);
+        }
+    } catch (e) {
+        console.warn('[Alpha Hunter] SPY fetch failed for relative strength, skipping RS signal');
+    }
 
     // Limit total symbols to prevent timeout
     symbolsToScan = symbolsToScan.slice(0, 300);
@@ -529,9 +627,32 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
 
                 // Synchronized Technical Scoring
                 const confluence = calculateConfluenceScore(latest);
-                const techScore = confluence.strength;
+                let techScore = confluence.strength;
                 const trend = confluence.trend;
                 const rsi = latest.rsi14 || 50;
+
+                // Overbought penalty: extreme RSI is a warning sign, not a strength
+                if (rsi > 80) techScore = Math.max(0, techScore - 10);
+
+                // 52-week high proximity bonus (+10 if within 5% of 52w high)
+                let near52wHigh = false;
+                if (cleanData.length >= 50) {
+                    const high52w = Math.max(...cleanData.slice(-252).map((d: any) => d.high || 0));
+                    if (high52w > 0 && latest.close >= high52w * 0.95) {
+                        techScore = Math.min(100, techScore + 10);
+                        near52wHigh = true;
+                    }
+                }
+
+                // Relative strength vs SPY (20-day): +10 if outperforming by >5%, -5 if underperforming by >5%
+                let outperformingSPY = false;
+                let volumeSurge = false;
+                if (cleanData.length >= 21 && spy20dReturn !== 0) {
+                    const stock20dReturn = (cleanData[cleanData.length - 1].close / cleanData[cleanData.length - 21].close) - 1;
+                    const relStrength = stock20dReturn - spy20dReturn;
+                    if (relStrength > 0.05) { techScore = Math.min(100, techScore + 10); outperformingSPY = true; }
+                    else if (relStrength < -0.05) techScore = Math.max(0, techScore - 5);
+                }
 
 
                 // 3. Process Fundamentals (Graceful Fallback)
@@ -546,6 +667,19 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
                 if (pe > 100) fundScore -= 10;
                 const margins = financialData.profitMargins || 0;
                 if (margins > 0.20) fundScore += 10;
+                // EPS growth bonus
+                const epsGrowth = financialData.earningsGrowth || 0;
+                if (epsGrowth > 0.10) fundScore += 10;
+                // Free cash flow margin bonus (>15% FCF/Revenue = capital-efficient business)
+                const fcf = financialData.freeCashflow || 0;
+                const totalRevenue = financialData.totalRevenue || 0;
+                if (fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
+                // Debt-to-equity penalty (high leverage = risk)
+                const debtToEquity = financialData.debtToEquity || 0;
+                if (debtToEquity > 2.0) fundScore -= 10;
+                // Insider ownership bonus (aligned incentives)
+                const insiderPct = stats.heldPercentInsiders || 0;
+                if (insiderPct > 0.05) fundScore += 5;
                 fundScore = Math.max(0, Math.min(100, fundScore));
 
 
@@ -568,6 +702,19 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
                     const upside = ((targetPrice - finalPrice) / finalPrice) * 100;
                     if (upside > 10) analystScore += 10;
                 }
+
+                // EPS surprise / earnings momentum
+                let epsSurpriseCount = 0;
+                const earningsTrendData = (quote as any)?.earningsTrend?.trend || [];
+                for (const et of earningsTrendData.slice(0, 2)) {
+                    const actual = et?.actual?.raw ?? et?.actual;
+                    const estimate = et?.estimate?.raw ?? et?.estimate;
+                    if (actual != null && estimate != null && Number(actual) > Number(estimate)) {
+                        epsSurpriseCount++;
+                    }
+                }
+                if (epsSurpriseCount >= 2) analystScore = Math.min(100, analystScore + 15);
+                else if (epsSurpriseCount === 1) analystScore = Math.min(100, analystScore + 8);
 
 
                 // 5. Process Social
@@ -632,13 +779,27 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
                     volumeDiff = stats.diff;
                 }
 
+                // Alpha Hunter: Volume surge detection — boost techScore if today is 1.5x the 20-day avg
+                if (cleanData.length >= 20 && volume > 0) {
+                    const vol20dAvg = cleanData.slice(-20).reduce((sum: number, d: any) => sum + (d.volume || 0), 0) / 20;
+                    if (vol20dAvg > 0 && volume > vol20dAvg * 1.5) {
+                        techScore = Math.min(100, techScore + 10);
+                        volumeSurge = true;
+                    }
+                }
+
                 // Reasons
                 const reasons: string[] = [];
                 if (discovery) reasons.push(`🔍 ${discovery.signal}`);
                 if (trend === 'BULLISH') reasons.push("Strong Technical Uptrend");
                 if (techScore > 70) reasons.push("Bullish Momentum (RSI)");
+                if (near52wHigh) reasons.push('🏔️ Near 52W High');
+                if (outperformingSPY) reasons.push('📈 Outperforming SPY');
+                if (volumeSurge) reasons.push('🔥 Volume Surge');
                 if (fundScore > 70) reasons.push("Solid Fundamentals");
                 if (analystScore > 80) reasons.push(`Analyst Consensus: ${ratingText}`);
+                if (epsSurpriseCount >= 2) reasons.push('📊 2x EPS Beat');
+                else if (epsSurpriseCount === 1) reasons.push('📊 EPS Beat');
                 if (socialScore > 75) reasons.push("High Social Interest");
                 if (volumeDiff > 50) reasons.push(`High Volume (+${Math.round(volumeDiff)}%)`);
 
@@ -712,21 +873,23 @@ export async function scanAlphaHunter(forceRefresh = false): Promise<ConvictionS
         }
     }
 
-    // Sort by score desc and filter >= 75
-    const sorted = results
-        .filter(r => r.score >= 75)
-        .sort((a, b) => b.score - a.score);
+    // Sort by score desc
+    const sortedRaw = results.sort((a, b) => b.score - a.score);
+    // Filter >= 75
+    const sortedFiltered = sortedRaw.filter(r => r.score >= 75);
 
     // Update Cache
-    global._alphaHunterCacheV7 = {
-        data: sorted,
+    global._alphaHunterCacheV8 = {
+        data: sortedFiltered,
+        rawData: sortedRaw,
         timestamp: Date.now()
     };
     isScanning = false;
 
-    if (sorted.length === 0) {
+    const finalReturn = returnAll ? sortedRaw : sortedFiltered;
+    if (finalReturn.length === 0) {
         return [];
     }
 
-    return sorted; // Return all processed Alpha Hunter picks
+    return finalReturn;
 }

@@ -1,4 +1,5 @@
 import { env } from './env';
+import { localDateString, localDateStringOffset } from './localdate';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const API_KEY = env.FINNHUB_API_KEY;
@@ -123,8 +124,8 @@ class FinnhubClient {
     }
 
     async getNews(symbol: string): Promise<FinnhubNews[]> {
-        const to = new Date().toISOString().split('T')[0];
-        const from = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const to = localDateString();
+        const from = localDateStringOffset(3);
         return await this.rateLimitedFetch('/company-news', { symbol, from, to }) || [];
     }
 

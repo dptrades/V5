@@ -70,9 +70,9 @@ export default function SocialPulsePage() {
         <div className="flex h-screen bg-[#0a0a0b] text-white font-sans overflow-hidden">
             {/* Sidebar Container */}
             <div className={`
-                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                ${isSidebarOpen ? 'w-[18vw] min-w-[200px]' : 'w-0'} 
+                ${isSidebarOpen ? 'w-[20vw] lg:w-[18vw] min-w-[200px]' : 'w-0'} 
                 h-full overflow-hidden flex-shrink-0 border-r border-gray-800
             `}>
                 <Sidebar
@@ -106,7 +106,7 @@ export default function SocialPulsePage() {
                 <div className="flex-1 p-6 md:p-10 overflow-y-auto transition-all duration-300">
                     {/* Header */}
                     <header className="mb-10">
-                        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+                        <div className="flex flex-col xl:flex-row lg:items-end justify-between gap-6">
                             <div>
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="p-2 bg-orange-500/20 rounded-xl border border-orange-500/30">
@@ -175,7 +175,7 @@ export default function SocialPulsePage() {
                             <Loading message="Scanning Social Frequency..." />
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
                             {trending.map((stock) => (
                                 <SocialPulseCard
                                     key={stock.symbol}
@@ -223,40 +223,40 @@ export default function SocialPulsePage() {
                                         <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
-                                                <span className="font-bold text-orange-400 text-xs uppercase tracking-wider">Mention Velocity (40%)</span>
+                                                <span className="font-bold text-orange-400 text-xs uppercase tracking-wider">Sentiment NLP Engine (70%)</span>
                                             </div>
                                             <p className="text-[11px] text-gray-200 leading-relaxed font-medium">
-                                                Scans high-frequency channels (WSB, Twitter, StockTwits) for surges in ticker mentions. We calculate the rate of change against a 7-day rolling average to detect organic viral expansion.
+                                                Uses Natural Language Processing to scan and categorize live news blocks. We filter out "noise" to extract high-conviction bullish/bearish intent and quantify the mood of news coverage.
                                             </p>
                                         </div>
 
                                         <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
-                                                <span className="font-bold text-yellow-400 text-xs uppercase tracking-wider">Sentiment NLP (30%)</span>
+                                                <span className="font-bold text-yellow-400 text-xs uppercase tracking-wider">Publication Urgency (30%)</span>
                                             </div>
                                             <p className="text-[11px] text-gray-200 leading-relaxed font-medium">
-                                                Uses Natural Language Processing to categorize retail mood. We filter out "noise" and bot activity to extract high-conviction bullish/bearish intent from real traders.
+                                                Weighs recent publication spikes and article urgency. A sudden surge in mentions for a specific ticker over the past 24-hours highly impacts visibility positioning on the dashboard.
                                             </p>
                                         </div>
 
                                         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-                                                <span className="font-bold text-blue-400 text-xs uppercase tracking-wider">Asset Correlation (15%)</span>
+                                                <span className="font-bold text-blue-400 text-xs uppercase tracking-wider">Asset Correlation</span>
                                             </div>
                                             <p className="text-[11px] text-gray-200 leading-relaxed font-medium">
-                                                Maps social ripples to price action. We prioritize stocks where mentions precede price breakout, identifying potential "lead indicators" for momentum.
+                                                Maps breaking news ripples to actual price action. By isolating stocks with breaking news coverage, we identify potential "lead indicators" for momentum.
                                             </p>
                                         </div>
 
                                         <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
-                                                <span className="font-bold text-purple-400 text-xs uppercase tracking-wider">Flow Contrast (15%)</span>
+                                                <span className="font-bold text-purple-400 text-xs uppercase tracking-wider">Flow Contrast</span>
                                             </div>
                                             <p className="text-[11px] text-gray-200 leading-relaxed font-medium">
-                                                Weighting retail "buying heavy" flow against institutional positioning. High social heat combined with heavy institutional call buying creates an "Ultimate Bull" signal.
+                                                Cross-references the NLP sentiment with Alpha Hunter technicals to create a blended "Heat Index" that confirms if news aligns with institutional flow.
                                             </p>
                                         </div>
                                     </div>

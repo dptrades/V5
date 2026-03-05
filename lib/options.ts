@@ -54,7 +54,9 @@ export function calculateVolatilityProxy(price: number, atr?: number, symbol?: s
 }
 
 /**
- * Enhanced Options Signal Generator
+ * Enhanced Options Signal Generator — v2
+ * Improvements: delta-targeted strikes, IV-regime DTE + strategy selection,
+ * PCR-adjusted confidence, EMA-anchored stop loss, min OI filter, rich reason strings.
  */
 export async function generateOptionSignal(
     currentPrice: number,
@@ -68,203 +70,274 @@ export async function generateOptionSignal(
     socialConfirmations?: number,
     skipCache: boolean = false
 ): Promise<OptionRecommendation> {
-    // 1. Determine Best Expiry (Monthly ~30-45 days out)
-    let expiry = getNextMonthlyExpiry(); // Default naive guess
-    try {
-        if (symbol) {
-            const expirations = await publicClient.getOptionExpirations(symbol);
-            if (expirations && expirations.length > 0) {
-                // Target: ~35 days out (Monthly)
-                const targetDate = new Date();
-                targetDate.setDate(targetDate.getDate() + 35);
-                const targetTime = targetDate.getTime();
-
-                // Find expiry closest to target date
-                expiry = expirations.reduce((prev, curr) => {
-                    const prevDiff = Math.abs(new Date(prev).getTime() - targetTime);
-                    const currDiff = Math.abs(new Date(curr).getTime() - targetTime);
-                    return currDiff < prevDiff ? curr : prev;
-                });
-                console.log(`[Options] Auto-selected expiry for ${symbol}: ${expiry}`);
-            }
-        }
-    } catch (e) {
-        console.warn(`[Options] Failed to fetch live expirations for ${symbol}, using default ${expiry}`);
-    }
-
-    const dte = Math.ceil((new Date(expiry).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-
-    // Safety check for ATR to prevent NaN strikes
     const effectiveAtr = (atr && !isNaN(atr) && atr > 0) ? atr : (currentPrice * 0.02);
 
-    const confluence = indicators ? calculateConfluenceScore(indicators) : { bullScore: 0, bearScore: 0, bullSignals: [], bearSignals: [], strength: 50, trend: 'NEUTRAL' };
-    const bullScore = confluence.bullScore;
-    const bearScore = confluence.bearScore;
-    const bullSignals = confluence.bullSignals;
-    const bearSignals = confluence.bearSignals;
+    const confluence = indicators
+        ? calculateConfluenceScore(indicators)
+        : { bullScore: 0, bearScore: 0, bullSignals: [], bearSignals: [], strength: 50, trend: 'NEUTRAL' as any };
+    const { bullScore, bearScore, bullSignals, bearSignals } = confluence;
 
     const isCall = (bullScore > bearScore && bullScore >= 15);
     const isPut = (bearScore > bullScore && bearScore >= 15);
     const direction: 'CALL' | 'PUT' | 'WAIT' = isCall ? 'CALL' : isPut ? 'PUT' : 'WAIT';
 
+    // ── PCR: fetch early (nearly always cached) ────────────────────────────────
+    let pcr: { volumeRatio: number; oiRatio: number; totalCalls: number; totalPuts: number } | null = null;
+    if (symbol) {
+        try { pcr = await getPutCallRatio(symbol); } catch (_) { }
+    }
+
     if (direction === 'WAIT') {
         const fallbackSignals = bullScore >= bearScore ? bullSignals : bearSignals;
         return {
-            type: 'WAIT',
-            strike: 0,
-            expiry: '',
-            confidence: 50,
-            reason: `Scanning Confluence. ${fallbackSignals.slice(0, 1).join(', ') || 'Monitoring Price Action'}`,
+            type: 'WAIT', strike: 0, expiry: '', confidence: 50,
+            reason: `Mixed signals. ${fallbackSignals[0] || 'Monitoring Price Action'}`,
             technicalConfirmations: 0,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1,
-            dte
+            socialConfirmations: socialConfirmations || 1, dte: 30
         };
     }
 
-    const signals = direction === 'CALL' ? bullSignals : bearSignals;
+    const signals = isCall ? bullSignals : bearSignals;
     const techConfirmations = signals.length;
 
-    // Unified Multi-Factor Confidence Score (Base 60)
-    // - Up to +15 from Tech Spread (Bull vs Bear)
-    // - Up to +10 from Fundamentals
-    // - Up to +10 from Social Pulse
-    const rawSpread = Math.abs(bullScore - bearScore);
-    const calculatedConfidence = Math.min(
-        99,
-        60 +
-        (rawSpread * 0.5) + // Technical weight
-        ((fundamentalConfirmations || 0) * 5) + // Fundamental weight
-        ((socialConfirmations || 0) * 5) // Social weight
-    );
-
-    const strikeOffset = effectiveAtr * 0.5;
-    const intendedStrike = roundToStrike(isCall ? currentPrice + strikeOffset : currentPrice - strikeOffset);
-
-    let realOption = null;
-    let actualAsk = 0;
-    let probabilityITM = 0.5; // Default
-
+    // ── 1. Pre-fetch option chain (needed for IV, DTE, and delta-strike) ───────
+    let chain: any = null;
     if (symbol) {
         try {
-            // PRIORITY: Schwab (10-min cache, SIP data) → Public.com fallback
-            let chain = schwabClient.isConfigured()
-                ? await schwabClient.getOptionChainNormalized(symbol, expiry)
+            chain = schwabClient.isConfigured()
+                ? await schwabClient.getOptionChainNormalized(symbol)
                 : null;
-            if (!chain) {
-                chain = await publicClient.getOptionChain(symbol, expiry);
+            if (!chain) chain = await publicClient.getOptionChain(symbol);
+        } catch (_) { }
+    }
+
+    // ── 2. Estimate ATM IV from the live chain ─────────────────────────────────
+    // Use the ATM strike's IV from the nearest expiry as our IV regime signal.
+    let atmIV = calculateVolatilityProxy(currentPrice, atr, symbol); // baseline proxy
+    if (chain?.options && chain.expirations?.length > 0) {
+        const nearestExp = chain.expirations[0];
+        const strikesSorted = Object.keys(chain.options[nearestExp] || {})
+            .map(Number)
+            .sort((a, b) => Math.abs(a - currentPrice) - Math.abs(b - currentPrice));
+        for (const s of strikesSorted.slice(0, 3)) {
+            const d = chain.options[nearestExp][s];
+            const iv = d?.call?.greeks?.impliedVolatility || d?.put?.greeks?.impliedVolatility || 0;
+            if (iv > 0) { atmIV = iv; break; }
+        }
+    }
+    const highIV = atmIV > 0.45; // > 45% annualized = elevated IV regime
+
+    // ── 3. Smart DTE selection: shorter when IV is high ───────────────────────
+    // High IV → buying premium is expensive → prefer 21-28 DTE to limit theta burn
+    // Low IV  → give the trade room to develop → prefer 40-50 DTE
+    const dtePref = highIV ? 25 : 42;
+    let expiry = getNextMonthlyExpiry();
+    try {
+        if (symbol) {
+            const expirations = await publicClient.getOptionExpirations(symbol);
+            if (expirations && expirations.length > 0) {
+                const targetTime = Date.now() + dtePref * 24 * 3600 * 1000;
+                expiry = expirations.reduce((prev, curr) => {
+                    const prevDiff = Math.abs(new Date(prev).getTime() - targetTime);
+                    const currDiff = Math.abs(new Date(curr).getTime() - targetTime);
+                    return currDiff < prevDiff ? curr : prev;
+                });
+                console.log(`[Options] ${symbol}: DTE pref=${dtePref}d (${highIV ? 'high' : 'normal'} IV), selected expiry=${expiry}`);
+            }
+        }
+    } catch (_) { }
+    const dte = Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 3600 * 24));
+
+    // ── 4. Strategy selection: spreads when IV is elevated ────────────────────
+    // High IV → buying naked calls/puts is expensive; a spread caps risk & premium
+    const useSpread = highIV;
+    const strategyName = isCall
+        ? (useSpread ? 'Bull Call Spread' : 'Alpha Bull')
+        : (useSpread ? 'Bear Put Spread' : 'Alpha Bear');
+
+    const marketSession = publicClient.getMarketSession();
+    const isRegularMarket = marketSession === 'REG';
+    const volumeThreshold = isRegularMarket ? 2 : 0;
+
+    // ── 5. Delta-targeted strike selection ────────────────────────────────────
+    // Target 0.35Δ: good leverage + reasonable probability (vs naive ATR offset)
+    const atrFallbackStrike = roundToStrike(isCall
+        ? currentPrice + effectiveAtr * 0.5
+        : currentPrice - effectiveAtr * 0.5);
+    let intendedStrike = atrFallbackStrike;
+    let realOption: any = null;
+    let probabilityITM = 0.5;
+    const TARGET_DELTA = 0.35;
+
+    const tryFindDeltaStrike = (chainData: any, exp: string) => {
+        if (!chainData?.options?.[exp]) return;
+        const strikeKeys = Object.keys(chainData.options[exp]).map(Number).sort((a, b) => a - b);
+        let closestDiff = Infinity;
+
+        for (const strike of strikeKeys) {
+            const strikeData = chainData.options[exp][strike];
+            const opt = isCall ? strikeData?.call : strikeData?.put;
+            if (!opt) continue;
+            // ── Min OI filter: skip illiquid contracts ──
+            if ((opt.openInterest || 0) < 50 && (opt.volume || 0) < Math.max(volumeThreshold, 1)) continue;
+
+            // Resolve delta: use actual Greeks or estimate from distance
+            let delta: number;
+            if (opt.greeks?.delta && opt.greeks.delta !== 0) {
+                delta = Math.abs(opt.greeks.delta);
+            } else {
+                const distPct = (strike - currentPrice) / currentPrice;
+                const atmAdjusted = isCall ? -distPct : distPct;
+                delta = Math.max(0.05, Math.min(0.95, 0.50 + atmAdjusted * 3));
             }
 
-            if (chain && chain.options[expiry]) {
-                const strikeKeys = Object.keys(chain.options[expiry]).map(Number).sort((a, b) => a - b);
-                const closestStrike = strikeKeys.reduce((prev, curr) =>
-                    Math.abs(curr - intendedStrike) < Math.abs(prev - intendedStrike) ? curr : prev
-                );
-                const strikeData = chain.options[expiry][closestStrike];
-                if (strikeData) {
-                    const opt = isCall ? strikeData.call : strikeData.put;
-                    if (opt) {
-                        realOption = opt;
-                        actualAsk = opt.ask;
+            const diff = Math.abs(delta - TARGET_DELTA);
+            if (diff < closestDiff) { closestDiff = diff; intendedStrike = strike; }
+        }
 
-                        // Greeks: Inline from Schwab chain → Schwab getGreeks → Public.com → proxy
-                        if (opt.greeks && opt.greeks.delta !== 0) {
-                            probabilityITM = Math.abs(opt.greeks.delta);
-                        } else if (schwabClient.isConfigured()) {
-                            const schwabGreeks = await schwabClient.getGreeks(opt.symbol);
-                            if (schwabGreeks) {
-                                realOption.greeks = schwabGreeks;
-                                probabilityITM = Math.abs(schwabGreeks.delta);
-                            }
-                        }
+        // Fetch the chosen strike's option contract
+        const strikeData = chainData.options[exp][intendedStrike];
+        if (strikeData) {
+            const opt = isCall ? strikeData.call : strikeData.put;
+            if (opt) { realOption = opt; }
+        }
+        console.log(`[Options] ${symbol}: Δ-targeted strike=$${intendedStrike} (ATR fallback=$${atrFallbackStrike})`);
+    };
 
-                        if (!realOption.greeks || realOption.greeks.delta === 0) {
-                            const greeks = await publicClient.getGreeks(opt.symbol);
-                            if (greeks) {
-                                realOption.greeks = greeks;
-                                probabilityITM = Math.abs(greeks.delta);
-                            } else {
-                                const distFromPrice = Math.abs(currentPrice - closestStrike) / currentPrice;
-                                probabilityITM = Math.max(0.1, 0.5 - (distFromPrice * 2));
-                                const ivProxy = calculateVolatilityProxy(currentPrice, atr, symbol);
-                                realOption.greeks = {
-                                    delta: isCall ? probabilityITM : -probabilityITM,
-                                    gamma: 0, theta: 0, vega: 0, rho: 0, impliedVolatility: ivProxy
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Failed to fetch option chain (Schwab → Public.com)', e);
+    if (chain) {
+        // Try selected expiry first, fall back to nearest available
+        if (chain.options?.[expiry]) {
+            tryFindDeltaStrike(chain, expiry);
+        } else {
+            const availableExp = chain.expirations?.find((e: string) => chain.options?.[e]) || '';
+            if (availableExp) tryFindDeltaStrike(chain, availableExp);
         }
     }
 
-    const stopLoss = isCall ? currentPrice - effectiveAtr : currentPrice + effectiveAtr;
-    const takeProfit1 = isCall ? currentPrice + effectiveAtr * 2 : currentPrice - effectiveAtr * 2;
+    // If still no realOption, do a targeted chain fetch for the chosen expiry
+    if (!realOption && symbol) {
+        try {
+            const freshChain = schwabClient.isConfigured()
+                ? await schwabClient.getOptionChainNormalized(symbol, expiry)
+                : await publicClient.getOptionChain(symbol, expiry);
+            if (freshChain?.options?.[expiry]) tryFindDeltaStrike(freshChain, expiry);
+        } catch (_) { }
+    }
 
-    const fundamentalDetails = fundamentalConfirmations && fundamentalConfirmations >= 2
+    // ── 6. Resolve Greeks for chosen contract ─────────────────────────────────
+    if (realOption) {
+        if (realOption.greeks?.delta && realOption.greeks.delta !== 0) {
+            probabilityITM = Math.abs(realOption.greeks.delta);
+        } else {
+            // Try Schwab → Public.com for Greeks
+            try {
+                let greeks = schwabClient.isConfigured()
+                    ? await schwabClient.getGreeks(realOption.symbol)
+                    : null;
+                if (!greeks) greeks = await publicClient.getGreeks(realOption.symbol);
+                if (greeks) {
+                    realOption.greeks = greeks;
+                    probabilityITM = Math.abs(greeks.delta);
+                } else {
+                    const distFromPrice = Math.abs(currentPrice - intendedStrike) / currentPrice;
+                    probabilityITM = Math.max(0.1, 0.5 - distFromPrice * 2);
+                    realOption.greeks = {
+                        delta: isCall ? probabilityITM : -probabilityITM,
+                        gamma: 0, theta: 0, vega: 0, rho: 0, impliedVolatility: atmIV
+                    };
+                }
+            } catch (_) { }
+        }
+    }
+
+    // ── 7. PCR-adjusted confidence (base 50, not 60) ──────────────────────────
+    // Requires real convergence of signals to reach 80+
+    const rawSpread = Math.abs(bullScore - bearScore);
+    let confidence = 50
+        + Math.min(15, rawSpread * 0.5)                               // tech spread → up to +15
+        + Math.min(9, (fundamentalConfirmations || 0) * 3)           // fundamentals → up to +9
+        + Math.min(6, (socialConfirmations || 0) * 2);               // social → up to +6
+
+    let pcrNote = '';
+    if (pcr) {
+        const pv = pcr.volumeRatio;
+        if (isCall && pv < 0.6) { confidence += 8; pcrNote = ` PCR ${pv} (bullish flow).`; }
+        else if (isCall && pv > 1.0) { confidence -= 5; pcrNote = ` PCR ${pv} (bearish flow—caution).`; }
+        else if (!isCall && pv > 1.0) { confidence += 8; pcrNote = ` PCR ${pv} (bearish flow aligns).`; }
+        else if (!isCall && pv < 0.6) { confidence -= 5; pcrNote = ` PCR ${pv} (bullish flow—caution).`; }
+        else { pcrNote = ` PCR ${pv} (neutral).`; }
+    }
+    // Delta quality bonus: being near optimal 0.35 delta adds confidence
+    if (probabilityITM > 0.25 && probabilityITM < 0.55) confidence += 5;
+    confidence = Math.min(99, Math.max(50, Math.round(confidence)));
+
+    // ── 8. EMA-anchored stop loss ──────────────────────────────────────────────
+    // Use EMA-50 as a logical support/resistance floor instead of bare ATR
+    let stopLoss: number;
+    let takeProfit1: number;
+    if (isCall) {
+        const ema50Floor = (ema50 && ema50 < currentPrice && ema50 > currentPrice * 0.90)
+            ? ema50 * 0.99 : currentPrice - effectiveAtr;
+        stopLoss = parseFloat(Math.max(ema50Floor, currentPrice - effectiveAtr * 1.5).toFixed(2));
+        takeProfit1 = parseFloat((currentPrice + effectiveAtr * 2).toFixed(2));
+    } else {
+        const ema50Ceiling = (ema50 && ema50 > currentPrice && ema50 < currentPrice * 1.10)
+            ? ema50 * 1.01 : currentPrice + effectiveAtr;
+        stopLoss = parseFloat(Math.min(ema50Ceiling, currentPrice + effectiveAtr * 1.5).toFixed(2));
+        takeProfit1 = parseFloat((currentPrice - effectiveAtr * 2).toFixed(2));
+    }
+
+    // ── 9. Rich reason string ──────────────────────────────────────────────────
+    const ivDisplay = ` IV ${(atmIV * 100).toFixed(0)}%${highIV ? ' (elevated → spread rec)' : ''}.`;
+    const deltaDisplay = probabilityITM ? ` Δ${probabilityITM.toFixed(2)}` : '';
+    const reason = `${direction} Setup: RSI ${Math.round(rsi)}, ${signals.slice(0, 2).join(' + ') || 'Confluent signals'}.${pcrNote}${ivDisplay}${deltaDisplay} ${techConfirmations} tech signals.`;
+
+    const fundamentalDetails = (fundamentalConfirmations || 0) >= 2
         ? ["Strong Earnings Growth", "Undervalued P/E Ratio", "Healthy Debt-to-Equity"]
         : ["Stable Fundamentals", "Positive Free Cash Flow"];
-
-    const socialDetails = socialConfirmations && socialConfirmations >= 2
+    const socialDetails = (socialConfirmations || 0) >= 2
         ? ["High Reddit Mention Frequency", "Positive StockTwits Sentiment", "Bullish Options Flow"]
         : ["Moderate Retail Interest", "Stable Institutional Sentiment"];
 
-    // Score is now unified at the top
-
-    // If no real option was found, we must wait.
     if (!realOption) {
         return {
-            type: 'WAIT',
-            strike: intendedStrike,
-            expiry: expiry,
-            confidence: 50,
-            reason: `No institutional option contract found for the calculated $${intendedStrike} strike.`,
+            type: 'WAIT', strike: intendedStrike, expiry, confidence: Math.min(confidence, 65),
+            reason: `No liquid contract at $${intendedStrike} strike.${ivDisplay}`,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1,
-            dte
+            socialConfirmations: socialConfirmations || 1, dte
         };
     }
 
-    const marketSession = publicClient.getMarketSession();
-    // Only enforce liquidity threshold during REGULAR market hours
-    const isRegularMarket = marketSession === 'REG';
-    const volumeThreshold = isRegularMarket ? 2 : 0; // Allow 0 volume in PRE/POST to show the "Plan"
-
-    // If volume is too low DURING market hours, downgrade to WAIT
     if ((realOption.volume || 0) < volumeThreshold) {
         return {
-            type: 'WAIT',
-            strike: intendedStrike,
-            expiry: expiry,
-            confidence: 50,
-            reason: `Low liquidity detected for the $${intendedStrike} strike. Monitoring for institutional volume entry.`,
+            type: 'WAIT', strike: intendedStrike, expiry, confidence: Math.min(confidence, 60),
+            reason: `Low liquidity at $${intendedStrike} strike. Monitoring for volume entry.`,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1,
-            dte
+            socialConfirmations: socialConfirmations || 1, dte
         };
     }
 
-    const midPrice = (realOption.bid && realOption.ask) ? (realOption.bid + realOption.ask) / 2 : (realOption.last || realOption.bid || realOption.ask || 0);
+    const midPrice = (realOption.bid && realOption.ask)
+        ? (realOption.bid + realOption.ask) / 2
+        : (realOption.last || realOption.bid || realOption.ask || 0);
 
     return {
         type: direction,
-        strike: realOption.strike,
-        expiry: realOption.expiration,
-        confidence: calculatedConfidence,
-        reason: `${techConfirmations} Tech Signals Aligned. ${signals[0]} Detected.`,
+        strike: realOption.strike || intendedStrike,
+        expiry: realOption.expiration || expiry,
+        confidence,
+        reason,
         entryPrice: currentPrice,
-        entryCondition: "Market Order",
-        stopLoss: parseFloat(stopLoss.toFixed(2)),
-        takeProfit1: parseFloat(takeProfit1.toFixed(2)),
-        strategy: isCall ? "Alpha Bull" : "Alpha Bear",
+        entryCondition: useSpread ? 'Limit (Spread)' : 'Limit Order',
+        stopLoss,
+        takeProfit1,
+        strategy: strategyName,
         volume: realOption.volume,
         openInterest: realOption.openInterest,
-        iv: realOption.greeks?.impliedVolatility,
+        iv: realOption.greeks?.impliedVolatility || atmIV,
         contractPrice: midPrice,
         rsi,
         isUnusual: false,
@@ -275,12 +348,13 @@ export async function generateOptionSignal(
         fundamentalDetails,
         socialDetails,
         symbol: realOption.symbol,
-        probabilityITM: realOption.greeks?.delta ? Math.abs(realOption.greeks.delta) : undefined,
+        probabilityITM: realOption.greeks?.delta ? Math.abs(realOption.greeks.delta) : probabilityITM,
         dte
     };
 }
 
-// Duplicate removed
+
+
 
 
 /**
@@ -528,17 +602,30 @@ export async function findTopOptions(
                     if (contractPrice < 0.05) continue;
 
                     /**
-                     * 5. Refined Scoring Logic
+                     * 5. Refined Scoring Logic v2
                      * - deltaProxy: Measures moneyness (0.5 max for ATM)
+                     * - deltaQuality: Bonus for being in the 0.20–0.50 optimal delta zone
                      * - volume/oi: Capped to prevent single block trades from dominating
                      * - moneyness: High weight to keep suggestions realistic
                      */
                     const deltaProxy = 0.5 - distance;
                     const volumeScore = Math.min(opt.volume || 0, 500) * 2;
-                    const oiScore = Math.min(opt.openInterest || 0, 1000) * 0.5;
+                    const oiScore = Math.min(opt.openInterest || 0, 2000) * 0.75; // Raised OI weight
                     const moneynessScore = deltaProxy * 200; // Up to 100 pts
 
-                    const score = volumeScore + oiScore + moneynessScore;
+                    // Actual delta quality bonus: reward contracts in the 0.20–0.50 delta "sweet spot"
+                    const actualDelta = opt.greeks?.delta ? Math.abs(opt.greeks.delta) : null;
+                    const deltaQuality = actualDelta !== null
+                        ? (actualDelta >= 0.20 && actualDelta <= 0.50 ? 60 : actualDelta >= 0.10 ? 20 : 0)
+                        : 0;
+
+                    const score = volumeScore + oiScore + moneynessScore + deltaQuality;
+
+                    // Rich reason string
+                    const deltaStr = actualDelta !== null ? ` Δ${actualDelta.toFixed(2)}` : '';
+                    const volStr = opt.volume ? `Vol ${opt.volume.toLocaleString()}` : '';
+                    const oiStr = opt.openInterest ? `OI ${opt.openInterest.toLocaleString()}` : '';
+                    const reasonStr = `${type} $${strike} — ${[volStr, oiStr, deltaStr].filter(Boolean).join(', ')}.`;
 
                     candidates.push({
                         recommendation: {
@@ -546,10 +633,10 @@ export async function findTopOptions(
                             strike,
                             expiry: exp,
                             confidence: 70,
-                            reason: `Institutional flow at $${strike}.`,
+                            reason: reasonStr,
                             entryPrice: currentPrice,
-                            entryCondition: "Market",
-                            stopLoss: type === 'CALL' ? currentPrice * 0.98 : currentPrice * 1.02,
+                            entryCondition: "Limit Order",
+                            stopLoss: type === 'CALL' ? currentPrice * 0.97 : currentPrice * 1.03,
                             takeProfit1: type === 'CALL' ? currentPrice * 1.05 : currentPrice * 0.95,
                             strategy: "Tactical Flow",
                             volume: opt.volume,

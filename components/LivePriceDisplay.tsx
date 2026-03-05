@@ -10,6 +10,7 @@ interface LivePriceDisplayProps {
     showChange?: boolean;
     refreshKey?: number; // Parent-driven refresh trigger (synchronized 60s timer)
     className?: string;
+    displayMode?: 'auto' | 'regular' | 'extended'; // Force which price to show
 }
 
 interface PriceData {
@@ -23,7 +24,7 @@ interface PriceData {
     source?: string;
 }
 
-export default function LivePriceDisplay({ symbol, fallbackPrice, enabled = true, showChange = false, refreshKey, className }: LivePriceDisplayProps) {
+export default function LivePriceDisplay({ symbol, fallbackPrice, enabled = true, showChange = false, refreshKey, className, displayMode = 'auto' }: LivePriceDisplayProps) {
     const [priceData, setPriceData] = useState<PriceData | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -38,9 +39,26 @@ export default function LivePriceDisplay({ symbol, fallbackPrice, enabled = true
                 const data = await res.json();
                 if (data.price !== null && data.price !== undefined) {
                     const isSessionLive = data.marketSession === 'REG';
-                    const latestPrice = isSessionLive ? data.price : (data.regularMarketPrice || data.price);
-                    const latestChange = isSessionLive ? data.change : (data.regularMarketChange || data.change);
-                    const latestChangePercent = isSessionLive ? data.changePercent : (data.regularMarketChangePercent || data.changePercent);
+                    let latestPrice = data.price;
+                    let latestChange = data.change;
+                    let latestChangePercent = data.changePercent;
+
+                    if (displayMode === 'regular') {
+                        // STRICTLY show regular market hours price
+                        latestPrice = data.regularMarketPrice || data.price;
+                        latestChange = data.regularMarketChange || data.change;
+                        latestChangePercent = data.regularMarketChangePercent || data.changePercent;
+                    } else if (displayMode === 'extended') {
+                        // STRICTLY show extended hours price if available
+                        latestPrice = isSessionLive ? data.price : (data.preMarketPrice || data.postMarketPrice || data.price);
+                        latestChange = isSessionLive ? data.change : (data.preMarketChange || data.postMarketChange || data.change);
+                        latestChangePercent = isSessionLive ? data.changePercent : (data.preMarketChangePercent || data.postMarketChangePercent || data.changePercent);
+                    } else {
+                        // 'auto' mode - default behavior
+                        latestPrice = isSessionLive ? data.price : (data.regularMarketPrice || data.price);
+                        latestChange = isSessionLive ? data.change : (data.regularMarketChange || data.change);
+                        latestChangePercent = isSessionLive ? data.changePercent : (data.regularMarketChangePercent || data.changePercent);
+                    }
 
                     // Detect price direction change for flash animation
                     if (priceData?.price) {

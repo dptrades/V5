@@ -24,7 +24,7 @@ export default function SectorPerformanceWidget({ onSectorClick }: Props) {
         const fetchSectors = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/conviction');
+                const res = await fetch('/api/conviction?all=true');
                 if (!res.ok) throw new Error('API Error');
                 const allStocks: ConvictionStock[] = await res.json();
 

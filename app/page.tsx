@@ -422,16 +422,16 @@ export default function Dashboard() {
     <main className="flex h-screen bg-gray-900 overflow-hidden font-sans text-gray-100 relative">
       {/* Sidebar - Drawer on Mobile, Fixed Sidebar on Desktop */}
       <div
-        className={`fixed inset-0 z-[100] transition-opacity duration-300 md:hidden ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-[100] transition-opacity duration-300 lg:hidden ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsSidebarOpen(false)}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       </div>
 
       <div className={`
-        fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+        fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isSidebarOpen ? 'w-[18vw] min-w-[200px]' : 'w-0'} 
+        ${isSidebarOpen ? 'w-[20vw] lg:w-[18vw] min-w-[200px]' : 'w-0'} 
         h-full overflow-hidden flex-shrink-0 border-r border-gray-800
       `}>
         <Sidebar
@@ -470,11 +470,11 @@ export default function Dashboard() {
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Expand</span>
           </button>
         )}
-        <div className="flex-1 p-4 md:p-6 flex flex-col overflow-y-auto w-full pt-16 md:pt-6 transition-all duration-300">
+        <div className="flex-1 p-4 lg:p-6 flex flex-col overflow-y-auto w-full pt-16 lg:pt-6 transition-all duration-300">
           <header className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
               {/* LEFT: Ticker, Price */}
-              <div className="flex flex-wrap items-center gap-4 md:gap-8 w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-4 lg:gap-8 w-full xl:w-auto">
                 {/* 1. Ticker Selector */}
                 <div className="flex items-center gap-2">
                   <div className="relative group">
@@ -498,7 +498,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 {companyName && (
-                  <span className="text-sm text-gray-100 font-medium hidden md:inline truncate max-w-[180px]">{companyName}</span>
+                  <span className="text-sm text-gray-100 font-medium hidden lg:inline truncate max-w-[180px]">{companyName}</span>
                 )}
 
                 {/* 2. Price & Change Info */}
@@ -509,6 +509,7 @@ export default function Dashboard() {
                     enabled={!loading}
                     showChange={true}
                     refreshKey={priceRefreshKey}
+                    displayMode="regular"
                   />
                   {lastUpdated && (
                     <span className="text-[10px] text-gray-400 font-mono mt-1">
@@ -532,6 +533,7 @@ export default function Dashboard() {
                 showChange={false}
                 fallbackPrice={stats?.currentPrice}
                 className="status-badge-only"
+                displayMode="regular"
               />
             </div>
           </header>
@@ -543,9 +545,9 @@ export default function Dashboard() {
 
 
               {/* ROW 1: Deep Dive (Left, 3/4) & AI Option Play + Price Stats (Right, 1/4) */}
-              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
                 {/* Deep Dive - Takes 3/4 - FIRST in DOM = LEFT */}
-                <div className="xl:col-span-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="lg:col-span-2 xl:col-span-3 overflow-x-auto pb-2 scrollbar-hide">
                   <div className="min-w-[600px] lg:min-w-0">
                     <DeepDiveContent
                       key={symbol}
@@ -559,7 +561,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Right Column - AI Option Play + Price Stats stacked vertically */}
-                <div className="xl:col-span-1 space-y-6">
+                <div className="lg:col-span-1 xl:col-span-1 space-y-6">
                   <div className="bg-gray-800/10 rounded-xl">
                     <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider mb-2 flex items-center gap-2">
                       <Zap className="w-4 h-4 text-blue-400" /> Tactical Option Play

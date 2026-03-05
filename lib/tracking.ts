@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { OptionRecommendation } from '../types/options';
+import { localDateString } from './localdate';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TRACKING_FILE = path.join(DATA_DIR, 'tracked_options.json');
@@ -67,10 +68,10 @@ export function trackOption(option: OptionRecommendation, companyName: string, u
         type: option.type as 'CALL' | 'PUT',
         entryPremium: option.contractPrice || 0,
         entryStockPrice: underlyingPrice,
-        entryDate: new Date().toISOString().split('T')[0],
+        entryDate: localDateString(),
         reasoning: option.technicalDetails || [option.reason],
         history: [{
-            date: new Date().toISOString().split('T')[0],
+            date: localDateString(),
             optionPremium: option.contractPrice || 0,
             stockPrice: underlyingPrice
         }],
@@ -84,7 +85,7 @@ export function trackOption(option: OptionRecommendation, companyName: string, u
 
 export async function updateTrackedOptions(getLatestData: (option: TrackedOption) => Promise<{ premium: number, stockPrice: number } | null>) {
     const tracked = getTrackedOptions();
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString();
     let hasChanges = false;
 
     for (const option of tracked) {

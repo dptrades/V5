@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { scanAlphaHunter } from '@/lib/conviction';
 import { sendEmailAlert } from '@/lib/notifications';
+import { localDateString } from '@/lib/localdate';
 
 /**
  * Alpha Hunter Daily Report Cron
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
         // Send Email
         const emailSuccess = await sendEmailAlert({
             subject: `🚀 Alpha Hunter: Top ${top25.length} Picks for Today`,
-            message: `Good morning! Here are the high-conviction Alpha Hunter picks for ${new Date().toLocaleDateString()}. These stocks show the strongest technical and institutional signals.`,
+            message: `Good morning! Here are the high-conviction Alpha Hunter picks for ${localDateString()}. These stocks show the strongest technical and institutional signals.`,
             stocks: top25.map(p => ({
                 symbol: p.symbol,
                 signal: p.metrics?.trend || 'NEUTRAL',

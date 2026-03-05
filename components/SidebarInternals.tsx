@@ -93,7 +93,7 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
         const fetchConvictionStats = async () => {
             try {
                 // Fetch conviction data for breadth calculation
-                const res = await fetch('/api/conviction');
+                const res = await fetch('/api/conviction?all=true');
                 if (!res.ok) return;
                 const data = await res.json();
 
@@ -305,7 +305,7 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
                                     <>
                                         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
                                             <p className="text-[15px] text-white font-medium leading-relaxed">
-                                                This monitors our curated universe of **~120 Institutional Mega-Caps** to measure structural market health.
+                                                This monitors our curated universe of **~150 Institutional Mega-Caps** to measure structural market health.
                                             </p>
                                         </div>
                                         <div className="space-y-4 pt-2">
@@ -327,13 +327,13 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
                                     <>
                                         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                             <p className="text-[15px] text-white font-medium leading-relaxed">
-                                                Breadth tracks the **immediate raw participation** of our ~120 stock mega-cap universe.
+                                                Breadth tracks the **immediate raw participation** of our ~150 stock mega-cap universe.
                                             </p>
                                         </div>
                                         <div className="space-y-4 pt-2">
                                             <div className="flex items-start gap-3">
                                                 <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_8px_rgba(74,222,128,0.6)]" />
-                                                <p className="text-sm text-gray-100 leading-snug">**Advancers (▲)**: The live count of stocks from our 120-symbol list currently trading **higher** than yesterday's close.</p>
+                                                <p className="text-sm text-gray-100 leading-snug">**Advancers (▲)**: The live count of stocks from our 150-symbol list currently trading **higher** than yesterday's close.</p>
                                             </div>
                                             <div className="flex items-start gap-3">
                                                 <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_8px_rgba(248,113,113,0.6)]" />

@@ -95,9 +95,9 @@ export default function TopPicksPage() {
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
             {/* Sidebar with "picks" active */}
             <div className={`
-                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out md:relative md:translate-x-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                ${isSidebarOpen ? 'w-[20vw] lg:w-[18vw] min-w-[200px]' : 'w-0'} 
+                ${isSidebarOpen ? 'w-[18vw] min-w-[200px]' : 'w-0'} 
                 h-full overflow-hidden flex-shrink-0 border-r border-gray-800
             `}>
                 <Sidebar
@@ -319,40 +319,40 @@ export default function TopPicksPage() {
                                             <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-                                                    <span className="font-bold text-blue-400 text-sm">Technical Momentum (30%)</span>
+                                                    <span className="font-bold text-blue-400 text-sm">Institutional Universe</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    Prioritizes stocks trading above key psychological levels (50/200 EMAs) with positive MACD divergence and RSI between 40-70.
+                                                    Limited to stocks with market caps &gt;$200B. We filter for companies with the highest institutional ownership to ensure stability and liquidity.
                                                 </p>
                                             </div>
 
                                             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
-                                                    <span className="font-bold text-purple-400 text-sm">Fundamentals & Value (25%)</span>
+                                                    <span className="font-bold text-purple-400 text-sm">Momentum Scoring</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    Cross-references Revenue Growth against P/E ratios and profit margins to identify "GARP" (Growth at a Reasonable Price) setups.
+                                                    Prioritizes stocks trading above key psychological levels (50/200 EMAs) with positive MACD divergence and RSI between 40-70.
                                                 </p>
                                             </div>
 
                                             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                                                    <span className="font-bold text-emerald-400 text-sm">Analyst Consensus (25%)</span>
+                                                    <span className="font-bold text-emerald-400 text-sm">Growth & Value Balance</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    Wall Street analyst ratings, buy recommendations, and &gt;10% upside potential to the mean price target.
+                                                    Cross-references Revenue Growth against P/E ratios to identify "GARP" (Growth at a Reasonable Price) setups.
                                                 </p>
                                             </div>
 
                                             <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
-                                                    <span className="font-bold text-yellow-400 text-sm">Social Sentiment (20%)</span>
+                                                    <span className="font-bold text-yellow-400 text-sm">Consensus Overdrive</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    Natural Language Processing scan of current news headlines and social buzz (X, WSB, StockTwits) focused purely on highest conviction institutional names.
+                                                    Requires at least 3 recent "Strong Buy" ratings from Tier-1 investment banks and &gt;10% upside potential to the mean price target.
                                                 </p>
                                             </div>
                                         </div>

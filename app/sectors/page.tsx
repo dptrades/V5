@@ -35,7 +35,7 @@ export default function SectorPage() {
         const runScan = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/conviction');
+                const res = await fetch('/api/conviction?all=true');
                 if (!res.ok) throw new Error('API Error');
                 const allStocks: ConvictionStock[] = await res.json();
 
@@ -84,7 +84,7 @@ export default function SectorPage() {
     return (
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
             <div className={`
-                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+                fixed inset-y-0 left-0 z-[110] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 ${isSidebarOpen ? 'w-[280px]' : 'w-0'} 
                 h-full overflow-hidden flex-shrink-0
@@ -135,7 +135,7 @@ export default function SectorPage() {
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {sectors.filter(s => s.name !== 'Internals').map((sector) => {
                                         // Get Top 5 Gainers (Start of array)
                                         const gainers = sector.stocks.filter(s => s.change24h > 0).slice(0, 5);
