@@ -160,7 +160,7 @@ export async function generateOptionSignal(
     const isRegularMarket = marketSession === 'REG';
     const volumeThreshold = isRegularMarket ? 2 : 0;
 
-    // ── 5. Delta-targeted strike selection ────────────────────────────────────
+    // ── 5. Delta-targeted strike selection ─────────────────────────
     // Target 0.35Δ: good leverage + reasonable probability (vs naive ATR offset)
     const atrFallbackStrike = roundToStrike(isCall
         ? currentPrice + effectiveAtr * 0.5
@@ -179,16 +179,20 @@ export async function generateOptionSignal(
             const strikeData = chainData.options[exp][strike];
             const opt = isCall ? strikeData?.call : strikeData?.put;
             if (!opt) continue;
+
             // ── Min OI filter: skip illiquid contracts ──
             if ((opt.openInterest || 0) < 50 && (opt.volume || 0) < Math.max(volumeThreshold, 1)) continue;
+
+            const distPct = Math.abs(strike - currentPrice) / currentPrice;
+            // ── Extreme Strike Filter: Only look at strikes within 25% of price ──
+            if (distPct > 0.25) continue;
 
             // Resolve delta: use actual Greeks or estimate from distance
             let delta: number;
             if (opt.greeks?.delta && opt.greeks.delta !== 0) {
                 delta = Math.abs(opt.greeks.delta);
             } else {
-                const distPct = (strike - currentPrice) / currentPrice;
-                const atmAdjusted = isCall ? -distPct : distPct;
+                const atmAdjusted = isCall ? -((strike - currentPrice) / currentPrice) : ((strike - currentPrice) / currentPrice);
                 delta = Math.max(0.05, Math.min(0.95, 0.50 + atmAdjusted * 3));
             }
 
@@ -202,20 +206,15 @@ export async function generateOptionSignal(
             const opt = isCall ? strikeData.call : strikeData.put;
             if (opt) { realOption = opt; }
         }
-        console.log(`[Options] ${symbol}: Δ-targeted strike=$${intendedStrike} (ATR fallback=$${atrFallbackStrike})`);
+        console.log(`[Options] ${symbol}: Δ-targeted strike=$${intendedStrike} (ATR fallback=$${atrFallbackStrike}) @ ${exp}`);
     };
 
-    if (chain) {
-        // Try selected expiry first, fall back to nearest available
-        if (chain.options?.[expiry]) {
-            tryFindDeltaStrike(chain, expiry);
-        } else {
-            const availableExp = chain.expirations?.find((e: string) => chain.options?.[e]) || '';
-            if (availableExp) tryFindDeltaStrike(chain, availableExp);
-        }
+    // Attempt 1: If base chain HAS our exact target expiry, use it.
+    if (chain?.options?.[expiry]) {
+        tryFindDeltaStrike(chain, expiry);
     }
 
-    // If still no realOption, do a targeted chain fetch for the chosen expiry
+    // Attempt 2: If we still don't have an option, do a targeted fetch for our explicitly chosen expiry.
     if (!realOption && symbol) {
         try {
             const freshChain = schwabClient.isConfigured()
@@ -225,7 +224,17 @@ export async function generateOptionSignal(
         } catch (_) { }
     }
 
-    // ── 6. Resolve Greeks for chosen contract ─────────────────────────────────
+    // Attempt 3: If standard chain fetch failed, fallback to whatever expiry is available in the base (cached) chain.
+    if (!realOption && chain) {
+        const availableExp = chain.expirations?.find((e: string) => chain.options?.[e]) || '';
+        if (availableExp && availableExp !== expiry) tryFindDeltaStrike(chain, availableExp);
+    }
+
+    // Recalculate DTE based exactly on which option we actually ended up finding!
+    const finalExpiry = realOption?.expiration || expiry;
+    const finalDte = Math.ceil((new Date(finalExpiry).getTime() - Date.now()) / (1000 * 3600 * 24));
+
+    // ── 6. Resolve Greeks for chosen contract ──────────────────────
     if (realOption) {
         if (realOption.greeks?.delta && realOption.greeks.delta !== 0) {
             probabilityITM = Math.abs(realOption.greeks.delta);
@@ -302,21 +311,21 @@ export async function generateOptionSignal(
 
     if (!realOption) {
         return {
-            type: 'WAIT', strike: intendedStrike, expiry, confidence: Math.min(confidence, 65),
+            type: 'WAIT', strike: intendedStrike, expiry: finalExpiry, confidence: Math.min(confidence, 65),
             reason: `No liquid contract at $${intendedStrike} strike.${ivDisplay}`,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1, dte
+            socialConfirmations: socialConfirmations || 1, dte: finalDte
         };
     }
 
     if ((realOption.volume || 0) < volumeThreshold) {
         return {
-            type: 'WAIT', strike: intendedStrike, expiry, confidence: Math.min(confidence, 60),
+            type: 'WAIT', strike: intendedStrike, expiry: finalExpiry, confidence: Math.min(confidence, 60),
             reason: `Low liquidity at $${intendedStrike} strike. Monitoring for volume entry.`,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1, dte
+            socialConfirmations: socialConfirmations || 1, dte: finalDte
         };
     }
 
@@ -349,7 +358,7 @@ export async function generateOptionSignal(
         socialDetails,
         symbol: realOption.symbol,
         probabilityITM: realOption.greeks?.delta ? Math.abs(realOption.greeks.delta) : probabilityITM,
-        dte
+        dte: finalDte
     };
 }
 
