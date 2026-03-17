@@ -1,90 +1,36 @@
 [
   {
-    "id": "MRK   260320C00120000",
-    "ticker": "MRK",
-    "companyName": "Merck & Co., Inc.",
-    "strike": 120,
-    "expiry": "2026-03-20",
-    "type": "CALL",
-    "entryPremium": 1.125,
-    "entryStockPrice": 115.745,
-    "entryDate": "2026-03-05",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "Bollinger Breakout (Overextended Down)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-05",
-        "optionPremium": 1.125,
-        "stockPrice": 115.745
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "NFLX  260417P00095000",
-    "ticker": "NFLX",
-    "companyName": "Netflix, Inc.",
-    "strike": 95,
-    "expiry": "2026-04-17",
+    "id": "TSLA_2024-04-19_200P",
+    "ticker": "TSLA_",
+    "companyName": "TSLA",
+    "strike": 200,
+    "expiry": "2024-04-19",
     "type": "PUT",
-    "entryPremium": 3.425,
-    "entryStockPrice": 99.055,
-    "entryDate": "2026-03-05",
+    "entryPremium": 5,
+    "entryStockPrice": 195,
+    "entryDate": "2026-03-17",
     "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "Price at Upper BB (Resistance)"
+      null
     ],
     "history": [
       {
-        "date": "2026-03-05",
-        "optionPremium": 3.425,
-        "stockPrice": 99.055
+        "date": "2026-03-17",
+        "optionPremium": 5,
+        "stockPrice": 195
       }
     ],
     "status": "ACTIVE"
   },
   {
-    "id": "KEYS  260417C00300000",
-    "ticker": "KEYS",
-    "companyName": "Keysight Technologies, Inc.",
-    "strike": 300,
-    "expiry": "2026-04-17",
+    "id": "MO260402C00069000",
+    "ticker": "MO",
+    "companyName": "Altria Group, Inc.",
+    "strike": 69,
+    "expiry": "2026-04-02",
     "type": "CALL",
-    "entryPremium": 8.8,
-    "entryStockPrice": 284.765,
-    "entryDate": "2026-03-05",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "Strong Bullish Momentum",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend"
-    ],
-    "history": [
-      {
-        "date": "2026-03-05",
-        "optionPremium": 8.8,
-        "stockPrice": 284.765
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "HON   260417C00250000",
-    "ticker": "HON",
-    "companyName": "Honeywell International Inc.",
-    "strike": 250,
-    "expiry": "2026-04-17",
-    "type": "CALL",
-    "entryPremium": 4.4,
-    "entryStockPrice": 238.7,
-    "entryDate": "2026-03-05",
+    "entryPremium": 0.5650000000000001,
+    "entryStockPrice": 67.31,
+    "entryDate": "2026-03-17",
     "reasoning": [
       "Price > EMA50",
       "Price > EMA200",
@@ -92,9 +38,34 @@
     ],
     "history": [
       {
-        "date": "2026-03-05",
-        "optionPremium": 4.4,
-        "stockPrice": 238.7
+        "date": "2026-03-17",
+        "optionPremium": 0.5650000000000001,
+        "stockPrice": 67.31
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "PLTR260402C00160000",
+    "ticker": "PLTR",
+    "companyName": "Palantir Technologies Inc.",
+    "strike": 160,
+    "expiry": "2026-04-02",
+    "type": "CALL",
+    "entryPremium": 4.25,
+    "entryStockPrice": 155.11,
+    "entryDate": "2026-03-17",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend"
+    ],
+    "history": [
+      {
+        "date": "2026-03-17",
+        "optionPremium": 4.25,
+        "stockPrice": 155.11
       }
     ],
     "status": "ACTIVE"

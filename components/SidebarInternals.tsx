@@ -92,8 +92,8 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
 
         const fetchConvictionStats = async () => {
             try {
-                // Fetch conviction data for breadth calculation
-                const res = await fetch('/api/conviction?all=true');
+                // Fetch conviction data for breadth calculation (Use Alpha-Hunter for broad 150+ stock coverage)
+                const res = await fetch('/api/alpha-hunter?all=true');
                 if (!res.ok) return;
                 const data = await res.json();
 

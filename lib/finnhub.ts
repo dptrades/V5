@@ -70,8 +70,8 @@ export interface FinnhubBasicFinancials {
 }
 
 class FinnhubClient {
-    private financialsCache: Map<string, { data: FinnhubBasicFinancials; expiry: number }> = new Map();
-    private sentimentCache: Map<string, { data: FinnhubSentiment; expiry: number }> = new Map();
+    private financialsCache: Map<string, { data: FinnhubBasicFinancials | null; expiry: number }> = new Map();
+    private sentimentCache: Map<string, { data: FinnhubSentiment | null; expiry: number }> = new Map();
     private readonly CACHE_TTL = 24 * 60 * 60 * 1000;           // 24 hours for fundamentals
     private readonly SENTIMENT_CACHE_TTL = 30 * 60 * 1000;      // 30 min for sentiment
 
@@ -115,6 +115,12 @@ class FinnhubClient {
                     console.error('[Finnhub] 🛑 Rate limit hit (429). Pausing queue 60s.');
                     return null;
                 }
+                if (response.status === 403) {
+                    // On 403 just return null, API Key lacks permissions for this endpoint.
+                    // DO NOT pause the queue, otherwise basic metrics get blocked for 60s
+                    console.error(`[Finnhub] 🛑 Forbidden (403) on ${endpoint}. API Key lacks permissions.`);
+                    return null;
+                }
                 if (!response.ok) throw new Error(`Finnhub API error: ${response.statusText}`);
                 const data = await response.json();
                 console.log(`[Finnhub] ${endpoint} resolved in ${Date.now() - start}ms`);
@@ -134,20 +140,9 @@ class FinnhubClient {
     }
 
     async getNewsSentiment(symbol: string): Promise<FinnhubSentiment | null> {
-        // Check sentiment cache
-        const cached = this.sentimentCache.get(symbol);
-        if (cached && Date.now() < cached.expiry) {
-            return cached.data;
-        }
-
-        const data = await this.rateLimitedFetch('/news-sentiment', { symbol });
-        if (data) {
-            this.sentimentCache.set(symbol, {
-                data,
-                expiry: Date.now() + this.SENTIMENT_CACHE_TTL
-            });
-        }
-        return data;
+        // Feature disabled: Requires Premium API Key.
+        // It triggers a 403 error which wastes 1.1s in the API rate limiter
+        return null;
     }
 
     async getSocialSentiment(symbol: string): Promise<FinnhubSocialSentiment | null> {
@@ -162,12 +157,10 @@ class FinnhubClient {
         }
 
         const data = await this.rateLimitedFetch('/stock/metric', { symbol, metric: 'all' });
-        if (data) {
-            this.financialsCache.set(symbol, {
-                data,
-                expiry: Date.now() + this.CACHE_TTL
-            });
-        }
+        this.financialsCache.set(symbol, {
+            data,
+            expiry: Date.now() + this.CACHE_TTL
+        });
         return data;
     }
 }

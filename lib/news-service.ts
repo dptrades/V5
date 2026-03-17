@@ -22,10 +22,14 @@ export async function getNewsData(symbol: string, type: 'news' | 'social' | 'ana
     }
 
     try {
-        // Fetch articles and Finnhub NLP sentiment in parallel
+        // Fetch articles and Finnhub NLP sentiment in parallel. 
+        // We use a 3-second timeout for sentiment since Finnhub can hang when rate limited.
+        const sentimentPromise = finnhubClient.getNewsSentiment(symbol).catch(() => null);
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+
         const [results, finnhubSentiment] = await Promise.all([
             yahooFinance.search(symbol, { newsCount: 20 }),
-            finnhubClient.getNewsSentiment(symbol).catch(() => null)
+            Promise.race([sentimentPromise, timeoutPromise])
         ]);
 
         if (!results.news || results.news.length === 0) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { OptionRecommendation } from '../lib/options';
-import { MousePointerClick, TrendingUp, TrendingDown, AlertCircle, Target, Shield, Crosshair, Zap, X, RefreshCw, Pin, Check } from 'lucide-react';
+import { MousePointerClick, TrendingUp, TrendingDown, AlertCircle, Target, Shield, Crosshair, Zap, X, RefreshCw, Pin, Check, Activity, BarChart2, Info } from 'lucide-react';
 import DataSourceIndicator from './ui/DataSourceIndicator';
 
 interface OptionsSignalProps {
@@ -183,16 +183,36 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
         );
     };
 
+    // Calculate segmented confidence widths
+    const baseScore = 50;
+    const techMax = 15;
+    const fundMax = 9;
+    const socMax = 6;
+    
+    // Reverse calculate rough contributions to the total confidence score
+    // This is approximate for visual purposes based on confirmations
+    const totalConfs = (data.technicalConfirmations || 0) + (data.fundamentalConfirmations || 0) + (data.socialConfirmations || 0) || 1;
+    const extraConf = data.confidence - baseScore;
+    
+    // Distribute extra confidence proportionally based on confirmations, guaranteeing a minimum visual size if present
+    const techCont = (data.technicalConfirmations || 0) > 0 ? Math.max(2, (data.technicalConfirmations || 0) / totalConfs * extraConf) : 0;
+    const fundCont = (data.fundamentalConfirmations || 0) > 0 ? Math.max(2, (data.fundamentalConfirmations || 0) / totalConfs * extraConf) : 0;
+    const socCont = (data.socialConfirmations || 0) > 0 ? Math.max(2, (data.socialConfirmations || 0) / totalConfs * extraConf) : 0;
+    
+    // Remaining chunk from PCR/Volume bonuses
+    const bonusCont = Math.max(0, extraConf - techCont - fundCont - socCont);
+
     return (
-        <div className={`bg-gray-800 rounded-xl p-4 border ${border} mb-4 relative overflow-hidden group`}>
+        <div className={`bg-gray-900/80 backdrop-blur-md rounded-2xl p-5 border shadow-xl ${border} mb-4 relative overflow-hidden group hover:shadow-[0_0_30px_-5px_var(--tw-shadow-color)] ${isCall ? 'shadow-emerald-900/20' : 'shadow-rose-900/20'} transition-all duration-500`}>
             {/* Detail Card Overlay */}
             {renderDetailCard()}
 
-            {/* Glow Effect */}
-            <div className={`absolute top-0 right-0 w-20 h-20 ${bg} opacity-5 blur-2xl -mr-10 -mt-10`}></div>
+            {/* Premium Glow Effects */}
+            <div className={`pointer-events-none absolute top-0 right-0 w-32 h-32 ${bg} opacity-10 blur-3xl -mr-10 -mt-10 rounded-full transition-opacity duration-1000 group-hover:opacity-20`}></div>
+            <div className={`pointer-events-none absolute bottom-0 left-0 w-24 h-24 ${bg} opacity-5 blur-2xl -ml-10 -mb-10 rounded-full`}></div>
 
             {/* Header */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="relative z-10 flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <MousePointerClick className={`w-4 h-4 ${color}`} />
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-100">Options AI</span>
@@ -251,102 +271,120 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
                             </span>
                         )}
                     </div>
-                    {/* Render Spread Sell Leg if available */}
-                    {data.spreadSellStrike && (
-                        <div className="text-gray-400 font-mono text-[11px] flex items-center gap-1.5 mt-1 ml-1 opacity-80">
-                            <span className="uppercase text-[9px] font-bold border rounded px-1 border-gray-600 bg-gray-800">SELL</span>
-                            ${data.spreadSellStrike} <span className="text-gray-500 text-[10px]">Strike</span>
-                            {data.spreadSellPrice && (
-                                <span className="text-gray-400 text-[10px] font-medium">
-                                    @ ${data.spreadSellPrice.toFixed(2)}
-                                </span>
-                            )}
-                        </div>
-                    )}
                 </div>
-                <div className="text-right flex flex-col items-end gap-1">
-                    <div className="text-[10px] text-gray-100">Expiry</div>
-                    <div className="text-white text-sm font-medium flex items-center gap-2">
+                <div className="text-right flex flex-col items-end gap-1.5">
+                    <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Target Expiry</div>
+                    <div className="text-white text-sm font-semibold flex items-center gap-2">
                         {data.expiry}
-                        <span className="text-[10px] text-blue-400 font-bold bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
-                            {data.dte}D
+                        <span className="text-[10px] text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 shadow-sm shadow-blue-900/20">
+                            {data.dte} DTE
                         </span>
                     </div>
-                    {data.isUnusual && (
-                        <span className="text-[8px] font-bold uppercase bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/30">
-                            Unusual Vol
-                        </span>
-                    )}
-                    {data.rsi && (data.rsi > 70 || data.rsi < 30) && (
-                        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border ${data.rsi > 70 ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'}`}>
-                            {data.rsi > 70 ? 'Overbought' : 'Oversold'}
-                        </span>
-                    )}
-                    {(() => {
-                        const patternStr = data.technicalDetails?.find(d => d.startsWith('Pattern:'));
-                        if (patternStr) {
-                            // Format: "Pattern: Bullish Engulfing (Bullish)" -> extract "Bullish Engulfing"
-                            const match = patternStr.match(/Pattern:\s*(.+?)\s*\(/);
-                            const name = match ? match[1] : patternStr.replace('Pattern: ', '');
-                            const isBull = patternStr.includes('(Bullish)');
-                            const isBear = patternStr.includes('(Bearish)');
-                            return (
-                                <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border ${isBull ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : isBear ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
-                                    }`}>
-                                    {name}
-                                </span>
-                            );
-                        }
-                        return null;
-                    })()}
+                    <div className="flex gap-1.5 flex-wrap justify-end mt-0.5">
+                        {data.isUnusual && (
+                            <span className="text-[9px] font-bold uppercase bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                Vol Surge
+                            </span>
+                        )}
+                        {data.rsi && (data.rsi > 70 || data.rsi < 30) && (
+                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${data.rsi > 70 ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                                {data.rsi > 70 ? 'Overbought' : 'Oversold'}
+                            </span>
+                        )}
+                        {(() => {
+                            const patternStr = data?.technicalDetails?.find(d => d.startsWith('Pattern:'));
+                            if (patternStr) {
+                                const match = patternStr.match(/Pattern:\s*(.+?)\s*\(/);
+                                const name = match ? match[1] : patternStr.replace('Pattern: ', '');
+                                const isBull = patternStr.includes('(Bullish)');
+                                const isBear = patternStr.includes('(Bearish)');
+                                return (
+                                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${isBull ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : isBear ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                                        }`}>
+                                        {name}
+                                    </span>
+                                );
+                            }
+                            return null;
+                        })()}
+                    </div>
                 </div>
             </div>
 
             {/* Strategy Badge */}
-            {data.strategy && (
-                <div className="mb-3">
-                    <span className={`text-[10px] px-2 py-1 rounded-md ${isCall ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'} font-semibold uppercase tracking-wider`}>
+            {data?.strategy && (
+                <div className="mb-4">
+                    <span className={`text-[10px] px-2.5 py-1 rounded-md ${isCall ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'} font-bold uppercase tracking-widest shadow-sm`}>
                         {data.strategy}
                     </span>
                 </div>
             )}
 
-            {/* Confidence Bar */}
-            <div className="w-full bg-gray-700 h-1.5 rounded-full mb-3 overflow-hidden">
-                <div
-                    className={`h-full ${bg} transition-all duration-1000 ease-out`}
-                    style={{ width: `${data.confidence}%` }}
-                />
-            </div>
-
-            {/* Metrics Row - Responsive Wrap */}
-            <div className="flex justify-between items-center mb-4 px-1 flex-wrap gap-2 text-center">
-                <div className="text-center">
-                    <div className="text-[9px] text-gray-100 uppercase font-bold mb-1">Vol / OI</div>
-                    <div className="text-[11px] text-white font-mono font-bold">
-                        {data.volume ? (data.volume > 1000 ? `${(data.volume / 1000).toFixed(1)}k` : data.volume) : '---'}
-                        <span className="text-gray-200 mx-1">/</span>
-                        {data.openInterest ? (data.openInterest > 1000 ? `${(data.openInterest / 1000).toFixed(1)}k` : data.openInterest) : '---'}
+            {/* Segmented Confidence Bar */}
+            <div className="mb-5">
+                <div className="flex justify-between items-end mb-1.5 px-0.5">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">AI Signal Confidence</span>
+                    <span className="text-xs font-bold text-white">{data.confidence}%</span>
+                </div>
+                <div className="w-full bg-gray-800 h-2 rounded-full flex overflow-hidden border border-gray-700/50 shadow-inner">
+                    {/* Base Score (50) */}
+                    <div className="h-full bg-gray-600 transition-all duration-1000 ease-out" style={{ width: `${(baseScore / 100) * 100}%` }} title="Base Model Baseline (50%)" />
+                    {/* Technical (Green/Red) */}
+                    <div className={`h-full ${isCall ? 'bg-emerald-400' : 'bg-rose-400'} opacity-90 transition-all duration-1000 ease-out delay-100`} style={{ width: `${techCont}%` }} title="Technical Edge" />
+                    {/* Fundamental (Blue) */}
+                    <div className="h-full bg-blue-400 opacity-90 transition-all duration-1000 ease-out delay-200" style={{ width: `${fundCont}%` }} title="Fundamental Edge" />
+                    {/* Social (Purple) */}
+                    <div className="h-full bg-purple-400 opacity-90 transition-all duration-1000 ease-out delay-300" style={{ width: `${socCont}%` }} title="Sentiment Edge" />
+                    {/* Flow/Bonus (Yellow) */}
+                    <div className="h-full bg-amber-400 opacity-90 transition-all duration-1000 ease-out delay-500" style={{ width: `${bonusCont}%` }} title="Options Flow Bonus" />
+                </div>
+                <div className="flex justify-between px-1 mt-1 lg:hidden">
+                    <div className="flex items-center gap-1.5 text-[8px] text-gray-400 uppercase font-medium">
+                        <div className={`w-1.5 h-1.5 rounded-full ${isCall ? 'bg-emerald-400' : 'bg-rose-400'}`}></div> Tech
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 ml-1"></div> Fund
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400 ml-1"></div> Sent
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-1"></div> Flow
                     </div>
                 </div>
-                <div className="text-center">
-                    <div className="text-[9px] text-gray-100 uppercase font-bold mb-1">IV</div>
-                    <div className={`text-[11px] font-mono font-bold ${(data.iv || 0) > 0.5 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+            </div>
+
+            {/* Data Row: Core Metrics & Greeks */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                {/* Implied Volatility */}
+                <div className="bg-gray-800/60 rounded-lg p-2 border border-gray-700/40 flex flex-col justify-center text-center backdrop-blur-sm">
+                    <div className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Implied Vol (IV)</div>
+                    <div className={`text-xs font-mono font-bold ${(data.iv || 0) > 0.6 ? 'text-rose-400' : (data.iv || 0) > 0.4 ? 'text-amber-400' : 'text-emerald-400'}`}>
                         {data.iv ? `${(data.iv * 100).toFixed(1)}%` : '---'}
                     </div>
                 </div>
-                {data.probabilityITM !== undefined && (
-                    <div className="text-center border-l border-gray-700/50 pl-3">
-                        <div className="text-[9px] text-gray-100 uppercase font-bold mb-1">Prob. ITM</div>
-                        <div className={`text-[11px] font-mono font-bold ${(data.probabilityITM || 0) > 0.6 ? 'text-emerald-400' : (data.probabilityITM || 0) < 0.3 ? 'text-red-400' : 'text-blue-400'}`}>
-                            {(data.probabilityITM * 100).toFixed(1)}%
-                        </div>
+
+                {/* Probability ITM (Delta proxy) */}
+                <div className="bg-gray-800/60 rounded-lg p-2 border border-gray-700/40 flex flex-col justify-center text-center backdrop-blur-sm">
+                    <div className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5 flex items-center justify-center gap-1">
+                        Prob. ITM <span className="text-[8px] text-gray-500 font-normal normal-case">(Δ{(data.probabilityITM || 0).toFixed(2)})</span>
                     </div>
-                )}
+                    <div className={`text-xs font-mono font-bold ${(data.probabilityITM || 0) > 0.40 ? 'text-emerald-400' : (data.probabilityITM || 0) < 0.25 ? 'text-amber-400' : 'text-blue-400'}`}>
+                        {data.probabilityITM ? `${(data.probabilityITM * 100).toFixed(1)}%` : '---'}
+                    </div>
+                </div>
+
+                {/* Volume Profile */}
+                <div className="bg-gray-800/60 rounded-lg p-2 border border-gray-700/40 flex flex-col justify-center text-center backdrop-blur-sm col-span-2 sm:col-span-2">
+                    <div className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Liquidity Profile</div>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white" title="Volume">
+                            {data.volume ? (data.volume > 1000 ? `${(data.volume / 1000).toFixed(1)}k` : data.volume) : '---'} <span className="text-[9px] text-gray-500 ml-0.5">Vol</span>
+                        </span>
+                        <span className="text-gray-600">/</span>
+                        <span className="text-xs font-mono font-bold text-gray-300" title="Open Interest">
+                            {data.openInterest ? (data.openInterest > 1000 ? `${(data.openInterest / 1000).toFixed(1)}k` : data.openInterest) : '---'} <span className="text-[9px] text-gray-500 ml-0.5">OI</span>
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            {/* Confirmations Section */}
-            <div className="bg-gray-900/40 rounded-lg p-3 border border-gray-700/30 mb-4">
+            {/* Confirmations Section - Glass Look */}
+            <div className="bg-gray-800/40 backdrop-blur-md rounded-xl p-3 border border-gray-700/50 mb-5 shadow-inner">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] uppercase font-bold text-gray-200 tracking-wider">Confluence Analysis</span>
                     <span className="text-[10px] font-mono text-blue-400 font-bold">{(data.technicalConfirmations || 0) + (data.fundamentalConfirmations || 0) + (data.socialConfirmations || 0)} Factors</span>
@@ -382,38 +420,44 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
                 </div>
             </div>
 
-            {/* === TRADE PLAN === */}
+            {/* === TRADE EXECUTION PLAN === */}
             {data.entryPrice && (
-                <div className="space-y-2 pt-3 border-t border-gray-700/50">
-                    <div className="text-xs font-bold text-gray-200 uppercase tracking-wider mb-2">Trade Plan</div>
+                <div className="space-y-3 pt-4 border-t border-gray-700/50">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Target className="w-4 h-4 text-amber-400" />
+                        <h4 className="text-xs font-extrabold text-white uppercase tracking-wider">Execution Plan</h4>
+                    </div>
 
-                    {/* Trade Plan Grid (Entry, Stop, Target) - Responsive */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {/* Trade Plan Grid (Entry, Stop, Target) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {/* Entry */}
-                        <div className="flex flex-col bg-gray-900/50 rounded-lg p-2 border border-gray-700/30">
-                            <div className="flex items-center gap-1 mb-1">
-                                <Crosshair className="w-3 h-3 text-blue-400" />
-                                <span className="text-[9px] text-gray-200 uppercase font-bold">Entry</span>
+                        <div className="flex flex-col bg-gray-800/80 rounded-xl p-3 border border-gray-600/50 shadow-md relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-8 h-8 bg-blue-500/10 rounded-bl-full"></div>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <Crosshair className="w-3.5 h-3.5 text-blue-400" />
+                                <span className="text-[10px] text-gray-300 uppercase font-bold tracking-wider">Underlying</span>
                             </div>
-                            <div className="text-xs font-mono text-white font-bold">${data.entryPrice.toFixed(2)}</div>
+                            <div className="text-sm font-mono text-white font-bold tracking-tight">${data.entryPrice.toFixed(2)}</div>
                         </div>
 
                         {/* Stop Loss */}
-                        <div className="flex flex-col bg-red-950/30 rounded-lg p-2 border border-red-900/30">
-                            <div className="flex items-center gap-1 mb-1">
-                                <Shield className="w-3 h-3 text-red-400" />
-                                <span className="text-[9px] text-red-400 uppercase font-bold">Stop</span>
+                        <div className="flex flex-col bg-gray-800/80 rounded-xl p-3 border border-rose-900/50 shadow-md relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-8 h-8 bg-rose-500/10 rounded-bl-full"></div>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <Shield className="w-3.5 h-3.5 text-rose-400" />
+                                <span className="text-[10px] text-rose-300 uppercase font-bold tracking-wider">Hard Stop</span>
                             </div>
-                            <div className="text-xs font-mono text-red-400 font-bold">{data.stopLoss ? `$${data.stopLoss.toFixed(2)}` : '---'}</div>
+                            <div className="text-sm font-mono text-rose-400 font-bold tracking-tight">{data.stopLoss ? `$${data.stopLoss.toFixed(2)}` : '---'}</div>
                         </div>
 
                         {/* Target */}
-                        <div className="flex flex-col bg-green-950/30 rounded-lg p-2 border border-green-900/30">
-                            <div className="flex items-center gap-1 mb-1">
-                                <Target className="w-3 h-3 text-green-400" />
-                                <span className="text-[9px] text-green-400 uppercase font-bold">Target</span>
+                        <div className="flex flex-col bg-gray-800/80 rounded-xl p-3 border border-emerald-900/50 shadow-md relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-8 h-8 bg-emerald-500/10 rounded-bl-full"></div>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Target</span>
                             </div>
-                            <div className="text-xs font-mono text-green-400 font-bold">{data.takeProfit1 ? `$${data.takeProfit1.toFixed(2)}` : '---'}</div>
+                            <div className="text-sm font-mono text-emerald-400 font-bold tracking-tight">{data.takeProfit1 ? `$${data.takeProfit1.toFixed(2)}` : '---'}</div>
                         </div>
                     </div>
 

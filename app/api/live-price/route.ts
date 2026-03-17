@@ -36,7 +36,14 @@ export async function GET(request: Request) {
 
         // 2. Metadata from Yahoo Finance
         try {
-            const quote: any = await yahooFinance.quote(ticker);
+            // Add a strict 1500ms timeout to Yahoo Finance to prevent falling behind on live price polling
+            const yahooPromise = yahooFinance.quote(ticker);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Yahoo Finance quote timeout (1500ms)')), 1500)
+            );
+
+            const quote: any = await Promise.race([yahooPromise, timeoutPromise]);
+
             if (quote) {
                 regularMarketPrice = quote.regularMarketPrice || 0;
                 regularMarketChange = quote.regularMarketChange || 0;
@@ -47,8 +54,8 @@ export async function GET(request: Request) {
                 postMarketChangePercent = quote.postMarketChangePercent || 0;
                 previousClose = quote.regularMarketPreviousClose || 0;
             }
-        } catch (yahooError) {
-            console.warn('[Live Price] Yahoo quote error:', yahooError);
+        } catch (yahooError: any) {
+            console.warn(`[Live Price] Yahoo quote error for ${ticker}: ${yahooError.message}`);
         }
 
         // Final Calculations for Change

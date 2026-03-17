@@ -128,10 +128,10 @@ export async function generateOptionSignal(
     }
     const highIV = atmIV > 0.45; // > 45% annualized = elevated IV regime
 
-    // ── 3. Smart DTE selection: shorter when IV is high ───────────────────────
-    // High IV → buying premium is expensive → prefer 21-28 DTE to limit theta burn
-    // Low IV  → give the trade room to develop → prefer 40-50 DTE
-    const dtePref = highIV ? 25 : 42;
+    // ── 3. Smart DTE selection: best practice 30-60 days ───────────────────────
+    // Standard plays: 30-45 DTE
+    // High IV plays: 45-60 DTE (more time to overcome premium crush, flatter theta curve)
+    const dtePref = highIV ? 50 : 35;
     let expiry = getNextMonthlyExpiry();
     try {
         if (symbol) {
@@ -149,26 +149,23 @@ export async function generateOptionSignal(
     } catch (_) { }
     const dte = Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 3600 * 24));
 
-    // ── 4. Strategy selection: spreads when IV is elevated ────────────────────
-    // High IV → buying naked calls/puts is expensive; a spread caps risk & premium
-    const useSpread = highIV;
-    const strategyName = isCall
-        ? (useSpread ? 'Bull Call Spread' : 'Alpha Bull')
-        : (useSpread ? 'Bear Put Spread' : 'Alpha Bear');
+    // ── 4. Strategy selection: single leg directional only ────────────────────
+    // User explicitly requested no spreads.
+    const strategyName = isCall ? 'Alpha Bull' : 'Alpha Bear';
 
     const marketSession = publicClient.getMarketSession();
     const isRegularMarket = marketSession === 'REG';
     const volumeThreshold = isRegularMarket ? 2 : 0;
 
     // ── 5. Delta-targeted strike selection ─────────────────────────
-    // Target 0.35Δ: good leverage + reasonable probability (vs naive ATR offset)
+    // Target 0.40 - 0.45Δ: best practice for directional plays (better PoP than .30, cheaper than .50)
     const atrFallbackStrike = roundToStrike(isCall
-        ? currentPrice + effectiveAtr * 0.5
-        : currentPrice - effectiveAtr * 0.5);
+        ? currentPrice + effectiveAtr * 0.25 // More conservative default offset
+        : currentPrice - effectiveAtr * 0.25);
     let intendedStrike = atrFallbackStrike;
     let realOption: any = null;
     let probabilityITM = 0.5;
-    const TARGET_DELTA = 0.35;
+    const TARGET_DELTA = 0.42; // Center of 0.40 - 0.45 range
 
     const tryFindDeltaStrike = (chainData: any, exp: string) => {
         if (!chainData?.options?.[exp]) return;
@@ -184,8 +181,12 @@ export async function generateOptionSignal(
             if ((opt.openInterest || 0) < 50 && (opt.volume || 0) < Math.max(volumeThreshold, 1)) continue;
 
             const distPct = Math.abs(strike - currentPrice) / currentPrice;
-            // ── Extreme Strike Filter: Only look at strikes within 25% of price ──
-            if (distPct > 0.25) continue;
+            
+            // ── Dynamic Distance Filter ──
+            // Do not go further out than approx 1.5x the realized volatility proxy
+            // Caps max distance to protect from buying deep OTM garbage
+            const maxAllowedDistance = Math.min(0.20, atmIV * 0.25); 
+            if (distPct > maxAllowedDistance) continue;
 
             // Resolve delta: use actual Greeks or estimate from distance
             let delta: number;
@@ -225,9 +226,19 @@ export async function generateOptionSignal(
     }
 
     // Attempt 3: If standard chain fetch failed, fallback to whatever expiry is available in the base (cached) chain.
-    if (!realOption && chain) {
-        const availableExp = chain.expirations?.find((e: string) => chain.options?.[e]) || '';
-        if (availableExp && availableExp !== expiry) tryFindDeltaStrike(chain, availableExp);
+    if (!realOption && chain && chain.expirations) {
+        const targetTime = Date.now() + dtePref * 24 * 3600 * 1000;
+        
+        // Find nearest valid expiration >= 14 DTE
+        const fallbackExpirations = chain.expirations.filter((e: string) => {
+            const days = (new Date(e).getTime() - Date.now()) / (1000 * 3600 * 24);
+            return days >= 14 && chain.options?.[e];
+        }).sort((a: string, b: string) => Math.abs(new Date(a).getTime() - targetTime) - Math.abs(new Date(b).getTime() - targetTime));
+
+        for (const exp of fallbackExpirations) {
+            tryFindDeltaStrike(chain, exp);
+            if (realOption) break;
+        }
     }
 
     // Recalculate DTE based exactly on which option we actually ended up finding!
@@ -264,13 +275,11 @@ export async function generateOptionSignal(
     // Check if the Discovery Engine has a highly liquid contract that matches our direction
     if (symbol) {
         try {
-            // TODO(perf): `findTopOptions` internally fetches the full options chain again.
-            // This means each call to `generateOptionSignal` can trigger up to 3 separate
-            // options-chain fetches (main chain, targeted expiry chain, and this one).
             // Fix: Accept an optional pre-fetched chain parameter in findTopOptions and
             // pass the chain down from the caller to avoid repeat API calls.
             // The Schwab/Public caches mitigate this in practice, but cold-start is expensive.
-            const topCandidates = await findTopOptions(symbol, currentPrice, direction as any, rsi, skipCache);
+            // Pass minDte = 14 to prevent lotto plays from hijacking the main signal.
+            const topCandidates = await findTopOptions(symbol, currentPrice, direction as any, rsi, skipCache, chain, 14);
             if (topCandidates.length > 0) {
                 // Look for a top candidate that matches our direction and has massive volume
                 const flowUpgrade = topCandidates.find(c =>
@@ -326,8 +335,8 @@ export async function generateOptionSignal(
         else if (!isCall && pv < 0.6) { confidence -= 5; pcrNote = ` PCR ${pv} (bullish flow—caution).`; }
         else { pcrNote = ` PCR ${pv} (neutral).`; }
     }
-    // Delta quality bonus: being near optimal 0.35 delta adds confidence
-    if (probabilityITM > 0.25 && probabilityITM < 0.55) confidence += 5;
+    // Delta quality bonus: being near optimal 0.40 - 0.45 delta adds confidence
+    if (probabilityITM >= 0.35 && probabilityITM <= 0.50) confidence += 5;
 
     // Tactical Flow Bonus: if we matched a discovery engine pick, massive boost
     let tacticalNote = '';
@@ -357,48 +366,8 @@ export async function generateOptionSignal(
         takeProfit1 = parseFloat((currentPrice - effectiveAtr * 2).toFixed(2));
     }
 
-    // ── 8.5 Find Sell Leg for Spread ───────────────────────────────────────────
-    if (useSpread && realOption && chain?.options?.[finalExpiry]) {
-        try {
-            const expChain = chain.options[finalExpiry];
-            const strikeKeys = Object.keys(expChain).map(Number).sort((a, b) => a - b);
-
-            // We want to sell a strike near the takeProfit1 target
-            // For calls: the short strike must be > long strike
-            // For puts: the short strike must be < long strike
-            const validStrikes = strikeKeys.filter(s => isCall ? s > realOption.strike : s < realOption.strike);
-
-            if (validStrikes.length > 0) {
-                // Find the strike closest to the takeProfit1 price
-                let bestDiff = Infinity;
-                let bestStrike = validStrikes[0];
-
-                for (const s of validStrikes) {
-                    const diff = Math.abs(s - takeProfit1);
-                    if (diff < bestDiff) {
-                        bestDiff = diff;
-                        bestStrike = s;
-                    }
-                }
-
-                const sellOptData = expChain[bestStrike];
-                const sellOpt = isCall ? sellOptData?.call : sellOptData?.put;
-
-                // Only suggest it if it actually exists in the chain
-                if (sellOpt) {
-                    spreadSellStrike = bestStrike;
-                    spreadSellPrice = (sellOpt.bid && sellOpt.ask)
-                        ? (sellOpt.bid + sellOpt.ask) / 2
-                        : (sellOpt.bid || sellOpt.last || sellOpt.ask || 0);
-
-                    console.log(`[Options] ${symbol}: Derived Spread leg -> SELL $${spreadSellStrike} @ $${spreadSellPrice}`);
-                }
-            }
-        } catch (_) { }
-    }
-
     // ── 9. Rich reason string ──────────────────────────────────────────────────
-    const ivDisplay = ` IV ${(atmIV * 100).toFixed(0)}%${highIV ? ' (elevated → spread rec)' : ''}.`;
+    const ivDisplay = ` IV ${(atmIV * 100).toFixed(0)}%.`;
     const deltaDisplay = probabilityITM ? ` Δ${probabilityITM.toFixed(2)}` : '';
     const reason = `${direction} Setup: RSI ${Math.round(rsi)}, ${signals.slice(0, 2).join(' + ') || 'Confluent signals'}.${pcrNote}${tacticalNote}${ivDisplay}${deltaDisplay} ${techConfirmations} tech signals.`;
 
@@ -440,7 +409,7 @@ export async function generateOptionSignal(
         confidence,
         reason,
         entryPrice: currentPrice,
-        entryCondition: useSpread ? 'Limit (Spread)' : 'Limit Order',
+        entryCondition: 'Limit Order',
         stopLoss,
         takeProfit1,
         strategy: strategyName,
@@ -448,8 +417,6 @@ export async function generateOptionSignal(
         openInterest: realOption.openInterest,
         iv: realOption.greeks?.impliedVolatility || atmIV,
         contractPrice: midPrice,
-        spreadSellStrike,
-        spreadSellPrice,
         rsi,
         isUnusual: false,
         technicalConfirmations: techConfirmations,
@@ -458,7 +425,7 @@ export async function generateOptionSignal(
         technicalDetails: signals,
         fundamentalDetails,
         socialDetails,
-        symbol: realOption.symbol,
+        symbol: realOption.symbol || `${symbol}_${finalExpiry}_${realOption.strike || intendedStrike}${isCall ? 'C' : 'P'}`,
         probabilityITM: realOption.greeks?.delta ? Math.abs(realOption.greeks.delta) : probabilityITM,
         dte: finalDte
     };
@@ -678,22 +645,28 @@ export async function findTopOptions(
     currentPrice: number,
     trend: 'bullish' | 'bearish' | 'neutral',
     rsi: number = 50,
-    skipCache: boolean = false
+    skipCache: boolean = false,
+    preloadedChain?: any,
+    minDte: number = 1
 ): Promise<OptionRecommendation[]> {
     try {
-        // Schwab (primary, 10-min cache) → Public.com fallback
-        let chain = schwabClient.isConfigured()
-            ? await schwabClient.getOptionChainNormalized(symbol)
-            : null;
-        if (!chain) chain = await publicClient.getOptionChain(symbol);
+        let chain = preloadedChain ?? null;
+        if (!chain) {
+            // Schwab (primary, 10-min cache) → Public.com fallback
+            chain = schwabClient.isConfigured()
+                ? await schwabClient.getOptionChainNormalized(symbol)
+                : null;
+            if (!chain) chain = await publicClient.getOptionChain(symbol);
+        }
         if (!chain) return []; // Return empty if no chain found
 
         const candidates: Array<{ recommendation: OptionRecommendation, score: number }> = [];
         const now = new Date();
-        const validExpirations = chain.expirations.filter(exp => {
+        const validExpirations = chain.expirations.filter((exp: string) => {
             const d = new Date(exp);
             const diffDays = (d.getTime() - now.getTime()) / (1000 * 3600 * 24);
-            return diffDays >= 1 && diffDays <= 60;
+            // Configurable minimum DTE based on whether this is for the main signal or discovery widget
+            return diffDays >= minDte && diffDays <= 65;
         });
 
         const marketSession = publicClient.getMarketSession();
@@ -705,9 +678,9 @@ export async function findTopOptions(
                 const strike = parseFloat(strikeStr);
                 const distance = Math.abs(strike - currentPrice) / currentPrice;
 
-                // 1. Strict Strike Filter: Only ATM/NTM (within 15%)
+                // 1. Strict Strike Filter: Only ATM/NTM (within 10%)
                 // Deep OTM lotto plays are often noise despite high volume
-                if (distance > 0.15) continue;
+                if (distance > 0.10) continue;
 
                 const data = strikes[strike];
                 const types: Array<'CALL' | 'PUT'> = ['CALL', 'PUT'];
@@ -740,10 +713,10 @@ export async function findTopOptions(
                     const oiScore = Math.min(opt.openInterest || 0, 2000) * 0.75; // Raised OI weight
                     const moneynessScore = deltaProxy * 200; // Up to 100 pts
 
-                    // Actual delta quality bonus: reward contracts in the 0.20–0.50 delta "sweet spot"
+                    // Actual delta quality bonus: reward contracts in the 0.35–0.50 delta "sweet spot"
                     const actualDelta = opt.greeks?.delta ? Math.abs(opt.greeks.delta) : null;
                     const deltaQuality = actualDelta !== null
-                        ? (actualDelta >= 0.20 && actualDelta <= 0.50 ? 60 : actualDelta >= 0.10 ? 20 : 0)
+                        ? (actualDelta >= 0.35 && actualDelta <= 0.50 ? 80 : actualDelta >= 0.20 ? 30 : 0)
                         : 0;
 
                     const score = volumeScore + oiScore + moneynessScore + deltaQuality;

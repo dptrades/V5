@@ -46,7 +46,8 @@ export default function LivePriceDisplay({ symbol, fallbackPrice, enabled = true
 
                     if (displayMode === 'regular') {
                         // STRICTLY show regular market hours price
-                        latestPrice = data.regularMarketPrice || data.price;
+                        // If regularMarketPrice is missing (e.g. timeout), fall back to the 4PM close (fallbackPrice) instead of live extended hours (data.price).
+                        latestPrice = data.regularMarketPrice || fallbackPrice || data.price;
                         latestChange = data.regularMarketChange || data.change;
                         latestChangePercent = data.regularMarketChangePercent || data.changePercent;
                     } else if (displayMode === 'extended') {
@@ -56,7 +57,7 @@ export default function LivePriceDisplay({ symbol, fallbackPrice, enabled = true
                         latestChangePercent = isSessionLive ? data.changePercent : (data.preMarketChangePercent || data.postMarketChangePercent || data.changePercent);
                     } else {
                         // 'auto' mode - default behavior
-                        latestPrice = isSessionLive ? data.price : (data.regularMarketPrice || data.price);
+                        latestPrice = isSessionLive ? data.price : (data.regularMarketPrice || fallbackPrice || data.price);
                         latestChange = isSessionLive ? data.change : (data.regularMarketChange || data.change);
                         latestChangePercent = isSessionLive ? data.changePercent : (data.regularMarketChangePercent || data.changePercent);
                     }
