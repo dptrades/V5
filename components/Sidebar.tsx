@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SidebarInternals from './SidebarInternals';
-import { Search, Activity, Clock, Zap, BarChart2, Hash, Newspaper, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Activity, Clock, Zap, BarChart2, Hash, Newspaper, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Terminal } from 'lucide-react';
 import { IndicatorData } from '../types/financial';
 import { PriceStats } from '../lib/stats';
 import PreMarketMovers from './PreMarketMovers';
@@ -116,7 +116,8 @@ export default function Sidebar({
                 : pathname.startsWith('/conviction') ? 'conviction'
                     : pathname.startsWith('/social-pulse') ? 'social'
                         : pathname.startsWith('/performance') ? 'performance'
-                            : 'dashboard';
+                            : pathname.startsWith('/terminal') ? 'terminal'
+                                : 'dashboard';
 
 
 
@@ -153,6 +154,15 @@ export default function Sidebar({
                         }`}
                 >
                     <span className="truncate">📡 Live Dashboard</span>
+                </Link>
+                <Link
+                    href="/terminal"
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'terminal'
+                        ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                        : 'text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-transparent'
+                        }`}
+                >
+                    <span className="truncate">🖥️ DPTrade Terminal</span>
                 </Link>
                 <Link
                     href="/pre-market"
