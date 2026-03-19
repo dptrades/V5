@@ -36,6 +36,26 @@ function getMarketStatus(): MarketStatus {
   return "CLOSED";
 }
 
+function getETMinuteOfDay(): number {
+  const now = new Date();
+  const etStr = now.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "numeric", hour12: false });
+  const [h, m] = etStr.split(":").map(Number);
+  return h * 60 + m;
+}
+
+// Returns seconds until the next 15-minute clock boundary anchored to 9:30 AM ET
+// e.g. if it is 9:33 AM, returns 720 (12 minutes until 9:45)
+function getSecondsToNextBoundary(m: Mode, status: MarketStatus): number {
+  if (status === "CLOSED") return 900; // paused — don't auto-refresh
+  const slotSize = m === "TACTICAL" ? 5 : 15; // minutes per slot
+  const etMinute = getETMinuteOfDay();
+  const marketOpenMinute = 9 * 60 + 30; // 9:30 AM
+  const minutesSinceOpen = Math.max(0, etMinute - marketOpenMinute);
+  const minutesToNext = slotSize - (minutesSinceOpen % slotSize);
+  // If exactly on a boundary, schedule for the next slot
+  return (minutesToNext === 0 ? slotSize : minutesToNext) * 60;
+}
+
 function getRefreshInterval(m: Mode, status: MarketStatus): number {
   if (status === "CLOSED") return 0;
   if (status === "OPEN") return m === "TACTICAL" ? 5 * 60 : 15 * 60;
@@ -49,7 +69,10 @@ export default function TerminalPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [marketStatus, setMarketStatus] = useState<MarketStatus>(getMarketStatus());
-  const [countdown, setCountdown] = useState(() => getRefreshInterval("POSITIONAL", getMarketStatus()) || 900);
+  const [countdown, setCountdown] = useState(() => {
+    const st = getMarketStatus();
+    return getSecondsToNextBoundary("POSITIONAL", st);
+  });
 
   const fetchData = useCallback(async (b: Benchmark = benchmark, m: Mode = mode) => {
     setLoading(true);
@@ -60,7 +83,7 @@ export default function TerminalPage() {
       setLastUpdated(new Date());
       const status = getMarketStatus();
       setMarketStatus(status);
-      setCountdown(getRefreshInterval(m, status) || 900);
+      setCountdown(getSecondsToNextBoundary(m, status));
     } catch (e) {
       console.error("Failed to fetch terminal data", e);
     } finally {
@@ -77,9 +100,12 @@ export default function TerminalPage() {
       const interval = getRefreshInterval(mode, status);
       if (interval === 0) return;
       setCountdown(prev => {
-        if (prev <= 1) { fetchData(benchmark, mode); return interval; }
-        return prev - 1;
-      });
+          if (prev <= 1) {
+            fetchData(benchmark, mode);
+            return getSecondsToNextBoundary(mode, status);
+          }
+          return prev - 1;
+        });
     }, 1000);
     return () => clearInterval(tick);
   }, [benchmark, mode, fetchData]);
@@ -89,8 +115,8 @@ export default function TerminalPage() {
 
   const scoreDelta: number = data?.scoreDelta ?? 0;
   const emaDivergence: boolean = data?.emaDivergence ?? false;
-  const refreshInterval = getRefreshInterval(mode, marketStatus) || 900;
-  const progressPct = ((refreshInterval - countdown) / refreshInterval) * 100;
+  const slotSeconds = (mode === "TACTICAL" ? 5 : 15) * 60;
+  const progressPct = Math.min(100, ((slotSeconds - countdown) / slotSeconds) * 100);
   const minutesLeft = Math.floor(countdown / 60);
   const secondsLeft = countdown % 60;
 
