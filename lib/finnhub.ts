@@ -163,6 +163,10 @@ class FinnhubClient {
         });
         return data;
     }
+
+    async getQuote(symbol: string): Promise<{ c: number; d: number; dp: number } | null> {
+        return await this.rateLimitedFetch('/quote', { symbol });
+    }
 }
 
 export const finnhubClient = new FinnhubClient();

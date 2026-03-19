@@ -12,6 +12,7 @@ import SignalReadiness from "@/components/terminal/SignalReadiness";
 import ScoringWeights from "@/components/terminal/ScoringWeights";
 import EventCalendar from "@/components/terminal/EventCalendar";
 import WidgetErrorBoundary from "@/components/terminal/WidgetErrorBoundary";
+import WidgetSkeleton from "@/components/terminal/WidgetSkeleton";
 import {
   Activity, TrendingUp, BarChart3, Zap, Globe,
   ChevronLeft, RefreshCw, Clock, AlertTriangle
@@ -101,16 +102,7 @@ export default function TerminalPage() {
   };
   const statusCfg = msConfig[marketStatus];
 
-  if (!data && loading) {
-    return (
-      <div className="min-h-screen bg-[#05070A] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="w-8 h-8 text-[#00FF94] animate-spin" />
-          <span className="text-[#00FF94] font-bold tracking-widest uppercase text-xs">Initializing Terminal...</span>
-        </div>
-      </div>
-    );
-  }
+  /* Skeletons are handled inline per widget when !data */
 
   return (
     <div className="min-h-screen bg-[#05070A] text-white font-sans selection:bg-[#00FF94]/30">
@@ -224,37 +216,41 @@ export default function TerminalPage() {
           <div className="col-span-12 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
 
             {/* 1. Decision Banner */}
-          <WidgetErrorBoundary title="Market Readiness">
-            <DecisionBanner
-              deployCapital={data?.deployCapital || "STANDBY"}
-              positionSize={data?.positionSize || "RISK-OFF"}
-              totalScore={data?.totalScore || 0}
-              mode={data?.mode || mode}
-              onModeChange={handleModeChange}
-            />
-          </WidgetErrorBoundary>
+            <WidgetErrorBoundary title="Market Readiness">
+              {!data && loading ? <WidgetSkeleton className="h-[120px]" /> : (
+                <DecisionBanner
+                  deployCapital={data?.deployCapital || "STANDBY"}
+                  positionSize={data?.positionSize || "RISK-OFF"}
+                  totalScore={data?.totalScore || 0}
+                  mode={data?.mode || mode}
+                  onModeChange={handleModeChange}
+                />
+              )}
+            </WidgetErrorBoundary>
 
             {/* 2. Gauge + delta + sparkline */}
-          <WidgetErrorBoundary title="Score Gauge">
-            <div className="bg-[#0B0F17]/40 border border-white/5 rounded-xl p-4 backdrop-blur-md relative hover:border-white/10 transition-colors">
-              {scoreDelta !== 0 && (
-                <div className={`absolute top-3 right-3 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                  scoreDelta > 0 ? "bg-[#00FF94]/10 text-[#00FF94] border border-[#00FF94]/20" : "bg-[#FF2E2E]/10 text-[#FF2E2E] border border-[#FF2E2E]/20"
-                }`}>
-                  {scoreDelta > 0 ? "▲" : "▼"} {Math.abs(scoreDelta)}
+            <WidgetErrorBoundary title="Score Gauge">
+              {!data && loading ? <WidgetSkeleton className="h-[220px]" /> : (
+                <div className="bg-[#0B0F17]/40 border border-white/5 rounded-xl p-4 backdrop-blur-md relative hover:border-white/10 transition-colors">
+                  {scoreDelta !== 0 && (
+                    <div className={`absolute top-3 right-3 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                      scoreDelta > 0 ? "bg-[#00FF94]/10 text-[#00FF94] border border-[#00FF94]/20" : "bg-[#FF2E2E]/10 text-[#FF2E2E] border border-[#FF2E2E]/20"
+                    }`}>
+                      {scoreDelta > 0 ? "▲" : "▼"} {Math.abs(scoreDelta)}
+                    </div>
+                  )}
+                  <TerminalGauge score={data?.totalScore || 0} label={`${benchmark} Quality`} threshold={60} />
+                  {data?.scoreHistory && (
+                    <ScoreHistorySparkline history={data.scoreHistory} currentScore={data.totalScore} />
+                  )}
                 </div>
               )}
-              <TerminalGauge score={data?.totalScore || 0} label={`${benchmark} Quality`} threshold={60} />
-              {data?.scoreHistory && (
-                <ScoreHistorySparkline history={data.scoreHistory} currentScore={data.totalScore} />
-              )}
-            </div>
-          </WidgetErrorBoundary>
+            </WidgetErrorBoundary>
 
             {/* 3. Event Calendar */}
-          <WidgetErrorBoundary title="Event Calendar">
-            <EventCalendar />
-          </WidgetErrorBoundary>
+            <WidgetErrorBoundary title="Event Calendar">
+              {!data && loading ? <WidgetSkeleton className="h-[300px]" /> : <EventCalendar />}
+            </WidgetErrorBoundary>
 
           </div>
 
@@ -264,95 +260,109 @@ export default function TerminalPage() {
             {/* 2×3 Metric Grid */}
             <div className="grid grid-cols-2 gap-4">
               <WidgetErrorBoundary title="Daily EMA">
-                <MetricCard title="Daily EMA" value={data?.metrics?.dailyTrend?.value || 0} icon={TrendingUp}
-                  status={data?.metrics?.dailyTrend?.status} statusType={data?.metrics?.dailyTrend?.type}
-                  subMetrics={data?.metrics?.dailyTrend?.subMetrics || []}
-                  info={[
-                    "Tracks price position relative to 5 EMAs (9, 21, 50, 100, 200) on the daily chart.",
-                    "9/21 EMA: Short-term tactical support — fast-moving signals for momentum traders.",
-                    "50 EMA: Intermediate trend anchor — key institutional buying/selling level.",
-                    "100 EMA: Mid-term momentum gauge — less reactive than 50, more than 200.",
-                    "200 EMA: The long-term bull/bear dividing line — losing this is a major warning.",
-                    "5/5 bullish = strong trend. Below 3/5 = weakening structure.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Daily EMA" value={data?.metrics?.dailyTrend?.value || 0} icon={TrendingUp}
+                    status={data?.metrics?.dailyTrend?.status} statusType={data?.metrics?.dailyTrend?.type}
+                    subMetrics={data?.metrics?.dailyTrend?.subMetrics || []}
+                    info={[
+                      "Tracks price position relative to 5 EMAs (9, 21, 50, 100, 200) on the daily chart.",
+                      "9/21 EMA: Short-term tactical support — fast-moving signals for momentum traders.",
+                      "50 EMA: Intermediate trend anchor — key institutional buying/selling level.",
+                      "100 EMA: Mid-term momentum gauge — less reactive than 50, more than 200.",
+                      "200 EMA: The long-term bull/bear dividing line — losing this is a major warning.",
+                      "5/5 bullish = strong trend. Below 3/5 = weakening structure.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
               <WidgetErrorBoundary title="Weekly EMA">
-                <MetricCard title="Weekly EMA" value={data?.metrics?.weeklyTrend?.value || 0} icon={Clock}
-                  status={data?.metrics?.weeklyTrend?.status} statusType={data?.metrics?.weeklyTrend?.type}
-                  subMetrics={data?.metrics?.weeklyTrend?.subMetrics || []}
-                  info={[
-                    "Same 5 EMAs (9, 21, 50, 100, 200) analyzed on the weekly timeframe — structural health.",
-                    "Price above weekly 50 EMA = secular bull market structure confirmed.",
-                    "A bearish weekly EMA reading overrides bullish daily signals — the bigger picture wins.",
-                    "Divergence between daily and weekly triggers the EMA Divergence alert banner.",
-                    "Weekly EMAs change slowly — use them to set the directional bias for the week.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Weekly EMA" value={data?.metrics?.weeklyTrend?.value || 0} icon={Clock}
+                    status={data?.metrics?.weeklyTrend?.status} statusType={data?.metrics?.weeklyTrend?.type}
+                    subMetrics={data?.metrics?.weeklyTrend?.subMetrics || []}
+                    info={[
+                      "Same 5 EMAs (9, 21, 50, 100, 200) analyzed on the weekly timeframe — structural health.",
+                      "Price above weekly 50 EMA = secular bull market structure confirmed.",
+                      "A bearish weekly EMA reading overrides bullish daily signals — the bigger picture wins.",
+                      "Divergence between daily and weekly triggers the EMA Divergence alert banner.",
+                      "Weekly EMAs change slowly — use them to set the directional bias for the week.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
               <WidgetErrorBoundary title="Momentum">
-                <MetricCard title="Momentum" value={data?.metrics?.momentum?.value || 0} icon={Zap}
-                  status={data?.metrics?.momentum?.status} statusType={data?.metrics?.momentum?.type}
-                  subMetrics={data?.metrics?.momentum?.subMetrics || []}
-                  info={[
-                    "Combines RSI, MACD, and Relative Volume to measure buying/selling pressure.",
-                    "RSI(14): 40–70 range = healthy trend momentum. >70 = overbought. <30 = capitulation.",
-                    "MACD Bullish Cross: MACD line crossed above signal line — upward momentum building.",
-                    "MACD Bearish Cross: MACD dropped below signal — momentum fading, caution warranted.",
-                    "Relative Volume: Current activity vs 20-day average. >1x confirms conviction behind moves.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Momentum" value={data?.metrics?.momentum?.value || 0} icon={Zap}
+                    status={data?.metrics?.momentum?.status} statusType={data?.metrics?.momentum?.type}
+                    subMetrics={data?.metrics?.momentum?.subMetrics || []}
+                    info={[
+                      "Combines RSI, MACD, and Relative Volume to measure buying/selling pressure.",
+                      "RSI(14): 40–70 range = healthy trend momentum. >70 = overbought. <30 = capitulation.",
+                      "MACD Bullish Cross: MACD line crossed above signal line — upward momentum building.",
+                      "MACD Bearish Cross: MACD dropped below signal — momentum fading, caution warranted.",
+                      "Relative Volume: Current activity vs 20-day average. >1x confirms conviction behind moves.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
               <WidgetErrorBoundary title="Volatility">
-                <MetricCard title="Volatility" value={data?.metrics?.volatility?.value || 0} icon={Activity}
-                  status={data?.metrics?.volatility?.status} statusType={data?.metrics?.volatility?.type}
-                  subMetrics={data?.metrics?.volatility?.subMetrics || []}
-                  info={[
-                    "Measures market fear using VIX, its 52-week percentile, and Put/Call ratio.",
-                    "VIX < 20: Complacency / low fear — institutional buyers active, safe to hold longs.",
-                    "VIX 20–28: Elevated uncertainty — reduce leverage and tighten stop losses.",
-                    "VIX > 28: Fear-driven selling likely — avoid new long positions.",
-                    "VIX Percentile: Where today's VIX sits vs the past 52 weeks. >75th = extreme fear.",
-                    "Put/Call Ratio: >1.0 = bearish bias (more puts bought). <0.7 = bullish bias (complacency).",
-                    "BB Width: Bollinger Band squeeze (<5%) signals a large move is imminent.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Volatility" value={data?.metrics?.volatility?.value || 0} icon={Activity}
+                    status={data?.metrics?.volatility?.status} statusType={data?.metrics?.volatility?.type}
+                    subMetrics={data?.metrics?.volatility?.subMetrics || []}
+                    info={[
+                      "Measures market fear using VIX, its 52-week percentile, and Put/Call ratio.",
+                      "VIX < 20: Complacency / low fear — institutional buyers active, safe to hold longs.",
+                      "VIX 20–28: Elevated uncertainty — reduce leverage and tighten stop losses.",
+                      "VIX > 28: Fear-driven selling likely — avoid new long positions.",
+                      "VIX Percentile: Where today's VIX sits vs the past 52 weeks. >75th = extreme fear.",
+                      "Put/Call Ratio: >1.0 = bearish bias (more puts bought). <0.7 = bullish bias (complacency).",
+                      "BB Width: Bollinger Band squeeze (<5%) signals a large move is imminent.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
               <WidgetErrorBoundary title="Market Breadth">
-                <MetricCard title="Market Breadth" value={data?.metrics?.breadth?.value || 0} icon={BarChart3}
-                  status={data?.metrics?.breadth?.status} statusType={data?.metrics?.breadth?.type}
-                  subMetrics={data?.metrics?.breadth?.subMetrics || []}
-                  info={[
-                    "Two-layer breadth check: sector ETF performance + S&P 500 internal participation.",
-                    "Sectors Positive: How many of 11 SPDR ETFs closed positive today.",
-                    "Trending >20d: Sectors trading above their 20-day average = sustained demand.",
-                    "% > 20MA (S&P): % of all S&P 500 stocks above their 20-day MA. >50% = short-term healthy.",
-                    "% > 50MA (S&P): % above 50-day MA. >50% = intermediate uptrend is broad.",
-                    "% > 200MA (S&P): % above 200-day MA. >50% = secular bull market intact. <30% = bear market.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Market Breadth" value={data?.metrics?.breadth?.value || 0} icon={BarChart3}
+                    status={data?.metrics?.breadth?.status} statusType={data?.metrics?.breadth?.type}
+                    subMetrics={data?.metrics?.breadth?.subMetrics || []}
+                    info={[
+                      "Two-layer breadth check: sector ETF performance + S&P 500 internal participation.",
+                      "Sectors Positive: How many of 11 SPDR ETFs closed positive today.",
+                      "Trending >20d: Sectors trading above their 20-day average = sustained demand.",
+                      "% > 20MA (S&P): % of all S&P 500 stocks above their 20-day MA. >50% = short-term healthy.",
+                      "% > 50MA (S&P): % above 50-day MA. >50% = intermediate uptrend is broad.",
+                      "% > 200MA (S&P): % above 200-day MA. >50% = secular bull market intact. <30% = bear market.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
               <WidgetErrorBoundary title="Macro">
-                <MetricCard title="Macro" value={data?.metrics?.macro?.value || 0} icon={Globe}
-                  status={data?.metrics?.macro?.status} statusType={data?.metrics?.macro?.type}
-                  subMetrics={data?.metrics?.macro?.subMetrics || []}
-                  info={[
-                    "Measures headwinds from rising bond yields (10Y) and U.S. Dollar strength (DXY).",
-                    "Rising yields = higher discount rate → reduces the present value of future earnings.",
-                    "Rising dollar = tighter financial conditions globally, hurts multinational earnings.",
-                    "Supportive: Both yields and dollar are flat/falling — equity tailwind.",
-                    "Headwind: One spiking — be cautious. Hostile: Both spiking simultaneously — reduce all risk.",
-                    "This is the macro 'weather forecast' for equities.",
-                  ]} />
+                {!data && loading ? <WidgetSkeleton className="h-32" /> : (
+                  <MetricCard title="Macro" value={data?.metrics?.macro?.value || 0} icon={Globe}
+                    status={data?.metrics?.macro?.status} statusType={data?.metrics?.macro?.type}
+                    subMetrics={data?.metrics?.macro?.subMetrics || []}
+                    info={[
+                      "Measures headwinds from rising bond yields (10Y) and U.S. Dollar strength (DXY).",
+                      "Rising yields = higher discount rate → reduces the present value of future earnings.",
+                      "Rising dollar = tighter financial conditions globally, hurts multinational earnings.",
+                      "Supportive: Both yields and dollar are flat/falling — equity tailwind.",
+                      "Headwind: One spiking — be cautious. Hostile: Both spiking simultaneously — reduce all risk.",
+                      "This is the macro 'weather forecast' for equities.",
+                    ]} />
+                )}
               </WidgetErrorBoundary>
             </div>
 
             {/* AI Assessment */}
             <WidgetErrorBoundary title="Terminal Analysis">
-              <AITerminalAssessment
-                assessment={data?.ai?.assessment || "Analyzing market internals..."}
-                suggestedAction={data?.ai?.suggestedAction || "Monitor internals."}
-                riskLevel={data?.ai?.riskLevel || "Moderate"}
-              />
+              {!data && loading ? <WidgetSkeleton className="h-24" /> : (
+                <AITerminalAssessment
+                  assessment={data?.ai?.assessment || "Analyzing market internals..."}
+                  suggestedAction={data?.ai?.suggestedAction || "Monitor internals."}
+                  riskLevel={data?.ai?.riskLevel || "Moderate"}
+                />
+              )}
             </WidgetErrorBoundary>
 
             {/* Conditions Checklist */}
-            {data?.checklist && (
+            {(!data && loading) ? <WidgetSkeleton className="h-48" /> : data?.checklist && (
               <WidgetErrorBoundary title="Conditions Checklist">
                 <ConditionsChecklist checklist={data.checklist} />
               </WidgetErrorBoundary>
@@ -364,18 +374,20 @@ export default function TerminalPage() {
 
             {/* Sector Performance */}
             <WidgetErrorBoundary title="Sector Performance">
-              <SectorPerformanceTerminal sectors={data?.sectors || []} />
+              {!data && loading ? <WidgetSkeleton className="h-48" /> : (
+                <SectorPerformanceTerminal sectors={data?.sectors || []} />
+              )}
             </WidgetErrorBoundary>
 
             {/* Signal Readiness */}
-            {data?.signalReadiness && (
+            {(!data && loading) ? <WidgetSkeleton className="h-40" /> : data?.signalReadiness && (
               <WidgetErrorBoundary title="Signal Readiness">
                 <SignalReadiness signals={data.signalReadiness} score={data.totalScore} />
               </WidgetErrorBoundary>
             )}
 
             {/* Scoring Weights */}
-            {data?.scoringWeights && (
+            {(!data && loading) ? <WidgetSkeleton className="h-40" /> : data?.scoringWeights && (
               <WidgetErrorBoundary title="Score Breakdown">
                 <ScoringWeights weights={data.scoringWeights} totalScore={data.totalScore} />
               </WidgetErrorBoundary>

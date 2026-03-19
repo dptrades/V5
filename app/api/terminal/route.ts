@@ -3,12 +3,35 @@ import YahooFinance from 'yahoo-finance2';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { calculateIndicators } from '@/lib/indicators';
 import { fetchAlpacaBars, fetchAlpacaPrice } from '@/lib/alpaca';
+import { finnhubClient } from '@/lib/finnhub';
+import fs from 'fs';
+import path from 'path';
 
 const yahooFinance = new YahooFinance();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// --- In-memory score history ---
-const scoreHistory: Record<string, number[]> = {};
+const HISTORY_FILE = path.join(process.cwd(), 'data', 'terminal_history.json');
+
+function loadHistory(): Record<string, number[]> {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+    }
+  } catch (e) { console.error("[Terminal] Failed to load history", e); }
+  return {};
+}
+
+function saveHistory(history: Record<string, number[]>) {
+  try {
+    if (!fs.existsSync(path.dirname(HISTORY_FILE))) {
+      fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
+    }
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+  } catch (e) { console.error("[Terminal] Failed to save history", e); }
+}
+
+// In-memory score history (initialized from file)
+let scoreHistory: Record<string, number[]> = loadHistory();
 
 // ── 60-second response cache (key = `${benchmark}-${mode}`) ────────────────────
 const CACHE_TTL_MS = 60_000;
@@ -32,13 +55,9 @@ function alpacaToBar(b: any) {
 
 // ── Finnhub single quote (VIX, TNX, DXY proxies) ────────────────────────────
 async function fetchFinnhubQuote(symbol: string): Promise<{ price: number; changePercent: number } | null> {
-  const key = process.env.FINNHUB_API_KEY;
-  if (!key) return null;
   try {
-    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const d = await res.json();
-    if (!d.c) return null;
+    const d = await finnhubClient.getQuote(symbol);
+    if (!d || !d.c) return null;
     return { price: d.c, changePercent: d.dp ?? 0 };
   } catch { return null; }
 }
@@ -314,11 +333,15 @@ export async function GET(request: NextRequest) {
       : null;
 
     // --- Score History & Delta ---
+    // --- History & Delta ---
     if (!scoreHistory[benchmark]) scoreHistory[benchmark] = [];
     const prev = scoreHistory[benchmark];
     const scoreDelta = prev.length > 0 ? totalScore - prev[prev.length - 1] : 0;
+    
+    // Update and persist
     prev.push(totalScore);
     if (prev.length > 30) prev.shift();
+    saveHistory(scoreHistory);
 
     // --- EMA Divergence ---
     const emaDivergence = (dailyBullEmas <= 1 && weeklyBullEmas >= 4) || (dailyBullEmas >= 4 && weeklyBullEmas <= 1);
