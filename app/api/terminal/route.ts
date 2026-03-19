@@ -89,21 +89,12 @@ async function getTechnicalSnapshot(symbol: string) {
     // Fetch daily (365 bars) and weekly (260 bars ≈ 5 years) from Alpaca
     const [alpacaDaily, alpacaWeekly] = await Promise.all([
       fetchAlpacaBars(symbol, '1Day', 365),
-      fetchAlpacaBars(symbol, '1Day', 1825), // we'll downsample to weekly
+      fetchAlpacaBars(symbol, '1Week', 260),
     ]);
-
-    // Downsample daily → weekly (keep last bar of each ISO week)
-    const weekMap = new Map<string, any>();
-    for (const b of alpacaWeekly) {
-      const d = new Date(b.t);
-      const week = `${d.getUTCFullYear()}-W${Math.ceil((d.getUTCDate() + new Date(d.getUTCFullYear(), d.getUTCMonth(), 1).getDay()) / 7)}`;
-      weekMap.set(week, b); // last bar in week wins
-    }
-    const alpacaWeeklyBars = Array.from(weekMap.values()).sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
 
     // Convert to standard bar format
     const dailyBars = alpacaDaily.map(alpacaToBar).filter(b => b.close);
-    const weeklyBars = alpacaWeeklyBars.map(alpacaToBar).filter(b => b.close);
+    const weeklyBars = alpacaWeekly.map(alpacaToBar).filter(b => b.close);
 
     if (dailyBars.length < 30) {
       console.warn(`[Terminal] Not enough Alpaca bars for ${symbol}, trying Yahoo fallback`);

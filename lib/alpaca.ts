@@ -15,7 +15,7 @@ export interface AlpacaBar {
     v: number; // Volume
 }
 
-export async function fetchAlpacaBars(symbol: string, timeframe: '1Day' | '1Hour' | '15Min' = '1Day', limit: number = 100): Promise<AlpacaBar[]> {
+export async function fetchAlpacaBars(symbol: string, timeframe: '1Day' | '1Week' | '1Hour' | '15Min' = '1Day', limit: number = 100): Promise<AlpacaBar[]> {
     // Check rate-limit cooldown
     if (Date.now() < alpacaThrottledUntil) {
         console.warn(`[Alpaca] Rate limit cool-down active. Skipping ${symbol} ${timeframe}.`);
