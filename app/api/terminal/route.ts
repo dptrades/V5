@@ -232,12 +232,15 @@ export async function GET(request: NextRequest) {
     // ── Fetch all data in parallel ─────────────────────────────────────────
     const ETF_QUOTES = ['SPY', 'QQQ', 'IWM', ...sectorSymbols];
 
-    const [techSnapshot, sectorData, etfQuotes, vixData, tnxData, dxyData, breadthInternals] = await Promise.all([
+    const [techSnapshot, sectorData, etfQuotes, vixData, irxData, fvxData, tnxData, tyxData, dxyData, breadthInternals] = await Promise.all([
       getTechnicalSnapshot(benchmark),
       Promise.all(sectorSymbols.map(s => getSectorTrending(s))),
       Promise.all(ETF_QUOTES.map(s => fetchAlpacaQuote(s))),
       fetchFinnhubQuote('VIX').catch(() => null),
+      fetchFinnhubQuote('^IRX').catch(() => null),
+      fetchFinnhubQuote('^FVX').catch(() => null),
       fetchFinnhubQuote('^TNX').catch(() => null),
+      fetchFinnhubQuote('^TYX').catch(() => null),
       fetchAlpacaQuote('UUP').catch(() => null),
       getBreadthInternals(),
     ]);
@@ -246,7 +249,10 @@ export async function GET(request: NextRequest) {
     ETF_QUOTES.forEach((sym, i) => { if (etfQuotes[i]) dataMap[sym] = etfQuotes[i]!; });
 
     const vix = vixData?.price || dataMap['VIXY']?.price || 20;
+    const irxChange = irxData?.changePercent ?? 0;
+    const fvxChange = fvxData?.changePercent ?? 0;
     const tnxChange = tnxData?.changePercent ?? 0;
+    const tyxChange = tyxData?.changePercent ?? 0;
     const dxyChange = dxyData?.changePercent ?? 0;
 
     // VIX percentile (compute after we know vix)
@@ -286,7 +292,9 @@ export async function GET(request: NextRequest) {
     const positiveSectors = sectorSymbols.filter(sym => (dataMap[sym]?.changePercent ?? 0) > 0);
     const breadthScore = (positiveSectors.length / sectorSymbols.length) * 100;
 
-    const macroScore = Math.max(0, Math.min(100, 100 - (Math.max(0, tnxChange) * 10 + Math.max(0, dxyChange) * 10)));
+    // Macro Score: Penalty for rising yields across the curve + rising dollar
+    const yieldImpact = (Math.max(0, irxChange) + Math.max(0, fvxChange) + Math.max(0, tnxChange) + Math.max(0, tyxChange)) / 4;
+    const macroScore = Math.max(0, Math.min(100, 100 - (yieldImpact * 15 + Math.max(0, dxyChange) * 15)));
 
     // --- Mode-Aware Scoring Weights ---
     const weights = mode === 'TACTICAL'
@@ -386,10 +394,11 @@ export async function GET(request: NextRequest) {
   MOMENTUM: RSI ${rsi.toFixed(1)} | MACD ${macdBullish ? 'Bullish Cross' : 'Bearish Cross'} | RelVol ${relVolume.toFixed(2)}x
   VOLATILITY: VIX ${vix.toFixed(2)} (${vixPercentile}th percentile vs 52-week) | Put/Call ${breadthInternals.putCall !== null ? breadthInternals.putCall.toFixed(2) : 'N/A'}
   BREADTH: Sectors positive ${positiveSectors.length}/11 | S&P 500 stocks above 20MA: ${breadthInternals.above20?.toFixed(1) ?? 'N/A'}% | 50MA: ${breadthInternals.above50?.toFixed(1) ?? 'N/A'}% | 200MA: ${breadthInternals.above200?.toFixed(1) ?? 'N/A'}%
-  MACRO: 10Y yield change ${tnxChange > 0 ? '+' : ''}${tnxChange.toFixed(2)}% | DXY change ${dxyChange > 0 ? '+' : ''}${dxyChange.toFixed(2)}%
+  MACRO: 2Y change ${irxChange.toFixed(2)}% | 5Y change ${fvxChange.toFixed(2)}% | 10Y change ${tnxChange.toFixed(2)}% | 30Y change ${tyxChange.toFixed(2)}% | DXY change ${dxyChange.toFixed(2)}%
   ${emaDivergence ? '⚠️ EMA DIVERGENCE: Daily and weekly trend conflict — high caution.' : ''}
   ${breadthInternals.putCall !== null && breadthInternals.putCall > 1.0 ? '⚠️ Elevated put/call ratio — options market pricing in downside risk.' : ''}
   ${vixPercentile > 75 ? '⚠️ VIX in extreme fear territory — historically a mean-reversion zone.' : ''}
+  ${yieldImpact > 1.0 ? '⚠️ Yield curve is spiking aggressively, creating strong valuation headwinds.' : ''}
 
   Write a 2-sentence plain-English assessment focusing on the most critical signals. Then give a 3-5 word suggested action.
   Return ONLY JSON: {"assessment": "...", "suggestedAction": "...", "riskLevel": "Low/Moderate/High/Extreme"}`;
@@ -478,8 +487,8 @@ export async function GET(request: NextRequest) {
           status: macroScore < 40 ? "Hostile" : macroScore < 60 ? "Headwind" : "Supportive",
           type: macroScore < 40 ? "negative" : macroScore < 60 ? "warning" : "positive",
           subMetrics: [
-            { label: "Yield Impact (10Y)", value: tnxChange > 0 ? "Spiking" : "Stable", status: tnxChange > 0 ? "negative" : "positive" },
-            { label: "Dollar Impact (DXY)", value: dxyChange > 0 ? "Rising" : "Falling", status: dxyChange > 0 ? "negative" : "positive" }
+            { label: "Yield Curve (2-30Y)", value: yieldImpact > 0 ? "Rising" : "Stable", status: yieldImpact > 0.5 ? "negative" : "positive" },
+            { label: "US Dollar (DXY)", value: dxyChange > 0 ? "Rising" : "Falling", status: dxyChange > 0.2 ? "negative" : "positive" }
           ]
         }
       },
@@ -493,9 +502,7 @@ export async function GET(request: NextRequest) {
         { symbol: 'SPY', price: dataMap['SPY']?.price, change: dataMap['SPY']?.changePercent },
         { symbol: 'QQQ', price: dataMap['QQQ']?.price, change: dataMap['QQQ']?.changePercent },
         { symbol: 'IWM', price: dataMap['IWM']?.price, change: dataMap['IWM']?.changePercent },
-        { symbol: 'VIX',  price: vix,   change: vixData?.changePercent ?? 0 },
-        { symbol: '10Y',  price: tnxData?.price ?? null, change: tnxChange },
-        { symbol: 'DXY',  price: dxyData?.price ?? null, change: dxyChange },
+        { symbol: 'VIX', price: vix, change: vixData?.changePercent ?? 0 },
       ]
     };
 
