@@ -220,8 +220,8 @@ export default function TerminalPage() {
 
         <div className="grid grid-cols-12 gap-5">
 
-          {/* ── COL A: Decision Control (3 cols) ─────────────── */}
-          <div className="col-span-12 xl:col-span-3 flex flex-col gap-4">
+          {/* ────── COL A: Decision Control (3 cols) ─────────────── */}
+          <div className="col-span-12 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
 
             {/* 1. Decision Banner */}
           <WidgetErrorBoundary title="Market Readiness">
@@ -259,7 +259,7 @@ export default function TerminalPage() {
           </div>
 
           {/* ── COL B: 6 Metric Cards + AI Assessment (5 cols) ── */}
-          <div className="col-span-12 xl:col-span-5 flex flex-col gap-4">
+          <div className="col-span-12 md:col-span-12 xl:col-span-5 flex flex-col gap-4">
 
             {/* 2×3 Metric Grid */}
             <div className="grid grid-cols-2 gap-4">
@@ -360,7 +360,7 @@ export default function TerminalPage() {
           </div>
 
           {/* ── COL C: Sector + Readiness + Weights (4 cols) ──── */}
-          <div className="col-span-12 xl:col-span-4 flex flex-col gap-4">
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 flex flex-col gap-4">
 
             {/* Sector Performance */}
             <WidgetErrorBoundary title="Sector Performance">
