@@ -18,8 +18,9 @@ const FOMC_DATES_2026 = [
 const ECONOMIC_EVENTS_2026 = [
   // CPI — typically 2nd Wednesday/Thursday of month
   { date: "2026-01-14", label: "CPI Report", type: "macro" },
-  { date: "2026-02-11", label: "CPI Report", type: "macro" },
   { date: "2026-03-11", label: "CPI Report", type: "macro" },
+  { date: "2026-03-19", label: "Initial Jobless Claims", type: "macro" },
+  { date: "2026-03-19", label: "Existing Home Sales", type: "macro" },
   { date: "2026-04-08", label: "CPI Report", type: "macro" },
   { date: "2026-05-13", label: "CPI Report", type: "macro" },
   { date: "2026-06-10", label: "CPI Report", type: "macro" },
@@ -135,6 +136,7 @@ export async function GET() {
     const allEvents = [
       ...FOMC_DATES_2026,
       ...mappedFinnhub,
+      ...ECONOMIC_EVENTS_2026,
       ...buildOPEXEvents(year),
     ];
 
