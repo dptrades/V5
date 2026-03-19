@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { finnhubClient } from '@/lib/finnhub';
 
 // ─── 2026 Known Major Event Schedules ────────────────────────────────────────
 
@@ -110,13 +111,6 @@ export async function GET() {
     const now = new Date();
     const year = now.getFullYear();
 
-    // Build calendar of events
-    const allEvents = [
-      ...FOMC_DATES_2026,
-      ...ECONOMIC_EVENTS_2026,
-      ...buildOPEXEvents(year),
-    ];
-
     // Determine "today" and "end of this week" (Sunday ET)
     const todayStr = toDateStr(now);
 
@@ -126,6 +120,23 @@ export async function GET() {
     const endOfWeek = new Date(now);
     endOfWeek.setDate(now.getDate() + daysUntilSunday);
     const endOfWeekStr = toDateStr(endOfWeek);
+
+    // Fetch real-time economic events from Finnhub
+    const finnhubEvents = await finnhubClient.getEconomicCalendar(todayStr, endOfWeekStr);
+    const mappedFinnhub = finnhubEvents
+      .filter(e => e.country === 'United States')
+      .map(e => ({
+        date: e.time.split(' ')[0], // YYYY-MM-DD
+        label: e.event,
+        type: 'macro'
+      }));
+
+    // Build calendar of events
+    const allEvents = [
+      ...FOMC_DATES_2026,
+      ...mappedFinnhub,
+      ...buildOPEXEvents(year),
+    ];
 
     // Filter: today + rest of this week
     const todayEvents = allEvents

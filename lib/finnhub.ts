@@ -167,6 +167,11 @@ class FinnhubClient {
     async getQuote(symbol: string): Promise<{ c: number; d: number; dp: number } | null> {
         return await this.rateLimitedFetch('/quote', { symbol });
     }
+
+    async getEconomicCalendar(from: string, to: string): Promise<any[]> {
+        const data = await this.rateLimitedFetch('/calendar/economic', { from, to });
+        return data?.economicCalendar || [];
+    }
 }
 
 export const finnhubClient = new FinnhubClient();
