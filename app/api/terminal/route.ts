@@ -156,6 +156,30 @@ async function getTechnicalSnapshotYahoo(symbol: string) {
   }
 }
 
+// ── Market Status (ET Time) ──────────────────────────────────────────────────
+function getMarketStatus() {
+  const now = new Date();
+  const etTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+    weekday: 'long'
+  }).formatToParts(now);
+
+  const hour = parseInt(etTime.find(x => x.type === 'hour')?.value || '0');
+  const minute = parseInt(etTime.find(x => x.type === 'minute')?.value || '0');
+  const weekday = etTime.find(x => x.type === 'weekday')?.value;
+
+  const isWeekend = weekday === 'Saturday' || weekday === 'Sunday';
+  const totalMinutes = hour * 60 + minute;
+  const openMinutes = 9 * 60 + 30; // 09:30
+  const closeMinutes = 16 * 60; // 16:00
+
+  const isOpen = !isWeekend && totalMinutes >= openMinutes && totalMinutes < closeMinutes;
+  return { isOpen, label: isOpen ? 'LIVE' : 'MARKET CLOSED' };
+}
+
 // ── Sector trending: use Alpaca 30-day bars → check vs 20d avg ───────────────
 async function getSectorTrending(symbol: string): Promise<boolean> {
   try {
@@ -346,7 +370,12 @@ export async function GET(request: NextRequest) {
     else if (rsi >= 70) momentumWeight = 30;
     else if (rsi <= 30) momentumWeight = 60;
     if (relVolume > 1.2 && daily.ema9 && price > daily.ema9) momentumWeight += 10;
-    const momentumScore = Math.min(100, momentumWeight);
+    
+    // RSI Divergence Impact
+    if (divergence?.type === 'BULLISH') momentumWeight += 15;
+    if (divergence?.type === 'BEARISH') momentumWeight -= 15;
+
+    const momentumScore = Math.max(0, Math.min(100, momentumWeight));
 
     const volatilityScore = Math.max(0, Math.min(100, 100 - (vix - 15) * (100 / 15)));
 
@@ -447,12 +476,22 @@ export async function GET(request: NextRequest) {
 
     if (process.env.GEMINI_API_KEY) {
       try {
+        const currentQuote = dataMap[benchmark] || { price: price, changePercent: 0, changeAmount: 0 };
+        const qPct = currentQuote.changePercent;
+
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const prompt = `You are a quantitative market analyst. Analyze ${benchmark} (${mode} mode) with this data:
 
   SCORE: ${totalScore}/100 (${scoreDelta > 0 ? '+' : ''}${scoreDelta} change)
   TREND: Daily EMAs ${dailyBullEmas}/5 bullish | Weekly EMAs ${weeklyBullEmas}/5 bullish
-  MOMENTUM: RSI ${rsi.toFixed(1)} | MACD ${macdBullish ? 'Bullish Cross' : 'Bearish Cross'} | RelVol ${relVolume.toFixed(2)}x | Divergence: ${divergence?.type || 'None'}
+      Benchmark: ${benchmark}
+      Current Mode: ${mode} (${mode === 'TACTICAL' ? 'Short-term focus' : 'Swing/Mid-term focus'})
+      Current Price: $${price.toFixed(2)} (${qPct.toFixed(2)}% from close)
+      RSI (14d): ${rsi.toFixed(2)}
+      RSI Divergence: ${divergence?.type || 'None'} (Bullish/Bearish signal now factored into Momentum Score/Total Score)
+      MACD Bullish: ${macdBullish ? 'YES' : 'NO'}
+      Bollinger Band Width: ${bbWidth !== null ? (bbWidth * 100).toFixed(2) + '%' : 'N/A'}
+      Relative Volume (30d): ${relVolume.toFixed(1)}x
   VOLATILITY: VIX ${vix.toFixed(2)} (${vixPercentile}th percentile vs 52-week) | Put/Call ${breadthInternals.putCall !== null ? breadthInternals.putCall.toFixed(2) : 'N/A'}
   BREADTH: Sectors positive ${positiveSectors.length}/11 | S&P 500 stocks above 20MA: ${breadthInternals.above20?.toFixed(1) ?? 'N/A'}% | 50MA: ${breadthInternals.above50?.toFixed(1) ?? 'N/A'}% | 200MA: ${breadthInternals.above200?.toFixed(1) ?? 'N/A'}%
   MACRO: 2Y change ${irxChange.toFixed(2)}% | 5Y change ${fvxChange.toFixed(2)}% | 10Y change ${tnxChange.toFixed(2)}% | 30Y change ${tyxChange.toFixed(2)}% | DXY change ${dxyChange.toFixed(2)}%
@@ -480,6 +519,7 @@ export async function GET(request: NextRequest) {
       totalScore,
       deployCapital,
       positionSize,
+      marketStatus: getMarketStatus(),
       scoringWeights,
       signalReadiness,
       eventAlert,

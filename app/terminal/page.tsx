@@ -195,45 +195,66 @@ export default function TerminalPage() {
               {data?.topBar?.map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-1.5 border-r border-white/10 pr-4 last:border-0 last:pr-0">
                   <span className="text-[10px] font-bold text-white/40 uppercase">{item.symbol}</span>
-                  <span className="text-xs font-bold tabular-nums">${item.price?.toFixed(2)}</span>
+                  <span className="text-xs font-bold tabular-nums">
+                    ${item.price?.toFixed(2)}
+                    {marketStatus !== "OPEN" && <span className="text-[8px] opacity-30 ml-1 font-normal tracking-tighter">CLOSE</span>}
+                  </span>
                   <div className={`flex items-center gap-1 text-[10px] font-bold ${item.change >= 0 ? "text-[#00FF94]" : "text-[#FF2E2E]"}`}>
                     <span>{item.changeAmount >= 0 ? "+" : ""}{item.changeAmount?.toFixed(2)}</span>
                     <span className="opacity-40 text-white/20">|</span>
-                    <span>{item.change >= 0 ? "+" : ""}{item.change?.toFixed(2)}%</span>
+                    <span>{item.changePercent >= 0 ? "+" : ""}{item.changePercent?.toFixed(2)}%</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Countdown */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-end gap-0.5">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-white/20" />
-                  <span className="text-[10px] font-bold text-white/30">
-                    {minutesLeft}:{secondsLeft.toString().padStart(2, "0")}
-                  </span>
-                </div>
-                <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#00FF94]/50 rounded-full transition-all duration-1000" style={{ width: `${progressPct}%` }} />
+            {/* Refresh Timer */}
+            <div className="flex items-center gap-3 bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 min-w-[120px]">
+              <div className="relative w-6 h-6 shrink-0">
+                <svg className="w-6 h-6 transform -rotate-90">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="transparent" className="text-white/5" />
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="transparent" className="text-[#00FF94] transition-all duration-1000"
+                    strokeDasharray={62.8} strokeDashoffset={62.8 * (1 - progressPct / 100)} />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Clock className="w-2.5 h-2.5 text-white/40" />
                 </div>
               </div>
-              <button onClick={() => fetchData(benchmark, mode)}
-                className="p-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-all">
-                <RefreshCw className={`w-4 h-4 text-white/60 hover:text-white ${loading ? "animate-spin" : ""}`} />
-              </button>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold tabular-nums leading-none">
+                  {minutesLeft}:{secondsLeft.toString().padStart(2, "0")}
+                </span>
+                <span className="text-[8px] text-white/20 uppercase tracking-tighter font-bold">Refresh</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {loading && data && (
+        <div className="fixed inset-0 z-30 bg-[#05070A]/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-3 bg-[#0B0F17] border border-white/10 rounded-xl px-6 py-3">
+            <RefreshCw className="w-4 h-4 text-[#00FF94] animate-spin" />
+            <span className="text-xs font-bold text-[#00FF94] tracking-widest uppercase">Updating...</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Main Content ────────────────────────────────────── */}
       <div className="p-6 max-w-[1800px] mx-auto">
         {loading && data && (
           <div className="fixed inset-0 z-30 bg-[#05070A]/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
             <div className="flex items-center gap-3 bg-[#0B0F17] border border-white/10 rounded-xl px-6 py-3">
-              <RefreshCw className="w-4 h-4 text-[#00FF94] animate-spin" />
-              <span className="text-xs font-bold text-[#00FF94] tracking-widest uppercase">Updating...</span>
+              <div className="px-2 py-0.5 rounded border border-[#00FF94]/20 bg-[#00FF94]/5 select-none">
+                <span className="text-[10px] font-extrabold tracking-widest text-[#00FF94]">V5.0</span>
+              </div>
+              {data?.marketStatus && (
+                <div className={`px-2 py-0.5 rounded border ${data.marketStatus.isOpen ? "border-[#00FF94]/20 bg-[#00FF94]/5" : "border-white/10 bg-white/5"} select-none`}>
+                  <span className={`text-[9px] font-extrabold tracking-widest ${data.marketStatus.isOpen ? "text-[#00FF94]" : "text-white/40 uppercase"}`}>
+                    {data.marketStatus.label}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
