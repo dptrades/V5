@@ -187,27 +187,68 @@ async function getVixPercentile(currentVix: number): Promise<number> {
   }
 }
 
-// ── S&P 500 breadth internals via Yahoo Finance ───────────────────────────────
+// ── S&P 500 breadth internals — computed from a representative 50-stock basket ─
+const SP500_BASKET = [
+  'AAPL','MSFT','NVDA','AMZN','META','GOOGL','TSLA','AVGO','JPM','WMT',
+  'MA','UNH','XOM','PG','ORCL','JNJ','HD','V','COST','MRK',
+  'BAC','ABBV','NFLX','CRM','AMD','LLY','CVX','KO','PEP','WFC',
+  'ADBE','MCD','CSCO','ABT','ACN','LIN','DHR','NKE','PM','INTC',
+  'TXN','QCOM','CMCSA','VZ','IBM','GE','UNP','CAT','HON','RTX',
+];
+
 async function getBreadthInternals(): Promise<{ above20: number | null; above50: number | null; above200: number | null; putCall: number | null }> {
   try {
-    const symbols = ['^MMTW', '^MMFI', '^MMTH', '^CPCE'];
-    const results = await Promise.all(
-      symbols.map(s => yahooFinance.quote(s).catch(() => null))
+    // Fetch 205 days of bars to cover 200-day MA + buffer, in batches of 10
+    const BATCH_SIZE = 10;
+    const batches: string[][] = [];
+    for (let i = 0; i < SP500_BASKET.length; i += BATCH_SIZE) {
+      batches.push(SP500_BASKET.slice(i, i + BATCH_SIZE));
+    }
+
+    const batchResults = await Promise.all(
+      batches.map(batch =>
+        Promise.all(batch.map(sym => fetchAlpacaBars(sym, '1Day', 205).catch(() => null)))
+      )
     );
-    const get = (i: number) => {
-      const q = results[i];
-      return (q as any)?.regularMarketPrice ?? null;
-    };
+    const allBars: (any[] | null)[] = batchResults.flat();
+
+    let above20Count = 0, above50Count = 0, above200Count = 0, valid = 0;
+
+    allBars.forEach(bars => {
+      if (!bars || bars.length < 25) return;
+      valid++;
+      const closes = bars.map((b: any) => b.c);
+      const last = closes[closes.length - 1];
+
+      const avg20  = closes.slice(-21, -1).reduce((a: number, c: number) => a + c, 0) / 20;
+      const avg50  = closes.length >= 51  ? closes.slice(-51, -1).reduce((a: number, c: number) => a + c, 0) / 50  : null;
+      const avg200 = closes.length >= 201 ? closes.slice(-201, -1).reduce((a: number, c: number) => a + c, 0) / 200 : null;
+
+      if (last > avg20)  above20Count++;
+      if (avg50  && last > avg50)  above50Count++;
+      if (avg200 && last > avg200) above200Count++;
+    });
+
+    if (valid === 0) return { above20: null, above50: null, above200: null, putCall: null };
+
+    // Put/Call ratio: still try Yahoo as a best-effort, fall back to null
+    let putCall: number | null = null;
+    try {
+      const pcq = await yahooFinance.quote('^CPCE').catch(() => null);
+      putCall = (pcq as any)?.regularMarketPrice ?? null;
+    } catch { putCall = null; }
+
     return {
-      above20:  get(0),
-      above50:  get(1),
-      above200: get(2),
-      putCall:  get(3),
+      above20:  Math.round((above20Count  / valid) * 100),
+      above50:  Math.round((above50Count  / valid) * 100),
+      above200: Math.round((above200Count / valid) * 100),
+      putCall,
     };
   } catch {
     return { above20: null, above50: null, above200: null, putCall: null };
   }
 }
+
 
 export async function GET(request: NextRequest) {
   try {
