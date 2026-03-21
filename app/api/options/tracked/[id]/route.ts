@@ -3,11 +3,12 @@ import { deleteTrackedOption } from '@/lib/tracking';
 
 export async function DELETE(
     req: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
-        const id = decodeURIComponent(params.id);
+        const { id: rawId } = await params;
+        const id = decodeURIComponent(rawId);
+        
         const success = deleteTrackedOption(id);
 
         if (success) {

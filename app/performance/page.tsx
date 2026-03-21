@@ -20,7 +20,7 @@ export default function PerformancePage() {
     const fetchTracked = async (isManualRefresh = false) => {
         if (isManualRefresh) setIsRefreshing(true);
         try {
-            const res = await fetch('/api/options/tracked');
+            const res = await fetch('/api/options/tracked', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setTrackedOptions(data);
@@ -38,20 +38,22 @@ export default function PerformancePage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to stop tracking this option?')) return;
-
+        // Removed native confirm to ensure 100% compatibility across all browsers
+        console.log(`[Performance] Deleting tracker for:`, id);
         try {
             const res = await fetch(`/api/options/tracked/${encodeURIComponent(id)}`, {
                 method: 'DELETE',
+                cache: 'no-store'
             });
             if (res.ok) {
                 setTrackedOptions(prev => prev.filter(o => o.id !== id));
             } else {
-                alert('Failed to delete tracked option');
+                const text = await res.text();
+                alert(`Failed to delete (Status ${res.status}): ${text}`);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error('Error deleting option:', e);
-            alert('An error occurred while deleting');
+            alert(`Network error: ${e.message}`);
         }
     };
 
@@ -185,7 +187,7 @@ export default function PerformancePage() {
                                         <div key={option.id} className="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-6 backdrop-blur-sm hover:border-blue-500/30 transition-all group relative">
                                             <button
                                                 onClick={() => handleDelete(option.id)}
-                                                className="absolute top-4 right-4 p-2 bg-gray-900/50 border border-gray-700/50 rounded-xl text-gray-500 hover:text-rose-400 hover:border-rose-500/50 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                                                className="absolute top-4 right-4 p-2 bg-gray-900/50 border border-gray-700/50 rounded-xl text-gray-500 hover:text-rose-400 hover:border-rose-500/50 transition-colors z-20 opacity-40 group-hover:opacity-100"
                                                 title="Stop Tracking"
                                             >
                                                 <Trash2 className="w-4 h-4" />

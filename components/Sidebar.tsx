@@ -162,7 +162,7 @@ export default function Sidebar({
                         : 'text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-transparent'
                         }`}
                 >
-                    <span className="truncate">🖥️ DPTrade Terminal</span>
+                    <span className="truncate">🖥️ 3 Index Terminal</span>
                 </Link>
                 <Link
                     href="/pre-market"

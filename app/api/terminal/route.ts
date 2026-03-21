@@ -202,10 +202,18 @@ function getTerminalCache(key: string) {
   try {
     if (!fs.existsSync(CACHE_FILE)) return null;
     const cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
-    return cache[key] || null;
+    const entry = cache[key];
+    if (!entry) return null;
+    return entry;
   } catch (e) {
     return null;
   }
+}
+
+function isCacheValid(entry: any, ttlMs: number) {
+  if (!entry || !entry.cachedAt) return false;
+  const age = Date.now() - new Date(entry.cachedAt).getTime();
+  return age < ttlMs;
 }
 
 // ── Sector trending: use Alpaca 30-day bars → check vs 20d avg ───────────────
@@ -310,36 +318,62 @@ export async function GET(request: NextRequest) {
       const cached = getTerminalCache(cacheKey);
       if (cached) {
         console.log(`[Terminal] Cache hit for ${cacheKey} (market closed)`);
-        // Return cache but update the current marketStatus and score history
-        // Use a 24-hour window for "stale" cache (or just allow it)
+        
+        // SYNC HEADER: Get the absolute latest market prices from the global cache
+        const globalMarket = getTerminalCache('__GLOBAL_MARKET__');
+        
         return NextResponse.json({
           ...cached,
+          topBar: globalMarket?.topBar || cached.topBar, // Prefer global sync
           marketStatus, // CURRENT real-time status
         });
       }
     }
     console.log(`[Terminal] Cache miss or market open — fetching fresh data for ${cacheKey}`);
 
-    const baseSymbols = ['QQQ', 'SPY', 'IWM', '^VIX', '^TNX', 'DX-Y.NYB'];
-    const sectorSymbols = ['XLE', 'XLI', 'XLU', 'XLK', 'XLF', 'XLV', 'XLY', 'XLP', 'XLRE', 'XLC', 'XLB'];
+    // ── Shared Market Data Logic ──
+    const globalCache = getTerminalCache('__GLOBAL_MARKET__');
+    const useSharedMarket = isCacheValid(globalCache, 60_000); // 60s TTL for shared market data
 
-    // ── Fetch all data in parallel ─────────────────────────────────────────
+    const sectorSymbols = ['XLE', 'XLI', 'XLU', 'XLK', 'XLF', 'XLV', 'XLY', 'XLP', 'XLRE', 'XLC', 'XLB'];
     const ETF_QUOTES = ['SPY', 'QQQ', 'IWM', 'VIXY', ...sectorSymbols];
 
-    const [techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals] = await Promise.all([
-      getTechnicalSnapshot(benchmark),
-      Promise.all(sectorSymbols.map(s => getSectorTrending(s))),
-      Promise.all(ETF_QUOTES.map(s => fetchAlpacaQuote(s))),
-      fetchAlpacaQuote('UUP').catch(() => null),
-      yahooFinance.quote('^VIX').catch(() => null),
-      yahooFinance.quote('DX-Y.NYB').catch(() => null),
-      yahooFinance.quote('^IRX').catch(() => null),
-      yahooFinance.quote('^FVX').catch(() => null),
-      yahooFinance.quote('^TNX').catch(() => null),
-      yahooFinance.quote('^TYX').catch(() => null),
-      yahooFinance.quote(['SPY', 'QQQ', 'IWM']).catch(() => []),
-      getBreadthInternals(),
-    ]);
+    let techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals;
+
+    if (useSharedMarket) {
+      console.log(`[Terminal] Using shared global market data for ${benchmark}`);
+      // Only fetch the benchmark-specific technical snapshot
+      techSnapshot = await getTechnicalSnapshot(benchmark);
+      
+      // Map global data back to local variables for processing
+      sectorData = globalCache.raw?.sectorData || [];
+      etfQuotes = globalCache.raw?.etfQuotes || [];
+      dxyData = globalCache.raw?.dxyData || null;
+      yahooVix = globalCache.raw?.yahooVix || null;
+      yahooDxy = globalCache.raw?.yahooDxy || null;
+      yahooIrx = globalCache.raw?.yahooIrx || null;
+      yahooFvx = globalCache.raw?.yahooFvx || null;
+      yahooTnx = globalCache.raw?.yahooTnx || null;
+      yahooTyx = globalCache.raw?.yahooTyx || null;
+      yahooMain = globalCache.raw?.yahooMain || [];
+      breadthInternals = globalCache.raw?.breadthInternals || null;
+    } else {
+      console.log(`[Terminal] Shared market cache stale/missing — fetching full market state`);
+      [techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals] = await Promise.all([
+        getTechnicalSnapshot(benchmark),
+        Promise.all(sectorSymbols.map(s => getSectorTrending(s))),
+        Promise.all(ETF_QUOTES.map(s => fetchAlpacaQuote(s))),
+        fetchAlpacaQuote('UUP').catch(() => null),
+        yahooFinance.quote('^VIX').catch(() => null),
+        yahooFinance.quote('DX-Y.NYB').catch(() => null),
+        yahooFinance.quote('^IRX').catch(() => null),
+        yahooFinance.quote('^FVX').catch(() => null),
+        yahooFinance.quote('^TNX').catch(() => null),
+        yahooFinance.quote('^TYX').catch(() => null),
+        yahooFinance.quote(['SPY', 'QQQ', 'IWM']).catch(() => []),
+        getBreadthInternals(),
+      ]);
+    }
 
     const dataMap: Record<string, { price: number; changePercent: number; changeAmount: number }> = {};
     const fetchResults = etfQuotes as ({ price: number; changePercent: number; changeAmount: number } | null)[];
@@ -645,7 +679,34 @@ export async function GET(request: NextRequest) {
       ]
     };
 
-    // Save to cache if market is OPEN or if no cache exists yet (initial seed)
+    // 1. Save/Update the Global Market Cache if we just performed a fresh fetch
+    if (!useSharedMarket) {
+      console.log(`[Terminal] Updating __GLOBAL_MARKET__ cache (fresher state available)`);
+      saveTerminalCache('__GLOBAL_MARKET__', {
+        topBar: finalResponse.topBar,
+        marketStatus: finalResponse.marketStatus,
+        metrics: {
+            macro: finalResponse.metrics.macro,
+            volatility: finalResponse.metrics.volatility,
+            breadth: finalResponse.metrics.breadth
+        },
+        raw: {
+          sectorData,
+          etfQuotes,
+          dxyData,
+          yahooVix,
+          yahooDxy,
+          yahooIrx,
+          yahooFvx,
+          yahooTnx,
+          yahooTyx,
+          yahooMain,
+          breadthInternals
+        }
+      });
+    }
+
+    // 2. Save the benchmark-specific result
     const existingCache = getTerminalCache(cacheKey);
     if (marketStatus.isOpen || !existingCache) {
       saveTerminalCache(cacheKey, finalResponse);

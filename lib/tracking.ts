@@ -152,13 +152,22 @@ export async function updateTrackedOptions(getLatestData: (option: TrackedOption
     }
 
     if (hasChanges) {
-        saveTrackedOptions(tracked);
+        // RE-READ the file right before saving to avoid overwriting recent DEL operations
+        const currentStored = getTrackedOptions();
+        const finalToSave = currentStored.map(storedItem => {
+            const updatedItem = tracked.find(t => t.id === storedItem.id);
+            // If we have an updated version of THIS item, use it. 
+            // Otherwise keep the stored version (which might have been recently modified by another process).
+            return updatedItem || storedItem;
+        });
+        saveTrackedOptions(finalToSave);
     }
 }
 
 export function deleteTrackedOption(id: string) {
     const tracked = getTrackedOptions();
-    const updated = tracked.filter(o => o.id !== id);
+    const cleanId = id.trim();
+    const updated = tracked.filter(o => o.id.trim() !== cleanId);
     if (tracked.length !== updated.length) {
         saveTrackedOptions(updated);
         return true;

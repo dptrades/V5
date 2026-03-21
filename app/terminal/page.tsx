@@ -160,7 +160,7 @@ export default function TerminalPage() {
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full shrink-0 ${statusCfg.dot} ${marketStatus === "OPEN" ? "animate-pulse" : ""}`} />
-                <h1 className="text-sm font-black uppercase tracking-[0.25em] text-white truncate">DPTrade Terminal</h1>
+                <h1 className="text-sm font-black uppercase tracking-[0.25em] text-white truncate">3 Index Terminal</h1>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${statusCfg.color}`}>{statusCfg.label}</span>
