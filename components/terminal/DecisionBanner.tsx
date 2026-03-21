@@ -66,11 +66,11 @@ const DecisionBanner: React.FC<DecisionBannerProps> = ({
         </div>
       </div>
 
-      {/* Score + Position */}
+      {/* Position Size Row */}
       <div className="flex items-center justify-between border-t border-white/5 pt-4">
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-white/60 font-bold">Quality Score</span>
-          <span className={`text-4xl font-black tabular-nums ${cfg.color}`}>{totalScore}<span className="text-lg text-white/60">/100</span></span>
+          <span className="text-[10px] uppercase tracking-widest text-white/60 font-bold">Execution Action</span>
+          <div className={`text-xl font-black ${cfg.color}`}>{deployCapital === 'AVOID' ? 'NO TRADE' : 'ACTIVE'}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-[10px] uppercase tracking-widest text-white/60 font-bold">Position Size</span>

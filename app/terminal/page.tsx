@@ -398,17 +398,6 @@ export default function TerminalPage() {
               </WidgetErrorBoundary>
             </div>
 
-            {/* AI Assessment */}
-            <WidgetErrorBoundary title="Terminal Analysis">
-              {!data && loading ? <WidgetSkeleton className="h-24" /> : (
-                <AITerminalAssessment
-                  assessment={data?.ai?.assessment || "Analyzing market internals..."}
-                  suggestedAction={data?.ai?.suggestedAction || "Monitor internals."}
-                  riskLevel={data?.ai?.riskLevel || "Moderate"}
-                />
-              )}
-            </WidgetErrorBoundary>
-
             {/* Conditions Checklist */}
             {(!data && loading) ? <WidgetSkeleton className="h-48" /> : data?.checklist && (
               <WidgetErrorBoundary title="Conditions Checklist">

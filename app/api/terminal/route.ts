@@ -390,6 +390,18 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    let aiData = {
+      assessment: "Analyzing market internals...",
+      suggestedAction: "Monitor internals.",
+      riskLevel: "Moderate" as any,
+      score: 5.0,
+      signal: "NEUTRAL",
+      executionAction: "WAIT" as any,
+      entryPrice: dataMap[benchmark]?.price || 0,
+      entryReason: "Await confluence confirmation.",
+      techDetails: null as any
+    };
+
     // VIX handling: Primary from Yahoo index, then Alpaca VIXY, then fallback
     const vixPrice = (yahooVix as any)?.regularMarketPrice || dataMap['VIXY']?.price || 20;
     const vixChange = (yahooVix as any)?.regularMarketChangePercent || dataMap['VIXY']?.changePercent || 0;
@@ -548,35 +560,54 @@ export async function GET(request: NextRequest) {
         const qPct = currentQuote.changePercent;
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = `You are a quantitative market analyst. Analyze ${benchmark} (${mode} mode) with this data:
+        const promptText = `You are a Senior Quantitative Strategist for a Tier-1 Hedge Fund. 
+Analyze ${benchmark} (${mode} mode) using the provided data points. 
 
-  SCORE: ${totalScore}/100 (${scoreDelta > 0 ? '+' : ''}${scoreDelta} change)
-  TREND: Daily EMAs ${dailyBullEmas}/5 bullish | Weekly EMAs ${weeklyBullEmas}/5 bullish
-      Benchmark: ${benchmark}
-      Current Mode: ${mode} (${mode === 'TACTICAL' ? 'Short-term focus' : 'Swing/Mid-term focus'})
-      Current Price: $${price.toFixed(2)} (${qPct.toFixed(2)}% from close)
-      RSI (14d): ${rsi.toFixed(2)}
-      RSI Divergence: ${divergence?.type || 'None'} (Bullish/Bearish signal now factored into Momentum Score/Total Score)
-      MACD Bullish: ${macdBullish ? 'YES' : 'NO'}
-      Bollinger Band Width: ${bbWidth !== null ? (bbWidth * 100).toFixed(2) + '%' : 'N/A'}
-      Relative Volume (30d): ${relVolume.toFixed(1)}x
-  VOLATILITY: VIX ${vix.toFixed(2)} (${vixPercentile}th percentile vs 52-week) | Put/Call ${breadthInternals.putCall !== null ? breadthInternals.putCall.toFixed(2) : 'N/A'}
-  BREADTH: Sectors positive ${positiveSectors.length}/11 | S&P 500 stocks above 20MA: ${breadthInternals.above20?.toFixed(1) ?? 'N/A'}% | 50MA: ${breadthInternals.above50?.toFixed(1) ?? 'N/A'}% | 200MA: ${breadthInternals.above200?.toFixed(1) ?? 'N/A'}%
-  MACRO: 2Y change ${irxChange.toFixed(2)}% | 5Y change ${fvxChange.toFixed(2)}% | 10Y change ${tnxChange.toFixed(2)}% | 30Y change ${tyxChange.toFixed(2)}% | DXY change ${dxyChange.toFixed(2)}%
-  ${emaDivergence ? '⚠️ EMA DIVERGENCE: Daily and weekly trend conflict — high caution.' : ''}
-  ${breadthInternals.putCall !== null && breadthInternals.putCall > 1.0 ? '⚠️ Elevated put/call ratio — options market pricing in downside risk.' : ''}
-  ${vixPercentile > 75 ? '⚠️ VIX in extreme fear territory — historically a mean-reversion zone.' : ''}
-  ${yieldImpact > 1.0 ? '⚠️ Yield curve is spiking aggressively, creating strong valuation headwinds.' : ''}
+CONTEXT:
+- Benchmark: ${benchmark}
+- Current Price: $${price.toFixed(2)} (${qPct > 0 ? '+' : ''}${qPct.toFixed(2)}% vs prev close)
+- Tactical Score: ${totalScore}/100
+- VIX: ${vix.toFixed(2)} (${vixPercentile}th percentile - ${vixPercentile > 80 ? 'Extreme Fear/Bottoming' : vixPercentile < 20 ? 'Extreme Complacency/Exhaustion' : 'Normal'})
+- Market Breadth: ${breadthScore}% (Stocks > 50MA)
+- RSI (14d): ${rsi.toFixed(1)} (${divergence?.type || 'No'} Divergence)
+- EMA Status: Daily ${dailyBullEmas}/5 bullish | Weekly ${weeklyBullEmas}/5 bullish
 
-  Write a 2-sentence plain-English assessment focusing on the most critical signals. Then give a 3-5 word suggested action.
-  Return ONLY JSON: {"assessment": "...", "suggestedAction": "...", "riskLevel": "Low/Moderate/High/Extreme"}`;
-        const result = await model.generateContent(prompt);
+MANDATE:
+- Use professional finance terminology: "Secular Bullish Structural Integrity", "Demand-side Exhaustion", "Mean Reversion Bounce", "Liquidity Magnet", "Hard Ceiling Supply".
+- Be decisive and high-conviction.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "score": (0.0 to 10.0),
+  "signal": "STRONG BUY/BUY/NEUTRAL/SELL/STRONG SELL",
+  "executionAction": "BUY" or "WAIT",
+  "entryPrice": (current or target),
+  "entryReason": "2 sentence expert tactical entry guidance",
+  "assessment": "1 sentence strategic market regime overview",
+  "riskLevel": "Low/Moderate/High/Extreme",
+  "techDetails": {
+    "emas": [{"text": "...", "sentiment": "positive/negative/neutral"}],
+    "rsi": {"text": "...", "sentiment": "positive/negative/neutral"},
+    "bb": {"text": "...", "sentiment": "positive/negative/neutral"},
+    "fvg": {"text": "...", "sentiment": "positive/negative/neutral"},
+    "options": {"text": "Expert interpretation of ${breadthInternals.putCall !== null ? 'PCR ' + breadthInternals.putCall.toFixed(2) : 'institutional flow'}...", "sentiment": "positive/negative/neutral"}
+  }
+}`;
+        const result = await model.generateContent(promptText);
         const jsonMatch = result.response.text().match(/\{[\s\S]*\}/);
+        
         if (jsonMatch) {
-          const ai = JSON.parse(jsonMatch[0]);
-          assessment = ai.assessment || assessment;
-          suggestedAction = ai.suggestedAction || suggestedAction;
-          riskLevel = ai.riskLevel || riskLevel;
+          try {
+            const aiJson = JSON.parse(jsonMatch[0]);
+            aiData = {
+              ...aiJson,
+              assessment: aiJson.assessment || aiJson.signal,
+              suggestedAction: aiJson.signal || aiJson.suggestedAction,
+              riskLevel: aiJson.riskLevel || "Moderate"
+            };
+          } catch (e) {
+            console.error("Failed to parse Gemini AI JSON:", e);
+          }
         }
       } catch (e) { console.error("Gemini error:", e); }
     }
@@ -670,7 +701,7 @@ export async function GET(request: NextRequest) {
         change: dataMap[sym]?.changePercent ?? 0,
         trending: sectorData[i] as boolean
       })).sort((a: any, b: any) => b.change - a.change),
-      ai: { assessment, suggestedAction, riskLevel },
+      ai: aiData,
       topBar: [
         { symbol: 'SPY', price: dataMap['SPY']?.price, change: dataMap['SPY']?.changePercent, changeAmount: dataMap['SPY']?.changeAmount },
         { symbol: 'QQQ', price: dataMap['QQQ']?.price, change: dataMap['QQQ']?.changePercent, changeAmount: dataMap['QQQ']?.changeAmount },

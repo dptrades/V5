@@ -3,15 +3,15 @@
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 648.57,
-        "change": -1.43358,
-        "changeAmount": -9.43298
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
       },
       {
         "symbol": "QQQ",
-        "price": 582.06,
-        "change": -1.84817,
-        "changeAmount": -10.96
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
       },
       {
         "symbol": "IWM",
@@ -75,9 +75,9 @@
           },
           {
             "label": "VIX Percentile",
-            "value": "50th %ile",
-            "statusLabel": "Normal",
-            "status": "warning"
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
           },
           {
             "label": "Put/Call Ratio",
@@ -86,19 +86,19 @@
           },
           {
             "label": "BB Width",
-            "value": "6.74%",
+            "value": "11.13%",
             "status": "neutral"
           }
         ]
       },
       "breadth": {
-        "value": 0,
+        "value": 9,
         "status": "Weak",
         "type": "negative",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "0/11",
+            "value": "1/11",
             "status": "negative"
           },
           {
@@ -108,17 +108,17 @@
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "0.0%",
+            "value": "8.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "0.0%",
+            "value": "12.0%",
             "status": "negative"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "0.0%",
+            "value": "42.0%",
             "status": "negative"
           }
         ]
@@ -139,8 +139,16 @@
         false
       ],
       "etfQuotes": [
-        null,
-        null,
+        {
+          "price": 649.43,
+          "changePercent": -1.5821298134481119,
+          "changeAmount": -10.440000000000055
+        },
+        {
+          "price": 584.27,
+          "changePercent": -1.4721753794266472,
+          "changeAmount": -8.730000000000018
+        },
         {
           "price": 242.33,
           "changePercent": -2.1225033826766544,
@@ -156,26 +164,62 @@
           "changePercent": -0.058947368421046885,
           "changeAmount": -0.03499999999999659
         },
-        null,
-        null,
-        null,
-        null,
+        {
+          "price": 161.64,
+          "changePercent": -1.4570505395354598,
+          "changeAmount": -2.390000000000015
+        },
+        {
+          "price": 44.655,
+          "changePercent": -4.029658284977434,
+          "changeAmount": -1.875
+        },
+        {
+          "price": 135.34,
+          "changePercent": -2.2392372146778348,
+          "changeAmount": -3.0999999999999943
+        },
+        {
+          "price": 49.08,
+          "changePercent": 0.20416496529195882,
+          "changeAmount": 0.10000000000000142
+        },
         {
           "price": 145.38,
           "changePercent": -0.8457236393397962,
           "changeAmount": -1.240000000000009
         },
-        null,
+        {
+          "price": 107.745,
+          "changePercent": -1.782133090246124,
+          "changeAmount": -1.9549999999999983
+        },
         {
           "price": 81.295,
           "changePercent": -0.8476643493108832,
           "changeAmount": -0.6949999999999932
         },
-        null,
-        null,
-        null
+        {
+          "price": 40.61,
+          "changePercent": -3.1250000000000053,
+          "changeAmount": -1.3100000000000023
+        },
+        {
+          "price": 112.23,
+          "changePercent": -0.8218451749734824,
+          "changeAmount": -0.9299999999999926
+        },
+        {
+          "price": 46.99,
+          "changePercent": -1.5710096355257646,
+          "changeAmount": -0.75
+        }
       ],
-      "dxyData": null,
+      "dxyData": {
+        "price": 27.68,
+        "changePercent": 0.3625815808556977,
+        "changeAmount": 0.10000000000000142
+      },
       "yahooVix": {
         "language": "en-US",
         "region": "US",
@@ -183,18 +227,21 @@
         "typeDisp": "Index",
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
+        "currency": "USD",
+        "regularMarketChangePercent": 11.305076,
+        "regularMarketPrice": 26.78,
         "corporateActions": [],
         "regularMarketTime": "2026-03-20T20:15:01.000Z",
-        "marketState": "POSTPOST",
-        "currency": "USD",
-        "fiftyDayAverage": 19.9456,
-        "fiftyDayAverageChange": 6.8344,
-        "fiftyDayAverageChangePercent": 0.34265202,
-        "twoHundredDayAverage": 17.7129,
-        "twoHundredDayAverageChange": 9.067101,
-        "twoHundredDayAverageChangePercent": 0.5118925,
         "shortName": "CBOE Volatility Index",
         "longName": "CBOE Volatility Index",
+        "marketState": "POSTPOST",
+        "exchange": "CXI",
+        "messageBoardId": "finmb_INDEXVIX",
+        "exchangeTimezoneName": "America/Chicago",
+        "exchangeTimezoneShortName": "CDT",
+        "gmtOffSetMilliseconds": -18000000,
+        "market": "cboe_market",
+        "esgPopulated": false,
         "sourceInterval": 15,
         "exchangeDataDelayedBy": 0,
         "tradeable": false,
@@ -230,15 +277,12 @@
         "fiftyTwoWeekLow": 13.38,
         "fiftyTwoWeekHigh": 60.13,
         "fiftyTwoWeekChangePercent": 53.203667,
-        "exchange": "CXI",
-        "messageBoardId": "finmb_INDEXVIX",
-        "exchangeTimezoneName": "America/Chicago",
-        "exchangeTimezoneShortName": "CDT",
-        "gmtOffSetMilliseconds": -18000000,
-        "market": "cboe_market",
-        "esgPopulated": false,
-        "regularMarketChangePercent": 11.305076,
-        "regularMarketPrice": 26.78,
+        "fiftyDayAverage": 19.9456,
+        "fiftyDayAverageChange": 6.8344,
+        "fiftyDayAverageChangePercent": 0.34265202,
+        "twoHundredDayAverage": 17.7129,
+        "twoHundredDayAverageChange": 9.067101,
+        "twoHundredDayAverageChangePercent": 0.5118925,
         "symbol": "^VIX"
       },
       "yahooDxy": {
@@ -249,10 +293,13 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "regularMarketChangePercent": -0.14451495,
-        "regularMarketPrice": 99.503,
+        "tradeable": false,
+        "cryptoTradeable": false,
         "corporateActions": [],
         "regularMarketTime": "2026-03-20T20:59:59.000Z",
+        "marketState": "REGULAR",
+        "shortName": "ICE US Dollar Index - Index - C",
+        "longName": "US Dollar Index",
         "exchange": "NYB",
         "messageBoardId": "finmb_INDEXDX-Y.NYB",
         "exchangeTimezoneName": "America/New_York",
@@ -290,8 +337,6 @@
         "fiftyTwoWeekLow": 95.55,
         "fiftyTwoWeekHigh": 104.68,
         "fiftyTwoWeekChangePercent": -4.4216394,
-        "shortName": "ICE US Dollar Index - Index - C",
-        "longName": "US Dollar Index",
         "fiftyDayAverage": 98.2032,
         "fiftyDayAverageChange": 1.299797,
         "fiftyDayAverageChangePercent": 0.013235791,
@@ -300,9 +345,8 @@
         "twoHundredDayAverageChangePercent": 0.011273064,
         "sourceInterval": 30,
         "exchangeDataDelayedBy": 10,
-        "tradeable": false,
-        "cryptoTradeable": false,
-        "marketState": "REGULAR",
+        "regularMarketChangePercent": -0.14451495,
+        "regularMarketPrice": 99.503,
         "displayName": "US Dollar Index",
         "symbol": "DX-Y.NYB"
       },
@@ -314,12 +358,11 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "longName": "13 WEEK TREASURY BILL",
-        "regularMarketChangePercent": 0.16611412,
-        "regularMarketPrice": 3.618,
+        "marketState": "POSTPOST",
+        "tradeable": false,
+        "cryptoTradeable": false,
         "corporateActions": [],
         "regularMarketTime": "2026-03-20T18:59:54.000Z",
-        "shortName": "13 WEEK TREASURY BILL",
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXIRX",
         "exchangeTimezoneName": "America/Chicago",
@@ -327,9 +370,18 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
-        "marketState": "POSTPOST",
-        "tradeable": false,
-        "cryptoTradeable": false,
+        "regularMarketChangePercent": 0.16611412,
+        "regularMarketPrice": 3.618,
+        "fiftyDayAverage": 5.23192,
+        "fiftyDayAverageChange": -1.6139197,
+        "fiftyDayAverageChangePercent": -0.3084756,
+        "twoHundredDayAverage": 5.254455,
+        "twoHundredDayAverageChange": -1.636455,
+        "twoHundredDayAverageChangePercent": -0.31144145,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "shortName": "13 WEEK TREASURY BILL",
+        "longName": "13 WEEK TREASURY BILL",
         "hasPrePostMarketData": false,
         "firstTradeDateMilliseconds": "1960-01-04T13:20:00.000Z",
         "priceHint": 4,
@@ -361,14 +413,6 @@
         "fiftyTwoWeekLow": 3.61,
         "fiftyTwoWeekHigh": 5.348,
         "fiftyTwoWeekChangePercent": 3.0493855,
-        "fiftyDayAverage": 5.23192,
-        "fiftyDayAverageChange": -1.6139197,
-        "fiftyDayAverageChangePercent": -0.3084756,
-        "twoHundredDayAverage": 5.254455,
-        "twoHundredDayAverageChange": -1.636455,
-        "twoHundredDayAverageChangePercent": -0.31144145,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
         "symbol": "^IRX"
       },
       "yahooFvx": {
@@ -379,30 +423,7 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "fiftyDayAverage": 4.38596,
-        "fiftyDayAverageChange": -0.37396002,
-        "fiftyDayAverageChangePercent": -0.08526298,
-        "twoHundredDayAverage": 4.33374,
-        "twoHundredDayAverageChange": -0.32174015,
-        "twoHundredDayAverageChangePercent": -0.07424076,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
-        "tradeable": false,
-        "cryptoTradeable": false,
         "marketState": "POSTPOST",
-        "exchange": "CGI",
-        "messageBoardId": "finmb_INDEXFVX",
-        "exchangeTimezoneName": "America/Chicago",
-        "exchangeTimezoneShortName": "CDT",
-        "gmtOffSetMilliseconds": -18000000,
-        "market": "usir_market",
-        "esgPopulated": false,
-        "regularMarketChangePercent": 2.3730588,
-        "regularMarketPrice": 4.012,
-        "shortName": "Treasury Yield 5 Years",
-        "longName": "Treasury Yield 5 Years",
-        "corporateActions": [],
-        "regularMarketTime": "2026-03-20T18:59:54.000Z",
         "hasPrePostMarketData": false,
         "firstTradeDateMilliseconds": "1962-01-02T13:20:00.000Z",
         "priceHint": 4,
@@ -434,6 +455,29 @@
         "fiftyTwoWeekLow": 3.282,
         "fiftyTwoWeekHigh": 4.988,
         "fiftyTwoWeekChangePercent": 30.485714,
+        "regularMarketChangePercent": 2.3730588,
+        "regularMarketPrice": 4.012,
+        "corporateActions": [],
+        "regularMarketTime": "2026-03-20T18:59:54.000Z",
+        "exchange": "CGI",
+        "messageBoardId": "finmb_INDEXFVX",
+        "exchangeTimezoneName": "America/Chicago",
+        "exchangeTimezoneShortName": "CDT",
+        "gmtOffSetMilliseconds": -18000000,
+        "market": "usir_market",
+        "esgPopulated": false,
+        "shortName": "Treasury Yield 5 Years",
+        "longName": "Treasury Yield 5 Years",
+        "fiftyDayAverage": 4.38596,
+        "fiftyDayAverageChange": -0.37396002,
+        "fiftyDayAverageChangePercent": -0.08526298,
+        "twoHundredDayAverage": 4.33374,
+        "twoHundredDayAverageChange": -0.32174015,
+        "twoHundredDayAverageChangePercent": -0.07424076,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "tradeable": false,
+        "cryptoTradeable": false,
         "symbol": "^FVX"
       },
       "yahooTnx": {
@@ -447,33 +491,6 @@
         "marketState": "POSTPOST",
         "corporateActions": [],
         "regularMarketTime": "2026-03-20T18:59:54.000Z",
-        "shortName": "CBOE Interest Rate 10 Year T No",
-        "longName": "CBOE Interest Rate 10 Year T No",
-        "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 4.304,
-        "averageDailyVolume3Month": 0,
-        "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 1.0459998,
-        "fiftyTwoWeekLowChangePercent": 0.31270546,
-        "fiftyTwoWeekRange": {
-          "low": 3.345,
-          "high": 4.997
-        },
-        "fiftyTwoWeekHighChange": -0.6060004,
-        "fiftyTwoWeekHighChangePercent": -0.12127284,
-        "fiftyTwoWeekLow": 3.345,
-        "fiftyTwoWeekHigh": 4.997,
-        "fiftyTwoWeekChangePercent": 29.821074,
-        "fiftyDayAverage": 4.37796,
-        "fiftyDayAverageChange": 0.013039589,
-        "fiftyDayAverageChangePercent": 0.0029784623,
-        "twoHundredDayAverage": 4.307575,
-        "twoHundredDayAverageChange": 0.08342457,
-        "twoHundredDayAverageChangePercent": 0.019366944,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
-        "tradeable": false,
-        "cryptoTradeable": false,
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXTNX",
         "exchangeTimezoneName": "America/Chicago",
@@ -499,6 +516,33 @@
         "ask": 0,
         "bidSize": 0,
         "askSize": 0,
+        "fullExchangeName": "Cboe Indices",
+        "regularMarketOpen": 4.304,
+        "averageDailyVolume3Month": 0,
+        "averageDailyVolume10Day": 0,
+        "fiftyTwoWeekLowChange": 1.0459998,
+        "fiftyTwoWeekLowChangePercent": 0.31270546,
+        "fiftyTwoWeekRange": {
+          "low": 3.345,
+          "high": 4.997
+        },
+        "fiftyTwoWeekHighChange": -0.6060004,
+        "fiftyTwoWeekHighChangePercent": -0.12127284,
+        "fiftyTwoWeekLow": 3.345,
+        "fiftyTwoWeekHigh": 4.997,
+        "fiftyTwoWeekChangePercent": 29.821074,
+        "shortName": "CBOE Interest Rate 10 Year T No",
+        "longName": "CBOE Interest Rate 10 Year T No",
+        "fiftyDayAverage": 4.37796,
+        "fiftyDayAverageChange": 0.013039589,
+        "fiftyDayAverageChangePercent": 0.0029784623,
+        "twoHundredDayAverage": 4.307575,
+        "twoHundredDayAverageChange": 0.08342457,
+        "twoHundredDayAverageChangePercent": 0.019366944,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "tradeable": false,
+        "cryptoTradeable": false,
         "symbol": "^TNX"
       },
       "yahooTyx": {
@@ -508,22 +552,7 @@
         "typeDisp": "Index",
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
-        "corporateActions": [],
-        "regularMarketTime": "2026-03-20T18:59:54.000Z",
-        "marketState": "POSTPOST",
         "currency": "USD",
-        "fiftyDayAverage": 4.5123,
-        "fiftyDayAverageChange": 0.44770002,
-        "fiftyDayAverageChangePercent": 0.0992177,
-        "twoHundredDayAverage": 4.44611,
-        "twoHundredDayAverageChange": 0.51389027,
-        "twoHundredDayAverageChangePercent": 0.115582004,
-        "shortName": "Treasury Yield 30 Years",
-        "longName": "Treasury Yield 30 Years",
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
-        "tradeable": false,
-        "cryptoTradeable": false,
         "hasPrePostMarketData": false,
         "firstTradeDateMilliseconds": "1977-02-15T13:20:00.000Z",
         "priceHint": 4,
@@ -555,6 +584,13 @@
         "fiftyTwoWeekLow": 3.717,
         "fiftyTwoWeekHigh": 5.152,
         "fiftyTwoWeekChangePercent": 23.024773,
+        "longName": "Treasury Yield 30 Years",
+        "marketState": "POSTPOST",
+        "regularMarketChangePercent": 2.225882,
+        "regularMarketPrice": 4.96,
+        "shortName": "Treasury Yield 30 Years",
+        "corporateActions": [],
+        "regularMarketTime": "2026-03-20T18:59:54.000Z",
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXTYX",
         "exchangeTimezoneName": "America/Chicago",
@@ -562,8 +598,16 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
-        "regularMarketChangePercent": 2.225882,
-        "regularMarketPrice": 4.96,
+        "fiftyDayAverage": 4.5123,
+        "fiftyDayAverageChange": 0.44770002,
+        "fiftyDayAverageChangePercent": 0.0992177,
+        "twoHundredDayAverage": 4.44611,
+        "twoHundredDayAverageChange": 0.51389027,
+        "twoHundredDayAverageChangePercent": 0.115582004,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "tradeable": false,
+        "cryptoTradeable": false,
         "symbol": "^TYX"
       },
       "yahooMain": [
@@ -576,11 +620,24 @@
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
           "currency": "USD",
-          "regularMarketChangePercent": -1.43358,
-          "regularMarketPrice": 648.57,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "corporateActions": [],
+          "postMarketTime": "2026-03-20T23:59:59.000Z",
+          "regularMarketTime": "2026-03-20T20:00:00.000Z",
           "marketState": "POSTPOST",
           "shortName": "State Street SPDR S&P 500 ETF T",
           "longName": "State Street SPDR S&P 500 ETF Trust",
+          "exchange": "PCX",
+          "messageBoardId": "finmb_6160262",
+          "exchangeTimezoneName": "America/New_York",
+          "exchangeTimezoneShortName": "EDT",
+          "gmtOffSetMilliseconds": -14400000,
+          "market": "us_market",
+          "esgPopulated": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "1993-01-29T14:30:00.000Z",
+          "priceHint": 2,
           "postMarketChangePercent": 0.72621644,
           "postMarketPrice": 653.28,
           "postMarketChange": 4.710022,
@@ -635,21 +692,8 @@
           "priceToBook": 1.5110433,
           "sourceInterval": 15,
           "exchangeDataDelayedBy": 0,
-          "corporateActions": [],
-          "postMarketTime": "2026-03-20T23:59:59.000Z",
-          "regularMarketTime": "2026-03-20T20:00:00.000Z",
-          "exchange": "PCX",
-          "messageBoardId": "finmb_6160262",
-          "exchangeTimezoneName": "America/New_York",
-          "exchangeTimezoneShortName": "EDT",
-          "gmtOffSetMilliseconds": -14400000,
-          "market": "us_market",
-          "esgPopulated": false,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "1993-01-29T14:30:00.000Z",
-          "priceHint": 2,
+          "regularMarketChangePercent": -1.43358,
+          "regularMarketPrice": 648.57,
           "symbol": "SPY"
         },
         {
@@ -661,11 +705,24 @@
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
           "currency": "USD",
-          "regularMarketChangePercent": -1.84817,
-          "regularMarketPrice": 582.06,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "corporateActions": [],
+          "postMarketTime": "2026-03-20T23:59:58.000Z",
+          "regularMarketTime": "2026-03-20T20:00:02.000Z",
           "marketState": "POSTPOST",
           "shortName": "Invesco QQQ Trust, Series 1",
           "longName": "Invesco QQQ Trust",
+          "exchange": "NGM",
+          "messageBoardId": "finmb_8108558",
+          "exchangeTimezoneName": "America/New_York",
+          "exchangeTimezoneShortName": "EDT",
+          "gmtOffSetMilliseconds": -14400000,
+          "market": "us_market",
+          "esgPopulated": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "1999-03-10T14:30:00.000Z",
+          "priceHint": 2,
           "postMarketChangePercent": 0.86932576,
           "postMarketPrice": 587.12,
           "postMarketChange": 5.0599976,
@@ -720,21 +777,8 @@
           "priceToBook": 1.626893,
           "sourceInterval": 15,
           "exchangeDataDelayedBy": 0,
-          "corporateActions": [],
-          "postMarketTime": "2026-03-20T23:59:58.000Z",
-          "regularMarketTime": "2026-03-20T20:00:02.000Z",
-          "exchange": "NGM",
-          "messageBoardId": "finmb_8108558",
-          "exchangeTimezoneName": "America/New_York",
-          "exchangeTimezoneShortName": "EDT",
-          "gmtOffSetMilliseconds": -14400000,
-          "market": "us_market",
-          "esgPopulated": false,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "1999-03-10T14:30:00.000Z",
-          "priceHint": 2,
+          "regularMarketChangePercent": -1.84817,
+          "regularMarketPrice": 582.06,
           "symbol": "QQQ"
         },
         {
@@ -746,11 +790,24 @@
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
           "currency": "USD",
-          "regularMarketChangePercent": -2.18471,
-          "regularMarketPrice": 242.22,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "corporateActions": [],
+          "postMarketTime": "2026-03-20T23:59:59.000Z",
+          "regularMarketTime": "2026-03-20T20:00:00.000Z",
           "marketState": "POSTPOST",
           "shortName": "iShares Russell 2000 ETF",
           "longName": "iShares Russell 2000 ETF",
+          "exchange": "PCX",
+          "messageBoardId": "finmb_8797658",
+          "exchangeTimezoneName": "America/New_York",
+          "exchangeTimezoneShortName": "EDT",
+          "gmtOffSetMilliseconds": -14400000,
+          "market": "us_market",
+          "esgPopulated": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "2000-05-26T13:30:00.000Z",
+          "priceHint": 2,
           "postMarketChangePercent": 1.2430855,
           "postMarketPrice": 245.231,
           "postMarketChange": 3.0110016,
@@ -805,37 +862,24 @@
           "priceToBook": 1.1075749,
           "sourceInterval": 15,
           "exchangeDataDelayedBy": 0,
-          "corporateActions": [],
-          "postMarketTime": "2026-03-20T23:59:59.000Z",
-          "regularMarketTime": "2026-03-20T20:00:00.000Z",
-          "exchange": "PCX",
-          "messageBoardId": "finmb_8797658",
-          "exchangeTimezoneName": "America/New_York",
-          "exchangeTimezoneShortName": "EDT",
-          "gmtOffSetMilliseconds": -14400000,
-          "market": "us_market",
-          "esgPopulated": false,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "2000-05-26T13:30:00.000Z",
-          "priceHint": 2,
+          "regularMarketChangePercent": -2.18471,
+          "regularMarketPrice": 242.22,
           "symbol": "IWM"
         }
       ],
       "breadthInternals": {
-        "above20": 0,
-        "above50": 0,
-        "above200": 0,
+        "above20": 8,
+        "above50": 12,
+        "above200": 42,
         "putCall": null
       }
     },
-    "cachedAt": "2026-03-21T03:08:34.296Z"
+    "cachedAt": "2026-03-21T03:44:46.508Z"
   },
   "SPY_POSITIONAL": {
     "benchmark": "SPY",
     "mode": "POSITIONAL",
-    "totalScore": 31,
+    "totalScore": 32,
     "deployCapital": "AVOID",
     "positionSize": "RISK-OFF",
     "marketStatus": {
@@ -873,9 +917,9 @@
       },
       {
         "label": "Breadth",
-        "score": 0,
+        "score": 9,
         "weight": 15,
-        "contribution": 0,
+        "contribution": 1,
         "type": "negative"
       },
       {
@@ -916,38 +960,9 @@
       "active": true,
       "message": "Macro Headwinds Elevated — Yield spiking 2.57%, DXY strengthening. Reduce leverage."
     },
-    "scoreDelta": -1,
+    "scoreDelta": 0,
     "scoreHistory": [
-      42,
-      49,
-      41,
-      43,
-      48,
-      43,
-      47,
-      47,
-      47,
-      47,
-      41,
-      43,
-      47,
-      47,
-      43,
-      47,
-      47,
-      47,
-      38,
-      34,
-      38,
-      33,
-      33,
-      32,
-      32,
-      32,
-      32,
-      32,
-      32,
-      31
+      32
     ],
     "emaDivergence": false,
     "checklist": [
@@ -1078,9 +1093,9 @@
           },
           {
             "label": "VIX Percentile",
-            "value": "50th %ile",
-            "statusLabel": "Normal",
-            "status": "warning"
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
           },
           {
             "label": "Put/Call Ratio",
@@ -1095,13 +1110,13 @@
         ]
       },
       "breadth": {
-        "value": 0,
+        "value": 9,
         "status": "Weak",
         "type": "negative",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "0/11",
+            "value": "1/11",
             "status": "negative"
           },
           {
@@ -1111,17 +1126,17 @@
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "0.0%",
+            "value": "8.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "0.0%",
+            "value": "12.0%",
             "status": "negative"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "0.0%",
+            "value": "42.0%",
             "status": "negative"
           }
         ]
@@ -1153,7 +1168,7 @@
           },
           {
             "label": "US Dollar (DXY)",
-            "value": "99.50",
+            "value": "99.65",
             "status": "positive"
           }
         ]
@@ -1161,49 +1176,19 @@
     },
     "sectors": [
       {
-        "name": "XLI",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLU",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLK",
-        "change": 0,
-        "trending": false
-      },
-      {
         "name": "XLF",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLY",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLRE",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLC",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLB",
-        "change": 0,
+        "change": 0.20416496529195882,
         "trending": false
       },
       {
         "name": "XLE",
         "change": -0.058947368421046885,
         "trending": true
+      },
+      {
+        "name": "XLC",
+        "change": -0.8218451749734824,
+        "trending": false
       },
       {
         "name": "XLV",
@@ -1214,25 +1199,61 @@
         "name": "XLP",
         "change": -0.8476643493108832,
         "trending": false
+      },
+      {
+        "name": "XLI",
+        "change": -1.4570505395354598,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -1.5710096355257646,
+        "trending": false
+      },
+      {
+        "name": "XLY",
+        "change": -1.782133090246124,
+        "trending": false
+      },
+      {
+        "name": "XLK",
+        "change": -2.2392372146778348,
+        "trending": false
+      },
+      {
+        "name": "XLRE",
+        "change": -3.1250000000000053,
+        "trending": false
+      },
+      {
+        "name": "XLU",
+        "change": -4.029658284977434,
+        "trending": false
       }
     ],
     "ai": {
-      "assessment": "Trend breakdown identified. Price below major moving averages on high timeframes.",
-      "suggestedAction": "Preserve Capital",
-      "riskLevel": "High"
+      "assessment": "Analyzing market internals...",
+      "suggestedAction": "Monitor internals.",
+      "riskLevel": "Moderate",
+      "score": 5,
+      "signal": "NEUTRAL",
+      "executionAction": "WAIT",
+      "entryPrice": 649.43,
+      "entryReason": "Await confluence confirmation.",
+      "techDetails": null
     },
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 648.57,
-        "change": -1.43358,
-        "changeAmount": -9.43298
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
       },
       {
         "symbol": "QQQ",
-        "price": 582.06,
-        "change": -1.84817,
-        "changeAmount": -10.96
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
       },
       {
         "symbol": "IWM",
@@ -1247,12 +1268,12 @@
         "changeAmount": 2.7200012
       }
     ],
-    "cachedAt": "2026-03-21T03:08:34.297Z"
+    "cachedAt": "2026-03-21T03:21:05.131Z"
   },
   "QQQ_POSITIONAL": {
     "benchmark": "QQQ",
     "mode": "POSITIONAL",
-    "totalScore": 38,
+    "totalScore": 35,
     "deployCapital": "AVOID",
     "positionSize": "RISK-OFF",
     "marketStatus": {
@@ -1262,9 +1283,9 @@
     "scoringWeights": [
       {
         "label": "Daily Trend",
-        "score": 20,
+        "score": 0,
         "weight": 20,
-        "contribution": 4,
+        "contribution": 0,
         "type": "negative"
       },
       {
@@ -1290,9 +1311,9 @@
       },
       {
         "label": "Breadth",
-        "score": 0,
+        "score": 9,
         "weight": 15,
-        "contribution": 0,
+        "contribution": 1,
         "type": "negative"
       },
       {
@@ -1333,19 +1354,9 @@
       "active": true,
       "message": "Macro Headwinds Elevated — Yield spiking 2.57%, DXY strengthening. Reduce leverage."
     },
-    "scoreDelta": -3,
+    "scoreDelta": 0,
     "scoreHistory": [
-      48,
-      55,
-      53,
-      51,
-      52,
-      53,
-      53,
-      53,
-      52,
-      41,
-      38
+      35
     ],
     "emaDivergence": false,
     "checklist": [
@@ -1375,7 +1386,7 @@
       },
       {
         "label": "Price > D-EMA200 (Uptrend)",
-        "met": true
+        "met": false
       },
       {
         "label": "Rel Volume > 1x",
@@ -1384,29 +1395,29 @@
     ],
     "metrics": {
       "dailyTrend": {
-        "value": 20,
+        "value": 0,
         "status": "Tactical Bear",
         "type": "negative",
         "subMetrics": [
           {
             "label": "EMA Stack",
-            "value": "1/5 Bullish",
+            "value": "0/5 Bullish",
             "status": "warning"
           },
           {
-            "label": "Short (9/21: $593)",
+            "label": "Short (9/21: $596)",
             "value": "Broken",
             "status": "negative"
           },
           {
-            "label": "Mid (50/100: $606)",
+            "label": "Mid (50/100: $607)",
             "value": "Below",
             "status": "negative"
           },
           {
-            "label": "Long (200: $580)",
-            "value": "Above",
-            "status": "positive"
+            "label": "Long (200: $588)",
+            "value": "Below",
+            "status": "negative"
           }
         ]
       },
@@ -1421,7 +1432,7 @@
             "status": "warning"
           },
           {
-            "label": "Intermediate (21: $601)",
+            "label": "Intermediate (21: $603)",
             "value": "Bearish",
             "status": "negative"
           },
@@ -1431,7 +1442,7 @@
             "status": "positive"
           },
           {
-            "label": "Macro (200: $464)",
+            "label": "Macro (200: $463)",
             "value": "Bullish",
             "status": "positive"
           }
@@ -1444,7 +1455,7 @@
         "subMetrics": [
           {
             "label": "RSI(14)",
-            "value": "35.2",
+            "value": "35.3",
             "status": "warning"
           },
           {
@@ -1454,7 +1465,7 @@
           },
           {
             "label": "Rel Volume",
-            "value": "1.22x",
+            "value": "1.69x",
             "status": "positive"
           },
           {
@@ -1476,9 +1487,9 @@
           },
           {
             "label": "VIX Percentile",
-            "value": "50th %ile",
-            "statusLabel": "Normal",
-            "status": "warning"
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
           },
           {
             "label": "Put/Call Ratio",
@@ -1487,19 +1498,19 @@
           },
           {
             "label": "BB Width",
-            "value": "5.98%",
+            "value": "5.13%",
             "status": "neutral"
           }
         ]
       },
       "breadth": {
-        "value": 0,
+        "value": 9,
         "status": "Weak",
         "type": "negative",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "0/11",
+            "value": "1/11",
             "status": "negative"
           },
           {
@@ -1509,17 +1520,17 @@
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "0.0%",
+            "value": "8.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "0.0%",
+            "value": "12.0%",
             "status": "negative"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "0.0%",
+            "value": "42.0%",
             "status": "negative"
           }
         ]
@@ -1559,49 +1570,19 @@
     },
     "sectors": [
       {
-        "name": "XLI",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLU",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLK",
-        "change": 0,
-        "trending": false
-      },
-      {
         "name": "XLF",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLY",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLRE",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLC",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLB",
-        "change": 0,
+        "change": 0.20416496529195882,
         "trending": false
       },
       {
         "name": "XLE",
         "change": -0.058947368421046885,
         "trending": true
+      },
+      {
+        "name": "XLC",
+        "change": -0.8218451749734824,
+        "trending": false
       },
       {
         "name": "XLV",
@@ -1612,25 +1593,61 @@
         "name": "XLP",
         "change": -0.8476643493108832,
         "trending": false
+      },
+      {
+        "name": "XLI",
+        "change": -1.4570505395354598,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -1.5710096355257646,
+        "trending": false
+      },
+      {
+        "name": "XLY",
+        "change": -1.782133090246124,
+        "trending": false
+      },
+      {
+        "name": "XLK",
+        "change": -2.2392372146778348,
+        "trending": false
+      },
+      {
+        "name": "XLRE",
+        "change": -3.1250000000000053,
+        "trending": false
+      },
+      {
+        "name": "XLU",
+        "change": -4.029658284977434,
+        "trending": false
       }
     ],
     "ai": {
-      "assessment": "Trend breakdown identified. Price below major moving averages on high timeframes.",
-      "suggestedAction": "Preserve Capital",
-      "riskLevel": "High"
+      "assessment": "Analyzing market internals...",
+      "suggestedAction": "Monitor internals.",
+      "riskLevel": "Moderate",
+      "score": 5,
+      "signal": "NEUTRAL",
+      "executionAction": "WAIT",
+      "entryPrice": 584.27,
+      "entryReason": "Await confluence confirmation.",
+      "techDetails": null
     },
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 648.57,
-        "change": -1.43358,
-        "changeAmount": -9.43298
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
       },
       {
         "symbol": "QQQ",
-        "price": 582.06,
-        "change": -1.84817,
-        "changeAmount": -10.96
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
       },
       {
         "symbol": "IWM",
@@ -1645,12 +1662,12 @@
         "changeAmount": 2.7200012
       }
     ],
-    "cachedAt": "2026-03-21T03:08:44.425Z"
+    "cachedAt": "2026-03-21T03:38:16.135Z"
   },
   "IWM_POSITIONAL": {
     "benchmark": "IWM",
     "mode": "POSITIONAL",
-    "totalScore": 40,
+    "totalScore": 37,
     "deployCapital": "AVOID",
     "positionSize": "RISK-OFF",
     "marketStatus": {
@@ -1660,9 +1677,9 @@
     "scoringWeights": [
       {
         "label": "Daily Trend",
-        "score": 20,
+        "score": 0,
         "weight": 20,
-        "contribution": 4,
+        "contribution": 0,
         "type": "negative"
       },
       {
@@ -1688,9 +1705,9 @@
       },
       {
         "label": "Breadth",
-        "score": 0,
+        "score": 9,
         "weight": 15,
-        "contribution": 0,
+        "contribution": 1,
         "type": "negative"
       },
       {
@@ -1731,22 +1748,9 @@
       "active": true,
       "message": "Macro Headwinds Elevated — Yield spiking 2.57%, DXY strengthening. Reduce leverage."
     },
-    "scoreDelta": -3,
+    "scoreDelta": 0,
     "scoreHistory": [
-      39,
-      47,
-      43,
-      43,
-      43,
-      47,
-      47,
-      50,
-      50,
-      47,
-      50,
-      50,
-      43,
-      40
+      37
     ],
     "emaDivergence": false,
     "checklist": [
@@ -1776,7 +1780,7 @@
       },
       {
         "label": "Price > D-EMA200 (Uptrend)",
-        "met": true
+        "met": false
       },
       {
         "label": "Rel Volume > 1x",
@@ -1785,29 +1789,29 @@
     ],
     "metrics": {
       "dailyTrend": {
-        "value": 20,
+        "value": 0,
         "status": "Tactical Bear",
         "type": "negative",
         "subMetrics": [
           {
             "label": "EMA Stack",
-            "value": "1/5 Bullish",
+            "value": "0/5 Bullish",
             "status": "warning"
           },
           {
-            "label": "Short (9/21: $247)",
+            "label": "Short (9/21: $248)",
             "value": "Broken",
             "status": "negative"
           },
           {
-            "label": "Mid (50/100: $255)",
+            "label": "Mid (50/100: $256)",
             "value": "Below",
             "status": "negative"
           },
           {
-            "label": "Long (200: $239)",
-            "value": "Above",
-            "status": "positive"
+            "label": "Long (200: $244)",
+            "value": "Below",
+            "status": "negative"
           }
         ]
       },
@@ -1822,7 +1826,7 @@
             "status": "warning"
           },
           {
-            "label": "Intermediate (21: $250)",
+            "label": "Intermediate (21: $251)",
             "value": "Bearish",
             "status": "negative"
           },
@@ -1832,7 +1836,7 @@
             "status": "positive"
           },
           {
-            "label": "Macro (200: $216)",
+            "label": "Macro (200: $215)",
             "value": "Bullish",
             "status": "positive"
           }
@@ -1855,7 +1859,7 @@
           },
           {
             "label": "Rel Volume",
-            "value": "1.43x",
+            "value": "1.19x",
             "status": "positive"
           },
           {
@@ -1877,9 +1881,9 @@
           },
           {
             "label": "VIX Percentile",
-            "value": "50th %ile",
-            "statusLabel": "Normal",
-            "status": "warning"
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
           },
           {
             "label": "Put/Call Ratio",
@@ -1888,19 +1892,19 @@
           },
           {
             "label": "BB Width",
-            "value": "11.80%",
+            "value": "11.13%",
             "status": "neutral"
           }
         ]
       },
       "breadth": {
-        "value": 0,
+        "value": 9,
         "status": "Weak",
         "type": "negative",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "0/11",
+            "value": "1/11",
             "status": "negative"
           },
           {
@@ -1910,17 +1914,17 @@
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "0.0%",
+            "value": "8.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "0.0%",
+            "value": "12.0%",
             "status": "negative"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "0.0%",
+            "value": "42.0%",
             "status": "negative"
           }
         ]
@@ -1960,49 +1964,19 @@
     },
     "sectors": [
       {
-        "name": "XLI",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLU",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLK",
-        "change": 0,
-        "trending": false
-      },
-      {
         "name": "XLF",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLY",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLRE",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLC",
-        "change": 0,
-        "trending": false
-      },
-      {
-        "name": "XLB",
-        "change": 0,
+        "change": 0.20416496529195882,
         "trending": false
       },
       {
         "name": "XLE",
         "change": -0.058947368421046885,
         "trending": true
+      },
+      {
+        "name": "XLC",
+        "change": -0.8218451749734824,
+        "trending": false
       },
       {
         "name": "XLV",
@@ -2013,25 +1987,61 @@
         "name": "XLP",
         "change": -0.8476643493108832,
         "trending": false
+      },
+      {
+        "name": "XLI",
+        "change": -1.4570505395354598,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -1.5710096355257646,
+        "trending": false
+      },
+      {
+        "name": "XLY",
+        "change": -1.782133090246124,
+        "trending": false
+      },
+      {
+        "name": "XLK",
+        "change": -2.2392372146778348,
+        "trending": false
+      },
+      {
+        "name": "XLRE",
+        "change": -3.1250000000000053,
+        "trending": false
+      },
+      {
+        "name": "XLU",
+        "change": -4.029658284977434,
+        "trending": false
       }
     ],
     "ai": {
-      "assessment": "Trend breakdown identified. Price below major moving averages on high timeframes.",
-      "suggestedAction": "Preserve Capital",
-      "riskLevel": "High"
+      "assessment": "Analyzing market internals...",
+      "suggestedAction": "Monitor internals.",
+      "riskLevel": "Moderate",
+      "score": 5,
+      "signal": "NEUTRAL",
+      "executionAction": "WAIT",
+      "entryPrice": 242.33,
+      "entryReason": "Await confluence confirmation.",
+      "techDetails": null
     },
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 648.57,
-        "change": -1.43358,
-        "changeAmount": -9.43298
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
       },
       {
         "symbol": "QQQ",
-        "price": 582.06,
-        "change": -1.84817,
-        "changeAmount": -10.96
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
       },
       {
         "symbol": "IWM",
@@ -2046,6 +2056,796 @@
         "changeAmount": 2.7200012
       }
     ],
-    "cachedAt": "2026-03-21T03:08:49.464Z"
+    "cachedAt": "2026-03-21T03:38:25.233Z"
+  },
+  "QQQ_TACTICAL": {
+    "benchmark": "QQQ",
+    "mode": "TACTICAL",
+    "totalScore": 31,
+    "deployCapital": "AVOID",
+    "positionSize": "RISK-OFF",
+    "marketStatus": {
+      "isOpen": false,
+      "label": "MARKET CLOSED"
+    },
+    "scoringWeights": [
+      {
+        "label": "Daily Trend",
+        "score": 0,
+        "weight": 25,
+        "contribution": 0,
+        "type": "negative"
+      },
+      {
+        "label": "Weekly Trend",
+        "score": 60,
+        "weight": 10,
+        "contribution": 6,
+        "type": "warning"
+      },
+      {
+        "label": "Momentum",
+        "score": 50,
+        "weight": 25,
+        "contribution": 13,
+        "type": "warning"
+      },
+      {
+        "label": "Volatility",
+        "score": 21,
+        "weight": 20,
+        "contribution": 4,
+        "type": "negative"
+      },
+      {
+        "label": "Breadth",
+        "score": 9,
+        "weight": 10,
+        "contribution": 1,
+        "type": "negative"
+      },
+      {
+        "label": "Macro",
+        "score": 72,
+        "weight": 10,
+        "contribution": 7,
+        "type": "positive"
+      }
+    ],
+    "signalReadiness": [
+      {
+        "question": "Momentum Confirming?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "MACD Crossed Down"
+      },
+      {
+        "question": "Structure Intact?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "Below Key EMAs"
+      },
+      {
+        "question": "Dip Demand Active?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "Sellers In Control"
+      },
+      {
+        "question": "Sector Rotation Healthy?",
+        "answer": "Weak",
+        "status": "negative",
+        "detail": "1/11 sectors trending"
+      }
+    ],
+    "eventAlert": {
+      "active": true,
+      "message": "Macro Headwinds Elevated — Yield spiking 2.57%, DXY strengthening. Reduce leverage."
+    },
+    "scoreDelta": -4,
+    "scoreHistory": [
+      35,
+      31
+    ],
+    "emaDivergence": false,
+    "checklist": [
+      {
+        "label": "Price > Daily EMA50",
+        "met": false
+      },
+      {
+        "label": "Price > Weekly EMA50",
+        "met": true
+      },
+      {
+        "label": "VIX < 20",
+        "met": false
+      },
+      {
+        "label": "RSI 40–70 (Healthy)",
+        "met": false
+      },
+      {
+        "label": "Breadth > 60%",
+        "met": false
+      },
+      {
+        "label": "MACD Bullish",
+        "met": false
+      },
+      {
+        "label": "Price > D-EMA200 (Uptrend)",
+        "met": false
+      },
+      {
+        "label": "Rel Volume > 1x",
+        "met": true
+      }
+    ],
+    "metrics": {
+      "dailyTrend": {
+        "value": 0,
+        "status": "Tactical Bear",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "EMA Stack",
+            "value": "0/5 Bullish",
+            "status": "warning"
+          },
+          {
+            "label": "Short (9/21: $596)",
+            "value": "Broken",
+            "status": "negative"
+          },
+          {
+            "label": "Mid (50/100: $607)",
+            "value": "Below",
+            "status": "negative"
+          },
+          {
+            "label": "Long (200: $588)",
+            "value": "Below",
+            "status": "negative"
+          }
+        ]
+      },
+      "weeklyTrend": {
+        "value": 60,
+        "status": "Neutral",
+        "type": "warning",
+        "subMetrics": [
+          {
+            "label": "EMA Stack",
+            "value": "3/5 Bullish",
+            "status": "warning"
+          },
+          {
+            "label": "Intermediate (21: $603)",
+            "value": "Bearish",
+            "status": "negative"
+          },
+          {
+            "label": "Structural (50: $578)",
+            "value": "Holding",
+            "status": "positive"
+          },
+          {
+            "label": "Macro (200: $463)",
+            "value": "Bullish",
+            "status": "positive"
+          }
+        ]
+      },
+      "momentum": {
+        "value": 50,
+        "status": "Declining",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "RSI(14)",
+            "value": "35.3",
+            "status": "warning"
+          },
+          {
+            "label": "MACD Signal",
+            "value": "Bearish Cross",
+            "status": "negative"
+          },
+          {
+            "label": "Rel Volume",
+            "value": "1.69x",
+            "status": "positive"
+          },
+          {
+            "label": "RSI Divergence",
+            "value": "NONE",
+            "status": "neutral"
+          }
+        ]
+      },
+      "volatility": {
+        "value": 21,
+        "status": "Elevated",
+        "type": "warning",
+        "subMetrics": [
+          {
+            "label": "VIX Level",
+            "value": "26.78",
+            "status": "warning"
+          },
+          {
+            "label": "VIX Percentile",
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
+          },
+          {
+            "label": "Put/Call Ratio",
+            "value": "N/A",
+            "status": "positive"
+          },
+          {
+            "label": "BB Width",
+            "value": "5.13%",
+            "status": "neutral"
+          }
+        ]
+      },
+      "breadth": {
+        "value": 9,
+        "status": "Weak",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "Sectors Positive",
+            "value": "1/11",
+            "status": "negative"
+          },
+          {
+            "label": "Trending > 20d",
+            "value": "1/11",
+            "status": "warning"
+          },
+          {
+            "label": "% > 20MA (S&P)",
+            "value": "8.0%",
+            "status": "negative"
+          },
+          {
+            "label": "% > 50MA (S&P)",
+            "value": "12.0%",
+            "status": "negative"
+          },
+          {
+            "label": "% > 200MA (S&P)",
+            "value": "42.0%",
+            "status": "negative"
+          }
+        ]
+      },
+      "macro": {
+        "value": 72,
+        "status": "Supportive",
+        "type": "positive",
+        "subMetrics": [
+          {
+            "label": "2Y Yield",
+            "value": "3.62%",
+            "status": "negative"
+          },
+          {
+            "label": "5Y Yield",
+            "value": "4.01%",
+            "status": "negative"
+          },
+          {
+            "label": "10Y Yield",
+            "value": "4.39%",
+            "status": "negative"
+          },
+          {
+            "label": "30Y Yield",
+            "value": "4.96%",
+            "status": "negative"
+          },
+          {
+            "label": "US Dollar (DXY)",
+            "value": "99.50",
+            "status": "positive"
+          }
+        ]
+      }
+    },
+    "sectors": [
+      {
+        "name": "XLF",
+        "change": 0.20416496529195882,
+        "trending": false
+      },
+      {
+        "name": "XLE",
+        "change": -0.058947368421046885,
+        "trending": true
+      },
+      {
+        "name": "XLC",
+        "change": -0.8218451749734824,
+        "trending": false
+      },
+      {
+        "name": "XLV",
+        "change": -0.8457236393397962,
+        "trending": false
+      },
+      {
+        "name": "XLP",
+        "change": -0.8476643493108832,
+        "trending": false
+      },
+      {
+        "name": "XLI",
+        "change": -1.4570505395354598,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -1.5710096355257646,
+        "trending": false
+      },
+      {
+        "name": "XLY",
+        "change": -1.782133090246124,
+        "trending": false
+      },
+      {
+        "name": "XLK",
+        "change": -2.2392372146778348,
+        "trending": false
+      },
+      {
+        "name": "XLRE",
+        "change": -3.1250000000000053,
+        "trending": false
+      },
+      {
+        "name": "XLU",
+        "change": -4.029658284977434,
+        "trending": false
+      }
+    ],
+    "ai": {
+      "assessment": "Analyzing market internals...",
+      "suggestedAction": "Monitor internals.",
+      "riskLevel": "Moderate",
+      "score": 5,
+      "signal": "NEUTRAL",
+      "executionAction": "WAIT",
+      "entryPrice": 584.27,
+      "entryReason": "Await confluence confirmation.",
+      "techDetails": null
+    },
+    "topBar": [
+      {
+        "symbol": "SPY",
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
+      },
+      {
+        "symbol": "QQQ",
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
+      },
+      {
+        "symbol": "IWM",
+        "price": 242.33,
+        "change": -2.1225033826766544,
+        "changeAmount": -5.2549999999999955
+      },
+      {
+        "symbol": "VIX",
+        "price": 26.78,
+        "change": 11.305076,
+        "changeAmount": 2.7200012
+      }
+    ],
+    "cachedAt": "2026-03-21T03:43:25.014Z"
+  },
+  "IWM_TACTICAL": {
+    "benchmark": "IWM",
+    "mode": "TACTICAL",
+    "totalScore": 35,
+    "deployCapital": "AVOID",
+    "positionSize": "RISK-OFF",
+    "marketStatus": {
+      "isOpen": false,
+      "label": "MARKET CLOSED"
+    },
+    "scoringWeights": [
+      {
+        "label": "Daily Trend",
+        "score": 0,
+        "weight": 25,
+        "contribution": 0,
+        "type": "negative"
+      },
+      {
+        "label": "Weekly Trend",
+        "score": 60,
+        "weight": 10,
+        "contribution": 6,
+        "type": "warning"
+      },
+      {
+        "label": "Momentum",
+        "score": 65,
+        "weight": 25,
+        "contribution": 16,
+        "type": "positive"
+      },
+      {
+        "label": "Volatility",
+        "score": 21,
+        "weight": 20,
+        "contribution": 4,
+        "type": "negative"
+      },
+      {
+        "label": "Breadth",
+        "score": 9,
+        "weight": 10,
+        "contribution": 1,
+        "type": "negative"
+      },
+      {
+        "label": "Macro",
+        "score": 72,
+        "weight": 10,
+        "contribution": 7,
+        "type": "positive"
+      }
+    ],
+    "signalReadiness": [
+      {
+        "question": "Momentum Confirming?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "MACD Crossed Down"
+      },
+      {
+        "question": "Structure Intact?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "Below Key EMAs"
+      },
+      {
+        "question": "Dip Demand Active?",
+        "answer": "No",
+        "status": "negative",
+        "detail": "Sellers In Control"
+      },
+      {
+        "question": "Sector Rotation Healthy?",
+        "answer": "Weak",
+        "status": "negative",
+        "detail": "1/11 sectors trending"
+      }
+    ],
+    "eventAlert": {
+      "active": true,
+      "message": "Macro Headwinds Elevated — Yield spiking 2.57%, DXY strengthening. Reduce leverage."
+    },
+    "scoreDelta": -2,
+    "scoreHistory": [
+      37,
+      35
+    ],
+    "emaDivergence": false,
+    "checklist": [
+      {
+        "label": "Price > Daily EMA50",
+        "met": false
+      },
+      {
+        "label": "Price > Weekly EMA50",
+        "met": true
+      },
+      {
+        "label": "VIX < 20",
+        "met": false
+      },
+      {
+        "label": "RSI 40–70 (Healthy)",
+        "met": false
+      },
+      {
+        "label": "Breadth > 60%",
+        "met": false
+      },
+      {
+        "label": "MACD Bullish",
+        "met": false
+      },
+      {
+        "label": "Price > D-EMA200 (Uptrend)",
+        "met": false
+      },
+      {
+        "label": "Rel Volume > 1x",
+        "met": true
+      }
+    ],
+    "metrics": {
+      "dailyTrend": {
+        "value": 0,
+        "status": "Tactical Bear",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "EMA Stack",
+            "value": "0/5 Bullish",
+            "status": "warning"
+          },
+          {
+            "label": "Short (9/21: $248)",
+            "value": "Broken",
+            "status": "negative"
+          },
+          {
+            "label": "Mid (50/100: $256)",
+            "value": "Below",
+            "status": "negative"
+          },
+          {
+            "label": "Long (200: $244)",
+            "value": "Below",
+            "status": "negative"
+          }
+        ]
+      },
+      "weeklyTrend": {
+        "value": 60,
+        "status": "Neutral",
+        "type": "warning",
+        "subMetrics": [
+          {
+            "label": "EMA Stack",
+            "value": "3/5 Bullish",
+            "status": "warning"
+          },
+          {
+            "label": "Intermediate (21: $251)",
+            "value": "Bearish",
+            "status": "negative"
+          },
+          {
+            "label": "Structural (50: $240)",
+            "value": "Holding",
+            "status": "positive"
+          },
+          {
+            "label": "Macro (200: $215)",
+            "value": "Bullish",
+            "status": "positive"
+          }
+        ]
+      },
+      "momentum": {
+        "value": 65,
+        "status": "Declining",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "RSI(14)",
+            "value": "33.0",
+            "status": "warning"
+          },
+          {
+            "label": "MACD Signal",
+            "value": "Bearish Cross",
+            "status": "negative"
+          },
+          {
+            "label": "Rel Volume",
+            "value": "1.19x",
+            "status": "positive"
+          },
+          {
+            "label": "RSI Divergence",
+            "value": "BULLISH",
+            "status": "positive"
+          }
+        ]
+      },
+      "volatility": {
+        "value": 21,
+        "status": "Elevated",
+        "type": "warning",
+        "subMetrics": [
+          {
+            "label": "VIX Level",
+            "value": "26.78",
+            "status": "warning"
+          },
+          {
+            "label": "VIX Percentile",
+            "value": "13th %ile",
+            "statusLabel": "Low Fear",
+            "status": "positive"
+          },
+          {
+            "label": "Put/Call Ratio",
+            "value": "N/A",
+            "status": "positive"
+          },
+          {
+            "label": "BB Width",
+            "value": "11.13%",
+            "status": "neutral"
+          }
+        ]
+      },
+      "breadth": {
+        "value": 9,
+        "status": "Weak",
+        "type": "negative",
+        "subMetrics": [
+          {
+            "label": "Sectors Positive",
+            "value": "1/11",
+            "status": "negative"
+          },
+          {
+            "label": "Trending > 20d",
+            "value": "1/11",
+            "status": "warning"
+          },
+          {
+            "label": "% > 20MA (S&P)",
+            "value": "8.0%",
+            "status": "negative"
+          },
+          {
+            "label": "% > 50MA (S&P)",
+            "value": "12.0%",
+            "status": "negative"
+          },
+          {
+            "label": "% > 200MA (S&P)",
+            "value": "42.0%",
+            "status": "negative"
+          }
+        ]
+      },
+      "macro": {
+        "value": 72,
+        "status": "Supportive",
+        "type": "positive",
+        "subMetrics": [
+          {
+            "label": "2Y Yield",
+            "value": "3.62%",
+            "status": "negative"
+          },
+          {
+            "label": "5Y Yield",
+            "value": "4.01%",
+            "status": "negative"
+          },
+          {
+            "label": "10Y Yield",
+            "value": "4.39%",
+            "status": "negative"
+          },
+          {
+            "label": "30Y Yield",
+            "value": "4.96%",
+            "status": "negative"
+          },
+          {
+            "label": "US Dollar (DXY)",
+            "value": "99.50",
+            "status": "positive"
+          }
+        ]
+      }
+    },
+    "sectors": [
+      {
+        "name": "XLF",
+        "change": 0.20416496529195882,
+        "trending": false
+      },
+      {
+        "name": "XLE",
+        "change": -0.058947368421046885,
+        "trending": true
+      },
+      {
+        "name": "XLC",
+        "change": -0.8218451749734824,
+        "trending": false
+      },
+      {
+        "name": "XLV",
+        "change": -0.8457236393397962,
+        "trending": false
+      },
+      {
+        "name": "XLP",
+        "change": -0.8476643493108832,
+        "trending": false
+      },
+      {
+        "name": "XLI",
+        "change": -1.4570505395354598,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -1.5710096355257646,
+        "trending": false
+      },
+      {
+        "name": "XLY",
+        "change": -1.782133090246124,
+        "trending": false
+      },
+      {
+        "name": "XLK",
+        "change": -2.2392372146778348,
+        "trending": false
+      },
+      {
+        "name": "XLRE",
+        "change": -3.1250000000000053,
+        "trending": false
+      },
+      {
+        "name": "XLU",
+        "change": -4.029658284977434,
+        "trending": false
+      }
+    ],
+    "ai": {
+      "assessment": "Analyzing market internals...",
+      "suggestedAction": "Monitor internals.",
+      "riskLevel": "Moderate",
+      "score": 5,
+      "signal": "NEUTRAL",
+      "executionAction": "WAIT",
+      "entryPrice": 242.33,
+      "entryReason": "Await confluence confirmation.",
+      "techDetails": null
+    },
+    "topBar": [
+      {
+        "symbol": "SPY",
+        "price": 649.43,
+        "change": -1.5821298134481119,
+        "changeAmount": -10.440000000000055
+      },
+      {
+        "symbol": "QQQ",
+        "price": 584.27,
+        "change": -1.4721753794266472,
+        "changeAmount": -8.730000000000018
+      },
+      {
+        "symbol": "IWM",
+        "price": 242.33,
+        "change": -2.1225033826766544,
+        "changeAmount": -5.2549999999999955
+      },
+      {
+        "symbol": "VIX",
+        "price": 26.78,
+        "change": 11.305076,
+        "changeAmount": 2.7200012
+      }
+    ],
+    "cachedAt": "2026-03-21T03:44:46.510Z"
   }
 }
