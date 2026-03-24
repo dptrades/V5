@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar';
-import LoginOverlay from '../../components/LoginOverlay';
 import ConvictionCard from '../../components/ConvictionCard';
 import type { ConvictionStock } from '../../types/stock';
 import { Loader2, RefreshCw, X, ChevronRight, Activity } from 'lucide-react';
@@ -19,7 +18,6 @@ const CACHE_DURATION = REFRESH_INTERVALS.WIDGETS;
 
 export default function ConvictionPage() {
     const router = useRouter();
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
     // Sidebar Props (Standardized)
     const [symbol, setSymbol] = useState('AAPL');
@@ -40,16 +38,7 @@ export default function ConvictionPage() {
             setIsSidebarOpen(saved === 'true');
         }
 
-        // Initial Auth Check
-        const checkSession = async () => {
-            try {
-                const res = await fetch('/api/auth/session');
-                setIsAuthenticated(res.ok);
-            } catch (e) {
-                setIsAuthenticated(false);
-            }
-        };
-        checkSession();
+        fetchConviction();
     }, []);
 
     // Persistence: Save sidebar state on change
@@ -113,32 +102,23 @@ export default function ConvictionPage() {
         }
     };
 
-    // Load data after authentication
+
+    // Set up 15-minute auto-refresh during market hours
     useEffect(() => {
-        if (isAuthenticated === true) {
-            fetchConviction();
+        const intervalId = setInterval(() => {
+            if (isMarketActive()) {
+                console.log("🕒 Auto-refreshing Alpha Hunter market hours...");
+                fetchConviction(true);
+            }
+        }, REFRESH_INTERVALS.AUTO_REFRESH);
 
-            // Set up 15-minute auto-refresh during market hours
-            const intervalId = setInterval(() => {
-                if (isMarketActive()) {
-                    console.log("🕒 Auto-refreshing Alpha Hunter market hours...");
-                    fetchConviction(true);
-                }
-            }, REFRESH_INTERVALS.AUTO_REFRESH);
-
-            return () => clearInterval(intervalId);
-        }
-    }, [isAuthenticated]);
+        return () => clearInterval(intervalId);
+    }, []);
 
     const handleSelect = (symbol: string) => {
         router.push(`/?symbol=${symbol}`);
     };
 
-    if (isAuthenticated === null) return <Loading message="Authenticating session..." />;
-
-    if (!isAuthenticated) {
-        return <LoginOverlay onLoginSuccess={() => setIsAuthenticated(true)} />;
-    }
 
     return (
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
