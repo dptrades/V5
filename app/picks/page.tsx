@@ -7,7 +7,8 @@ import Sidebar from '@/components/Sidebar';
 import type { ConvictionStock } from '@/types/stock';
 import ConvictionDetailModal from '@/components/ConvictionDetailModal';
 import { REFRESH_INTERVALS, isMarketActive, getNextMarketOpen } from '../../lib/refresh-utils';
-import { Activity, Loader2 } from 'lucide-react';
+import { Activity, Loader2, Clock } from 'lucide-react';
+import RefreshClock from '@/components/RefreshClock';
 
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +19,7 @@ export default function TopPicksPage() {
     const [showLogic, setShowLogic] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [countdown, setCountdown] = useState(900); // 15m
 
     // Persistence: Load sidebar state on mount
     useEffect(() => {
@@ -56,16 +58,21 @@ export default function TopPicksPage() {
         };
 
         runScan();
-
-        // Auto-refresh every 15 minutes during market hours
-        const interval = setInterval(() => {
+        
+        // Timer for the visual clock
+        const tick = setInterval(() => {
             if (isMarketActive()) {
-                console.log('[Top Picks] Auto-refreshing...');
-                runScan();
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        runScan();
+                        return 900;
+                    }
+                    return prev - 1;
+                });
             }
-        }, REFRESH_INTERVALS.AUTO_REFRESH);
+        }, 1000);
 
-        return () => clearInterval(interval);
+        return () => clearInterval(tick);
     }, []);
 
     const handleSelect = (symbol: string) => {
@@ -146,6 +153,7 @@ export default function TopPicksPage() {
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
+                            <RefreshClock countdown={countdown} total={900} label="Next Scan" size="sm" color="#3B82F6" />
                             {isMarketActive() ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-blue-400 font-bold uppercase tracking-wider animate-pulse">
                                     <Activity className="w-3 h-3" />

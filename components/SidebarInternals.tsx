@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, TrendingUp, TrendingDown, Info, X } from 'lucide-react';
 import { REFRESH_INTERVALS, isMarketActive } from '../lib/refresh-utils';
+import RefreshClock from './RefreshClock';
 
 interface MarketData {
     symbol: string;
@@ -30,6 +31,7 @@ interface SectorGroup {
 interface Props {
     onSectorClick: (sector: SectorGroup) => void;
     isOpen: boolean;
+    refreshTrigger?: number;
 }
 
 const GICS_SECTORS = [
@@ -62,7 +64,7 @@ const normalizeSector = (sector: string): string => {
     return sector;
 };
 
-export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
+export default function SidebarInternals({ onSectorClick, isOpen, refreshTrigger }: Props) {
     const [internals, setInternals] = useState<InternalsData | null>(null);
     const [sectors, setSectors] = useState<SectorGroup[]>([]);
     const [convictionStats, setConvictionStats] = useState<{
@@ -142,7 +144,7 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
             }
         };
 
-        // Trigger immediate fetch on "Open"
+        // Trigger immediate fetch on "Open" or "Manual Refresh"
         fetchInternals();
         fetchConvictionStats();
 
@@ -155,7 +157,7 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
         }, REFRESH_INTERVALS.WIDGETS);
 
         return () => clearInterval(syncInterval);
-    }, [isOpen]);
+    }, [isOpen, refreshTrigger]);
 
     if (!internals) return (
         <div className="px-4 py-4 text-xs text-gray-200 animate-pulse text-center">
@@ -165,18 +167,19 @@ export default function SidebarInternals({ onSectorClick, isOpen }: Props) {
 
     const { vix, sp500, nasdaq, ndx, dow, russell } = internals;
     const stats = convictionStats || { advancers: 0, decliners: 0, bullishPercent: 50 };
-
     return (
         <div className="mt-auto border-t border-gray-800 p-4 space-y-4">
-            <h4 className="text-xs font-bold text-gray-200 uppercase tracking-widest flex items-center mb-2 justify-between">
-                <span className="flex items-center">
+            <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[10px] font-bold text-gray-200 uppercase tracking-widest flex items-center">
                     <Activity className="w-3 h-3 mr-1" /> Market Pulse
-                </span>
-                <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-            </h4>
+                </h4>
+                <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                </div>
+            </div>
 
             {/* VIX & Bullish % */}
             <div className="grid grid-cols-2 gap-2">

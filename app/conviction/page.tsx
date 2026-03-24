@@ -12,6 +12,7 @@ import SectorDetailModal from '../../components/SectorDetailModal';
 import { REFRESH_INTERVALS, getMarketSession, getNextMarketOpen, isMarketActive } from '../../lib/refresh-utils';
 import HeaderSignals from '../../components/HeaderSignals';
 import { OHLCVData } from '@/types/financial';
+import RefreshClock from '@/components/RefreshClock';
 
 const CACHE_KEY = 'alpha_hunter_results';
 const CACHE_DURATION = REFRESH_INTERVALS.WIDGETS;
@@ -27,6 +28,7 @@ export default function ConvictionPage() {
     const [stocks, setStocks] = useState<ConvictionStock[]>([]);
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [countdown, setCountdown] = useState(900); // 15m
     const [error, setError] = useState('');
     const [showLogic, setShowLogic] = useState(false);
     const [selectedSector, setSelectedSector] = useState<any>(null);
@@ -105,14 +107,21 @@ export default function ConvictionPage() {
 
     // Set up 15-minute auto-refresh during market hours
     useEffect(() => {
-        const intervalId = setInterval(() => {
+        // Timer for the visual clock
+        const tick = setInterval(() => {
             if (isMarketActive()) {
-                console.log("🕒 Auto-refreshing Alpha Hunter market hours...");
-                fetchConviction(true);
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        console.log("🕒 Auto-refreshing Alpha Hunter market hours...");
+                        fetchConviction(true);
+                        return 900;
+                    }
+                    return prev - 1;
+                });
             }
-        }, REFRESH_INTERVALS.AUTO_REFRESH);
+        }, 1000);
 
-        return () => clearInterval(intervalId);
+        return () => clearInterval(tick);
     }, []);
 
     const handleSelect = (symbol: string) => {
@@ -185,6 +194,7 @@ export default function ConvictionPage() {
                         </div>
 
                         <div className="flex flex-col items-start xl:items-end gap-2">
+                             <RefreshClock countdown={countdown} total={900} label="Next Scan" size="sm" color="#3B82F6" />
                             {isMarketActive() ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-blue-400 font-bold uppercase tracking-wider animate-pulse">
                                     <Activity className="w-3 h-3" />

@@ -26,6 +26,7 @@ interface SidebarProps {
     stats?: PriceStats | null;
     sentimentScore?: number;
     onSectorClick?: (sector: any) => void;
+    refreshTrigger?: number;
 }
 
 const StatsCarousel = ({ stats }: { stats: PriceStats | null }) => {
@@ -107,7 +108,8 @@ export default function Sidebar({
     currentPage = 'dashboard',
     stats = null,
     sentimentScore = 50,
-    onSectorClick = () => { }
+    onSectorClick = () => { },
+    refreshTrigger = 0
 }: SidebarProps) {
     const pathname = usePathname();
     const activePage = pathname === '/' ? 'dashboard'
@@ -217,7 +219,7 @@ export default function Sidebar({
 
             <div className="flex-1 overflow-y-auto mt-4">
                 {/* Market Internals (Market Pulse) - Below Navigation */}
-                <SidebarInternals onSectorClick={onSectorClick} isOpen={isOpen} />
+                <SidebarInternals onSectorClick={onSectorClick} isOpen={isOpen} refreshTrigger={refreshTrigger} />
             </div>
 
             {/* Footer: Source & Timestamp */}

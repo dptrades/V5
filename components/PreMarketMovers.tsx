@@ -8,6 +8,7 @@ import {
     CandlestickChart, ArrowUpRight, ArrowDownRight, Megaphone, Filter
 } from 'lucide-react';
 import { PreMarketMover, CatalystType, GapQuality, assessGapQuality } from '../lib/pre-market-engine';
+import RefreshClock from './RefreshClock';
 
 // ─── Filter Types ──────────────────────────────────────────────────────────
 type FilterType = 'all' | 'earnings' | 'fda' | 'upgrade' | 'momentum' | 'social' | 'options';
@@ -252,6 +253,7 @@ export default function PreMarketMovers() {
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
     const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
     const [session, setSession] = useState<ReturnType<typeof getMarketSession>>('closed');
+    const [countdown, setCountdown] = useState(600); // 10m
 
     // Load watchlist from localStorage
     useEffect(() => {
@@ -290,12 +292,23 @@ export default function PreMarketMovers() {
 
     useEffect(() => {
         fetchMovers();
-        // Auto-refresh every 10min during pre-market (4am–9:30am)
-        const interval = setInterval(() => {
+        // Timer for the visual clock (10m during pre-market)
+        const tick = setInterval(() => {
             const s = getMarketSession();
-            if (s === 'pre') fetchMovers();
-        }, 10 * 60 * 1000);
-        return () => clearInterval(interval);
+            if (s === 'pre') {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        fetchMovers();
+                        return 600;
+                    }
+                    return prev - 1;
+                });
+            } else {
+                setCountdown(600); // Reset for next pre-market
+            }
+        }, 1000);
+
+        return () => clearInterval(tick);
     }, [fetchMovers]);
 
     // ── Filtered movers ──────────────────────────────────────────────────
@@ -370,6 +383,9 @@ export default function PreMarketMovers() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {lastUpdated && session === 'pre' && (
+                            <RefreshClock countdown={countdown} total={600} label="Next Scan" size="sm" color="#EAB308" />
+                        )}
                         {lastUpdated && (
                             <div className="text-[10px] text-gray-500 font-mono hidden sm:block">
                                 <Clock className="w-3 h-3 inline mr-1" />
@@ -377,7 +393,10 @@ export default function PreMarketMovers() {
                             </div>
                         )}
                         <button
-                            onClick={fetchMovers}
+                            onClick={() => {
+                                fetchMovers();
+                                setCountdown(600);
+                            }}
                             disabled={loading}
                             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-50 text-gray-400 hover:text-white"
                             title="Refresh"

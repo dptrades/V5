@@ -164,5 +164,33 @@
       }
     ],
     "status": "ACTIVE"
+  },
+  {
+    "id": "PLTR260410C00160000",
+    "ticker": "PLTR",
+    "companyName": "Palantir Technologies Inc.",
+    "strike": 160,
+    "expiry": "2026-04-10",
+    "type": "CALL",
+    "entryPremium": 4.699999999999999,
+    "entryStockPrice": 155.28,
+    "entryDate": "2026-03-24",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "MACD Bullish Cross",
+      "Bollinger Uptrend",
+      "1W Timeframe is Bullish (30% weight)",
+      "1D Timeframe is Bullish (50% weight)",
+      "1H Timeframe is Bullish (20% weight)"
+    ],
+    "history": [
+      {
+        "date": "2026-03-24",
+        "optionPremium": 4.699999999999999,
+        "stockPrice": 155.28
+      }
+    ],
+    "status": "ACTIVE"
   }
 ]

@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { calculateIndicators } from '@/lib/indicators';
 import { fetchAlpacaBars, fetchAlpacaPrice } from '@/lib/alpaca';
 import { finnhubClient } from '@/lib/finnhub';
+import { getPutCallRatio } from '@/lib/options';
 import fs from 'fs';
 import path from 'path';
 
@@ -251,7 +252,7 @@ const SP500_BASKET = [
   'TXN','QCOM','CMCSA','VZ','IBM','GE','UNP','CAT','HON','RTX',
 ];
 
-async function getBreadthInternals(): Promise<{ above20: number | null; above50: number | null; above200: number | null; putCall: number | null }> {
+async function getBreadthInternals(): Promise<{ above20: number | null; above50: number | null; above200: number | null }> {
   try {
     // Fetch 205 days of bars to cover 200-day MA + buffer, in batches of 10
     const BATCH_SIZE = 10;
@@ -284,23 +285,15 @@ async function getBreadthInternals(): Promise<{ above20: number | null; above50:
       if (avg200 && last > avg200) above200Count++;
     });
 
-    if (valid === 0) return { above20: null, above50: null, above200: null, putCall: null };
-
-    // Put/Call ratio: still try Yahoo as a best-effort, fall back to null
-    let putCall: number | null = null;
-    try {
-      const pcq = await yahooFinance.quote('^CPCE').catch(() => null);
-      putCall = (pcq as any)?.regularMarketPrice ?? null;
-    } catch { putCall = null; }
-
+    if (valid === 0) return { above20: null, above50: null, above200: null };
+    
     return {
       above20:  Math.round((above20Count  / valid) * 100),
       above50:  Math.round((above50Count  / valid) * 100),
       above200: Math.round((above200Count / valid) * 100),
-      putCall,
     };
   } catch {
-    return { above20: null, above50: null, above200: null, putCall: null };
+    return { above20: null, above50: null, above200: null };
   }
 }
 
@@ -338,12 +331,15 @@ export async function GET(request: NextRequest) {
     const sectorSymbols = ['XLE', 'XLI', 'XLU', 'XLK', 'XLF', 'XLV', 'XLY', 'XLP', 'XLRE', 'XLC', 'XLB'];
     const ETF_QUOTES = ['SPY', 'QQQ', 'IWM', 'VIXY', ...sectorSymbols];
 
-    let techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals;
+    let techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals, putCall: number | null = null;
 
     if (useSharedMarket) {
       console.log(`[Terminal] Using shared global market data for ${benchmark}`);
-      // Only fetch the benchmark-specific technical snapshot
-      techSnapshot = await getTechnicalSnapshot(benchmark);
+      // Only fetch index-specific data
+      [techSnapshot, putCall] = await Promise.all([
+        getTechnicalSnapshot(benchmark),
+        getPutCallRatio(benchmark).then(d => d?.volumeRatio ?? null).catch(() => null)
+      ]);
       
       // Map global data back to local variables for processing
       sectorData = globalCache.raw?.sectorData || [];
@@ -359,7 +355,7 @@ export async function GET(request: NextRequest) {
       breadthInternals = globalCache.raw?.breadthInternals || null;
     } else {
       console.log(`[Terminal] Shared market cache stale/missing — fetching full market state`);
-      [techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals] = await Promise.all([
+      [techSnapshot, sectorData, etfQuotes, dxyData, yahooVix, yahooDxy, yahooIrx, yahooFvx, yahooTnx, yahooTyx, yahooMain, breadthInternals, putCall] = await Promise.all([
         getTechnicalSnapshot(benchmark),
         Promise.all(sectorSymbols.map(s => getSectorTrending(s))),
         Promise.all(ETF_QUOTES.map(s => fetchAlpacaQuote(s))),
@@ -372,7 +368,16 @@ export async function GET(request: NextRequest) {
         yahooFinance.quote('^TYX').catch(() => null),
         yahooFinance.quote(['SPY', 'QQQ', 'IWM']).catch(() => []),
         getBreadthInternals(),
+        getPutCallRatio(benchmark).then(d => d?.volumeRatio ?? null).catch(() => null)
       ]);
+    }
+
+    // --- PCR Fallback to Yahoo if Schwab/Public failed ---
+    if (!putCall) {
+      try {
+        const pcq = await yahooFinance.quote('^CPCE').catch(() => null);
+        putCall = (pcq as any)?.regularMarketPrice ?? null;
+      } catch { putCall = null; }
     }
 
     const dataMap: Record<string, { price: number; changePercent: number; changeAmount: number }> = {};
@@ -590,7 +595,7 @@ Return ONLY valid JSON with this exact structure:
     "rsi": {"text": "...", "sentiment": "positive/negative/neutral"},
     "bb": {"text": "...", "sentiment": "positive/negative/neutral"},
     "fvg": {"text": "...", "sentiment": "positive/negative/neutral"},
-    "options": {"text": "Expert interpretation of ${breadthInternals.putCall !== null ? 'PCR ' + breadthInternals.putCall.toFixed(2) : 'institutional flow'}...", "sentiment": "positive/negative/neutral"}
+    "options": {"text": "Expert interpretation of ${putCall !== null ? 'PCR ' + putCall.toFixed(2) : 'institutional flow'}...", "sentiment": "positive/negative/neutral"}
   }
 }`;
         const result = await model.generateContent(promptText);
@@ -667,7 +672,7 @@ Return ONLY valid JSON with this exact structure:
           subMetrics: [
             { label: "VIX Level", value: vix.toFixed(2), status: (vix < 20 ? "positive" : vix < 28 ? "warning" : "negative") as any },
             { label: "VIX Percentile", value: `${vixPercentile}th %ile`, statusLabel: vixPercentile < 30 ? "Low Fear" : vixPercentile < 60 ? "Normal" : vixPercentile < 80 ? "Elevated" : "Extreme", status: (vixPercentile < 40 ? "positive" : vixPercentile < 70 ? "warning" : "negative") as any },
-            { label: "Put/Call Ratio", value: breadthInternals.putCall !== null ? breadthInternals.putCall.toFixed(2) : "N/A", statusLabel: breadthInternals.putCall !== null ? (breadthInternals.putCall > 1.0 ? "Bearish Bias" : breadthInternals.putCall < 0.7 ? "Bullish Bias" : "Neutral") : undefined, status: (breadthInternals.putCall !== null && breadthInternals.putCall > 1.0 ? "negative" : "positive") as any },
+            { label: "Put/Call Ratio", value: putCall !== null ? putCall.toFixed(2) : "N/A", statusLabel: putCall !== null ? (putCall > 1.0 ? "Bearish Bias" : putCall < 0.7 ? "Bullish Bias" : "Neutral") : undefined, status: (putCall !== null && putCall > 1.0 ? "negative" : "positive") as any },
             { label: "BB Width", value: bbWidth !== null ? bbWidth.toFixed(2) + "%" : "N/A", status: (bbWidth !== null && bbWidth < 5 ? "warning" : "neutral") as any }
           ]
         },

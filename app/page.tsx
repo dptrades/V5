@@ -25,6 +25,7 @@ import HeaderSignals from '../components/HeaderSignals';
 import HeaderPattern from '../components/HeaderPattern';
 import HeaderAnalyst from '../components/HeaderAnalyst';
 import HeaderFundamentals from '../components/HeaderFundamentals';
+import RefreshClock from '../components/RefreshClock';
 
 import NewsFeed from '../components/NewsFeed';
 import LivePriceDisplay from '../components/LivePriceDisplay';
@@ -61,9 +62,13 @@ export default function Dashboard() {
   const [refreshTrigger, setRefreshTrigger] = useState(0); // For manual refresh
   const [priceRefreshKey, setPriceRefreshKey] = useState(0); // Synchronized 60s price timer for header + deep dive
 
+  // Countdown Timers (seconds)
+  const [dataCountdown, setDataCountdown] = useState(900); // 15m Master Clock for all widgets
+
   const handleManualRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
     setPriceRefreshKey(prev => prev + 1); // Also sync price on manual refresh
+    setDataCountdown(900);
   };
 
   // Load initial symbol from localStorage on mount (client-side only)
@@ -276,34 +281,31 @@ export default function Dashboard() {
     // Initial Load
     loadData();
 
-    // 1. Synchronized Price Refresh (60s) — drives BOTH header LivePriceDisplay and Deep Dive
+    // 1. Synchronized Price Refresh (60s) — background only
     const priceInterval = setInterval(() => {
       if (document.hidden || ignore || !isMarketActive()) return;
-      setPriceRefreshKey(prev => prev + 1);
-    }, REFRESH_INTERVALS.PRICE);
+      
+      setPriceRefreshKey(pk => pk + 1);
+    }, 60000);
 
-    // 2. Chart & Deep Dive Data (15 Minutes) - MEDIUM - Universal Auto-Refresh
-    const dataInterval = setInterval(() => {
-      if (!document.hidden && !ignore && isMarketActive()) {
-        console.log('[Auto-Refresh] Fetching Chart & Deep Dive Data (15m)...');
-        // Manual refresh triggers everything else
-        handleManualRefresh();
-      }
-    }, REFRESH_INTERVALS.AUTO_REFRESH);
+    // 2. Master Dashboard Refresh (15 Minutes) - Drives all widgets
+    const masterInterval = setInterval(() => {
+      if (document.hidden || ignore || !isMarketActive()) return;
 
-    // 3. News (2 Hours) - SLOW
-    const newsInterval = setInterval(() => {
-      if (!document.hidden && !ignore && isMarketActive()) {
-        console.log('[Auto-Refresh] Fetching News (2h)...');
-        fetchStockNews(symbol, 'neutral').then(setNews);
-      }
-    }, REFRESH_INTERVALS.NEWS);
+      setDataCountdown(prev => {
+        if (prev <= 1) {
+          console.log('[Auto-Refresh] Master Refresh (15m)...');
+          handleManualRefresh();
+          return 900;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
       ignore = true;
       clearInterval(priceInterval);
-      clearInterval(dataInterval);
-      clearInterval(newsInterval);
+      clearInterval(masterInterval);
     };
   }, [symbol, interval, isAuthenticated, refreshTrigger]);
 
@@ -463,6 +465,7 @@ export default function Dashboard() {
               setIsSidebarOpen(false);
             }
           }}
+          refreshTrigger={refreshTrigger}
         />
       </div>
 
@@ -521,9 +524,15 @@ export default function Dashboard() {
                     showStatusBadge={true}
                   />
                   {lastUpdated && (
-                    <span className="text-[10px] text-gray-400 font-mono mt-1">
-                      Last Updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        Last Updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                      <div className="flex items-center gap-2 px-2 py-0.5 bg-gray-800/50 rounded-full border border-gray-700/50">
+                        <span className="text-[9px] text-gray-400 uppercase tracking-tighter font-bold">Refresh</span>
+                        <RefreshClock countdown={dataCountdown} total={900} size="xs" color="#3B82F6" />
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -552,7 +561,9 @@ export default function Dashboard() {
                     {/* 1. AI TERMINAL ASSESSMENT (Strategic Stock Signal) - CENTER TOP */}
                     {analysis && (
                       <div className="space-y-4 mb-8">
-                        <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider px-1">AI Terminal Assessment</h3>
+                        <div className="flex items-center justify-between px-1">
+                          <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider">AI Terminal Assessment</h3>
+                        </div>
                         <ErrorBoundary name="AI Analysis" onRetry={handleManualRefresh}>
                           <AIAnalysisWidget
                             symbol={symbol || ''}
@@ -579,7 +590,9 @@ export default function Dashboard() {
 
                     {/* 3. PRICE STATISTICS - BOTTOM OF CENTER COLUMN */}
                     <div className="mt-8">
-                      <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider mb-4 px-1">Price Statistics</h3>
+                      <div className="flex items-center justify-between mb-4 px-1">
+                        <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider">Price Statistics</h3>
+                      </div>
                       <ErrorBoundary name="Price Statistics">
                         <HighlightStats stats={stats} />
                       </ErrorBoundary>
@@ -591,9 +604,11 @@ export default function Dashboard() {
                 <div className="lg:col-span-1 xl:col-span-1 space-y-6">
                   {/* Tactical Option Play */}
                   <div className="bg-gray-800/10 rounded-xl">
-                    <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider mb-2 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-blue-400" /> Tactical Option Play
-                    </h3>
+                    <div className="flex items-center justify-between mb-2">
+                       <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-blue-400" /> Tactical Option Play
+                      </h3>
+                    </div>
                     <ErrorBoundary name="Options Signal" onRetry={handleManualRefresh}>
                       <OptionsSignal
                         data={optionsSignal}
@@ -622,7 +637,9 @@ export default function Dashboard() {
 
               {/* ROW 5: Live News - BELOW AI Insight */}
               <div>
-                <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider mb-4 px-1 text-center lg:text-left">Live Intelligence</h3>
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider text-center lg:text-left">Live Intelligence</h3>
+                </div>
                 <ErrorBoundary name="News Feed">
                   <NewsFeed news={news} loading={loading} />
                 </ErrorBoundary>
