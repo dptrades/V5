@@ -24,6 +24,11 @@ interface AITerminalAssessmentProps {
     fvg: TechPoint;
     options: TechPoint;
   };
+  multiDivergence?: {
+    h1?: { type: 'BULLISH' | 'BEARISH' | 'NONE' };
+    daily?: { type: 'BULLISH' | 'BEARISH' | 'NONE' };
+    weekly?: { type: 'BULLISH' | 'BEARISH' | 'NONE' };
+  };
   // Fallback for old data if any
   assessment?: string;
   suggestedAction?: string;
@@ -33,7 +38,7 @@ const INFO = [
   "Expert AI Assessment powered by Gemini 1.5 Flash (Senior Strategist Logic).",
   "Left Panel: Strategic AI Signal, Tactical Score (0-10), and Execution Strategy.",
   "Right Panel: Technical Confluence Analysis covering EMAs, RSI, Gaps, and Bias.",
-  "Entry Condition: Specific, logic-based triggers derived from institutional liquidity zones.",
+  "Multi-TF Divergence: Real-time RSI divergence tracking across Hourly (H1), Daily (D1), and Weekly (W1) timeframes.",
 ];
 
 const getRiskColor = (level: string = "Moderate") => {
@@ -46,8 +51,22 @@ const getRiskColor = (level: string = "Moderate") => {
   }
 };
 
+const DivergenceBadge = ({ label, type }: { label: string, type?: 'BULLISH' | 'BEARISH' | 'NONE' }) => {
+  const isBullish = type === 'BULLISH';
+  const isBearish = type === 'BEARISH';
+  const color = isBullish ? 'text-[#00FF94] border-[#00FF94]/30 bg-[#00FF94]/5' : isBearish ? 'text-[#FF2E2E] border-[#FF2E2E]/30 bg-[#FF2E2E]/5' : 'text-white/20 border-white/5 bg-white/5';
+  
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${color} transition-all`}>
+      <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+      <div className={`w-1.5 h-1.5 rounded-full ${isBullish ? 'bg-[#00FF94] shadow-[0_0_8px_rgba(0,255,148,0.5)]' : isBearish ? 'bg-[#FF2E2E] shadow-[0_0_8px_rgba(255,46,46,0.5)]' : 'bg-white/10'}`}></div>
+      {(isBullish || isBearish) && <span className="text-[8px] font-black uppercase ml-1 animate-pulse">{type}</span>}
+    </div>
+  );
+};
+
 const AITerminalAssessment: React.FC<AITerminalAssessmentProps> = ({ 
-  symbol, score = 5.0, signal = "NEUTRAL", executionAction = "WAIT", entryPrice = 0, entryReason = "", riskLevel = "Moderate", techDetails, assessment, suggestedAction 
+  symbol, score = 5.0, signal = "NEUTRAL", executionAction = "WAIT", entryPrice = 0, entryReason = "", riskLevel = "Moderate", techDetails, assessment, suggestedAction, multiDivergence 
 }) => {
   const isBullish = score >= 6.5;
   const isBearish = score <= 4;
@@ -124,6 +143,19 @@ const AITerminalAssessment: React.FC<AITerminalAssessmentProps> = ({
              <div className="text-6xl font-black text-white tracking-tighter relative z-10">
                {score.toFixed(1)}<span className="text-xl text-white/20 font-bold ml-1">/10</span>
              </div>
+          </div>
+
+          {/* NEW: MULTI-TIMEFRAME DIVERGENCE ANALYSIS */}
+          <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col gap-4 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+               <Activity className="w-3.5 h-3.5 text-indigo-400" />
+               <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">RSI Divergence Matrix</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-2.5">
+               <DivergenceBadge label="Hourly (H1)" type={multiDivergence?.h1?.type} />
+               <DivergenceBadge label="Daily (D1)" type={multiDivergence?.daily?.type} />
+               <DivergenceBadge label="Weekly (W1)" type={multiDivergence?.weekly?.type} />
+            </div>
           </div>
 
           {/* EXECUTION STRATEGY */}

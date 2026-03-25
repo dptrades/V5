@@ -85,16 +85,18 @@ async function fetchAlpacaQuote(symbol: string): Promise<{ price: number; change
   } catch { return null; }
 }
 
-// ── Technical snapshot: Alpaca daily + weekly bars → indicators ───────────────
+// ── Technical snapshot: Alpaca 1h + daily + weekly bars → indicators ───────────────
 async function getTechnicalSnapshot(symbol: string) {
   try {
-    // Fetch daily (365 bars) and weekly (260 bars ≈ 5 years) from Alpaca
-    const [alpacaDaily, alpacaWeekly] = await Promise.all([
+    // Fetch 1h (400 bars), daily (365 bars), and weekly (260 bars ≈ 5 years) from Alpaca
+    const [alpaca1h, alpacaDaily, alpacaWeekly] = await Promise.all([
+      fetchAlpacaBars(symbol, '1Hour', 400),
       fetchAlpacaBars(symbol, '1Day', 365),
       fetchAlpacaBars(symbol, '1Week', 260),
     ]);
 
     // Convert to standard bar format
+    const h1Bars = alpaca1h.map(alpacaToBar).filter(b => b.close);
     const dailyBars = alpacaDaily.map(alpacaToBar).filter(b => b.close);
     const weeklyBars = alpacaWeekly.map(alpacaToBar).filter(b => b.close);
 
@@ -103,9 +105,11 @@ async function getTechnicalSnapshot(symbol: string) {
       return getTechnicalSnapshotYahoo(symbol);
     }
 
+    const h1Indicators = calculateIndicators(h1Bars);
     const dailyIndicators = calculateIndicators(dailyBars);
     const weeklyIndicators = calculateIndicators(weeklyBars);
 
+    const latestH1 = h1Indicators[h1Indicators.length - 1];
     const latestDaily = dailyIndicators[dailyIndicators.length - 1];
     const latestWeekly = weeklyIndicators[weeklyIndicators.length - 1];
 
@@ -122,7 +126,20 @@ async function getTechnicalSnapshot(symbol: string) {
 
     const divergence = latestDaily.divergence;
 
-    return { daily: latestDaily, weekly: latestWeekly, relVolume, bbWidth, macdBullish, divergence };
+    return { 
+      h1: latestH1, 
+      daily: latestDaily, 
+      weekly: latestWeekly, 
+      relVolume, 
+      bbWidth, 
+      macdBullish, 
+      divergence,
+      multiDivergence: {
+        h1: latestH1?.divergence,
+        daily: latestDaily?.divergence,
+        weekly: latestWeekly?.divergence
+      }
+    };
   } catch (e) {
     console.error(`[Terminal] Alpaca snapshot failed for ${symbol}, falling back to Yahoo:`, e);
     return getTechnicalSnapshotYahoo(symbol);
@@ -132,25 +149,50 @@ async function getTechnicalSnapshot(symbol: string) {
 // ── Fallback: Yahoo Finance bars ─────────────────────────────────────────────
 async function getTechnicalSnapshotYahoo(symbol: string) {
   try {
-    const [dailyChart, weeklyChart] = await Promise.all([
+    const [h1Chart, dailyChart, weeklyChart] = await Promise.all([
+      yahooFinance.chart(symbol, { period1: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), interval: '1h' }),
       yahooFinance.chart(symbol, { period1: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), interval: '1d' }),
       yahooFinance.chart(symbol, { period1: new Date(Date.now() - 365 * 5 * 24 * 60 * 60 * 1000), interval: '1wk' })
     ]);
-    const toBar = (q: any) => ({ time: new Date(q.date).getTime(), open: q.open, high: q.high, low: q.l, close: q.close, volume: q.volume });
-    const dailyBars = dailyChart.quotes.map(toBar).filter(q => q.close) as any[];
-    const weeklyBars = weeklyChart.quotes.map(toBar).filter(q => q.close) as any[];
+    const toBar = (q: any) => ({ time: new Date(q.date).getTime(), open: q.open, high: q.high, low: q.low, close: q.close, volume: q.volume });
+    
+    const h1Bars = (h1Chart.quotes || []).map(toBar).filter(q => q.close) as any[];
+    const dailyBars = (dailyChart.quotes || []).map(toBar).filter(q => q.close) as any[];
+    const weeklyBars = (weeklyChart.quotes || []).map(toBar).filter(q => q.close) as any[];
+    
+    const h1Indicators = calculateIndicators(h1Bars);
     const dailyIndicators = calculateIndicators(dailyBars);
     const weeklyIndicators = calculateIndicators(weeklyBars);
+    
+    const latestH1 = h1Indicators[h1Indicators.length - 1];
     const latestDaily = dailyIndicators[dailyIndicators.length - 1];
     const latestWeekly = weeklyIndicators[weeklyIndicators.length - 1];
+    
     const avgVolume = dailyBars.slice(-20).reduce((acc: number, b: any) => acc + b.volume, 0) / 20;
     const relVolume = latestDaily.volume / avgVolume;
+    
     const bb = latestDaily.bollinger;
     const bbWidth = bb?.upper && bb?.lower && bb?.middle ? ((bb.upper - bb.lower) / bb.middle * 100) : null;
+    
     const macd = latestDaily.macd;
     const macdBullish = macd?.MACD !== undefined && macd?.signal !== undefined ? macd.MACD > macd.signal : null;
+    
     const divergence = latestDaily.divergence;
-    return { daily: latestDaily, weekly: latestWeekly, relVolume, bbWidth, macdBullish, divergence };
+    
+    return { 
+      h1: latestH1, 
+      daily: latestDaily, 
+      weekly: latestWeekly, 
+      relVolume, 
+      bbWidth, 
+      macdBullish, 
+      divergence,
+      multiDivergence: {
+        h1: latestH1?.divergence,
+        daily: latestDaily?.divergence,
+        weekly: latestWeekly?.divergence
+      }
+    };
   } catch (e) {
     console.error(`Yahoo snapshot failed for ${symbol}:`, e);
     return null;
@@ -436,7 +478,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Technical analysis failed" }, { status: 500 });
     }
 
-    const { daily, weekly, relVolume, bbWidth, macdBullish, divergence } = techSnapshot;
+    const { daily, weekly, relVolume, bbWidth, macdBullish, divergence, multiDivergence } = techSnapshot;
     const price = daily.close;
     const rsi = daily.rsi14 || 50;
 
@@ -456,7 +498,7 @@ export async function GET(request: NextRequest) {
     else if (rsi <= 30) momentumWeight = 60;
     if (relVolume > 1.2 && daily.ema9 && price > daily.ema9) momentumWeight += 10;
     
-    // RSI Divergence Impact
+    // RSI Divergence Impact (Daily)
     if (divergence?.type === 'BULLISH') momentumWeight += 15;
     if (divergence?.type === 'BEARISH') momentumWeight -= 15;
 
@@ -574,11 +616,13 @@ CONTEXT:
 - Tactical Score: ${totalScore}/100
 - VIX: ${vix.toFixed(2)} (${vixPercentile}th percentile - ${vixPercentile > 80 ? 'Extreme Fear/Bottoming' : vixPercentile < 20 ? 'Extreme Complacency/Exhaustion' : 'Normal'})
 - Market Breadth: ${breadthScore}% (Stocks > 50MA)
-- RSI (14d): ${rsi.toFixed(1)} (${divergence?.type || 'No'} Divergence)
+- RSI (14d): ${rsi.toFixed(1)} 
+- Divergences: Hourly (${multiDivergence.h1?.type || 'None'}), Daily (${multiDivergence.daily?.type || 'None'}), Weekly (${multiDivergence.weekly?.type || 'None'})
 - EMA Status: Daily ${dailyBullEmas}/5 bullish | Weekly ${weeklyBullEmas}/5 bullish
 
 MANDATE:
 - Use professional finance terminology: "Secular Bullish Structural Integrity", "Demand-side Exhaustion", "Mean Reversion Bounce", "Liquidity Magnet", "Hard Ceiling Supply".
+- Mention any detected RSI divergences across timeframes (Hourly/Daily/Weekly) and explain their significance in your assessment.
 - Be decisive and high-conviction.
 
 Return ONLY valid JSON with this exact structure:
@@ -630,6 +674,7 @@ Return ONLY valid JSON with this exact structure:
       scoreDelta,
       scoreHistory: [...(scoreHistory[benchmark] || [])],
       emaDivergence,
+      multiDivergence, // Include the multi-timeframe divergence data
       checklist,
       metrics: {
         dailyTrend: {
@@ -662,7 +707,7 @@ Return ONLY valid JSON with this exact structure:
             { label: "RSI(14)", value: rsi.toFixed(1), status: rsi > 40 && rsi < 70 ? "positive" : "warning" },
             { label: "MACD Signal", value: macdBullish === null ? "N/A" : macdBullish ? "Bullish Cross" : "Bearish Cross", status: macdBullish ? "positive" : "negative" },
             { label: "Rel Volume", value: relVolume.toFixed(2) + "x", status: relVolume > 1 ? "positive" : "neutral" },
-            { label: "RSI Divergence", value: divergence?.type || "None", status: divergence?.type === "BULLISH" ? "positive" : divergence?.type === "BEARISH" ? "negative" : "neutral" }
+            { label: "Daily Divergence", value: divergence?.type || "None", status: divergence?.type === "BULLISH" ? "positive" : divergence?.type === "BEARISH" ? "negative" : "neutral" }
           ]
         },
         volatility: {
@@ -683,9 +728,9 @@ Return ONLY valid JSON with this exact structure:
           subMetrics: [
             { label: "Sectors Positive", value: `${positiveSectors.length}/${sectorSymbols.length}`, status: (breadthScore >= 50 ? "positive" : "negative") as any },
             { label: "Trending > 20d", value: `${(sectorData as boolean[]).filter(Boolean).length}/${sectorSymbols.length}`, status: ((sectorData as boolean[]).filter(Boolean).length >= 6 ? "positive" : "warning") as any },
-            { label: "% > 20MA (S&P)", value: breadthInternals.above20 !== null ? breadthInternals.above20.toFixed(1) + "%" : "N/A", status: (breadthInternals.above20 !== null && breadthInternals.above20 > 50 ? "positive" : "negative") as any },
-            { label: "% > 50MA (S&P)", value: breadthInternals.above50 !== null ? breadthInternals.above50.toFixed(1) + "%" : "N/A", status: (breadthInternals.above50 !== null && breadthInternals.above50 > 50 ? "positive" : "negative") as any },
-            { label: "% > 200MA (S&P)", value: breadthInternals.above200 !== null ? breadthInternals.above200.toFixed(1) + "%" : "N/A", status: (breadthInternals.above200 !== null && breadthInternals.above200 > 50 ? "positive" : "negative") as any },
+            { label: "% > 20MA (S&P)", value: (breadthInternals as any).above20 !== null ? (breadthInternals as any).above20.toFixed(1) + "%" : "N/A", status: (breadthInternals as any).above20 !== null && (breadthInternals as any).above20 > 50 ? "positive" : "negative" as any },
+            { label: "% > 50MA (S&P)", value: (breadthInternals as any).above50 !== null ? (breadthInternals as any).above50.toFixed(1) + "%" : "N/A", status: (breadthInternals as any).above50 !== null && (breadthInternals as any).above50 > 50 ? "positive" : "negative" as any },
+            { label: "% > 200MA (S&P)", value: (breadthInternals as any).above200 !== null ? (breadthInternals as any).above200.toFixed(1) + "%" : "N/A", status: (breadthInternals as any).above200 !== null && (breadthInternals as any).above200 > 50 ? "positive" : "negative" as any },
           ]
         },
         macro: {

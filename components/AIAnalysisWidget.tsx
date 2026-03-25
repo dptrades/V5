@@ -135,9 +135,13 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                                         <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
                                         Momentum (RSI)
                                     </div>
-                                    <div className="flex items-start gap-3">
-                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.rsi.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.rsi.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-[#FFB800]'}`}></div>
-                                        <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.rsi.text}</span>
+                                    <div className="space-y-3.5">
+                                        {techDetails.rsi.map((point, i) => (
+                                            <div key={i} className="flex items-start gap-3 group/item">
+                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.5)] ${point.sentiment === 'positive' ? 'bg-[#00FF94]' : point.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-[#FFB800]'}`}></div>
+                                                <span className="text-xs text-white/70 font-bold leading-relaxed group-hover/item:text-white transition-colors">{point.text}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -204,7 +208,7 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
     // Detailed Technical Object
     const techDetails = {
         emas: [] as { text: string, sentiment: 'positive' | 'negative' | 'neutral' }[],
-        rsi: { text: '', sentiment: 'neutral' as 'positive' | 'negative' | 'neutral' },
+        rsi: [] as { text: string, sentiment: 'positive' | 'negative' | 'neutral' }[],
         bb: { text: '', sentiment: 'neutral' as 'positive' | 'negative' | 'neutral' },
         fvg: { text: 'No significant Fair Value Gaps detected in immediate price action.', sentiment: 'neutral' as 'positive' | 'negative' | 'neutral' },
         options: { text: 'Neutral participation detected in institutional flow.', sentiment: 'neutral' as 'positive' | 'negative' | 'neutral' }
@@ -240,17 +244,39 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
         }
     }
 
-    // 2. RSI ANALYSIS
+    // 2. RSI & DIVERGENCE ANALYSIS
     if (daily && daily.rsi) {
         if (daily.rsi > 70) {
-            techDetails.rsi = { text: `RSI Overextended at ${daily.rsi.toFixed(1)}, suggesting high probability of terminal exhaustion.`, sentiment: 'negative' };
+            techDetails.rsi.push({ text: `RSI Overextended at ${daily.rsi.toFixed(1)}, suggesting high probability of terminal exhaustion.`, sentiment: 'negative' });
             score -= 1.0;
         } else if (daily.rsi < 30) {
-            techDetails.rsi = { text: `RSI Oversold at ${daily.rsi.toFixed(1)}, indicating a potential bottoming process or mean reversion bounce.`, sentiment: 'positive' };
+            techDetails.rsi.push({ text: `RSI Oversold at ${daily.rsi.toFixed(1)}, indicating a potential bottoming process or mean reversion bounce.`, sentiment: 'positive' });
             score += 1.0;
         } else {
-            techDetails.rsi = { text: `RSI Neutral at ${daily.rsi.toFixed(0)}, leaving room for expansion before immediate rejection.`, sentiment: 'neutral' };
+            techDetails.rsi.push({ text: `RSI Neutral at ${daily.rsi.toFixed(0)}, leaving room for expansion before immediate rejection.`, sentiment: 'neutral' });
         }
+    }
+
+    // Multi-Timeframe Divergence Bullet Points
+    const divTimeframes = [
+        { label: 'H1', data: analysis.timeframes.find(t => t.timeframe === '1h') },
+        { label: 'D1', data: analysis.timeframes.find(t => t.timeframe === '1d') },
+        { label: 'W1', data: analysis.timeframes.find(t => t.timeframe === '1w') }
+    ];
+
+    divTimeframes.forEach(tf => {
+        if (tf.data?.divergence && tf.data.divergence.type !== 'NONE') {
+            const isBull = tf.data.divergence.type === 'BULLISH';
+            techDetails.rsi.push({ 
+                text: `${tf.label} RSI Divergence: ${tf.data.divergence.type} signal detected. ${isBull ? 'Bullish momentum building.' : 'Bearish divergence suggests waning demand.'}`, 
+                sentiment: isBull ? 'positive' : 'negative' 
+            });
+            score += isBull ? 0.75 : -0.75;
+        }
+    });
+
+    if (divTimeframes.every(tf => !tf.data?.divergence || tf.data.divergence.type === 'NONE')) {
+        techDetails.rsi.push({ text: "Searching H1, D1, & W1 for momentum divergence — None detected in current regime.", sentiment: 'neutral' });
     }
 
     // 3. BOLLINGER BANDS

@@ -60,6 +60,9 @@ export interface TimeframeData {
         ema200: number;
         isNear: boolean; // if within 1% of any major EMA
     };
+    divergence?: {
+        type: 'BULLISH' | 'BEARISH' | 'NONE';
+    } | null;
 }
 
 export interface MultiTimeframeAnalysis {
@@ -450,7 +453,12 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                     ema50: ema50Diff,
                     ema200: ema200Diff,
                     isNear
-                }
+                },
+                divergence: (() => {
+                    const last5 = indicators.slice(-5).reverse();
+                    const found = last5.find(ind => ind.divergence && ind.divergence.type !== 'NONE');
+                    return found ? found.divergence : { type: 'NONE' };
+                })()
             });
         }
     }));
