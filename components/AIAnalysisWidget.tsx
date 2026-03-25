@@ -113,10 +113,11 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                            {/* Trend Group */}
+                            {/* Left Column: Trend, Gaps, Bias */}
                             <div className="space-y-6">
+                                {/* Trend & Moving Averages */}
                                 <div className="space-y-4">
-                                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.25em] flex items-center gap-2">
+                                    <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em] flex items-center gap-2">
                                         <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
                                         Trend & Moving Averages
                                     </div>
@@ -130,10 +131,38 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.25em] flex items-center gap-2">
+                                {/* Market Gaps (FVG) */}
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em] flex items-center gap-2">
                                         <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                                        Momentum (RSI)
+                                        Market Gaps (FVG)
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.fvg.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.fvg.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-white/20'}`}></div>
+                                        <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.fvg.text}</span>
+                                    </div>
+                                </div>
+                                
+                                {/* Institutional Bias */}
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em] flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                        Institutional Bias
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.options.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.options.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-white/20'}`}></div>
+                                        <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.options.text}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Momentum, Volatility */}
+                            <div className="space-y-6">
+                                {/* Momentum (RSI) */}
+                                <div className="space-y-4">
+                                    <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em] flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                        Momentum (RSI Matrix)
                                     </div>
                                     <div className="space-y-3.5">
                                         {techDetails.rsi.map((point, i) => (
@@ -144,40 +173,16 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                                         ))}
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Volatility & Flow Group */}
-                            <div className="space-y-6">
-                                <div className="space-y-4">
-                                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.25em] flex items-center gap-2">
+                                {/* Volatility (Bollinger) */}
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em] flex items-center gap-2">
                                         <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
                                         Volatility (Bollinger)
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.bb.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.bb.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-white/20'}`}></div>
                                         <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.bb.text}</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.25em] flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                                        Market Gaps (FVG)
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.fvg.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.fvg.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-white/20'}`}></div>
-                                        <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.fvg.text}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="space-y-4">
-                                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.25em] flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                                        Institutional Bias
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${techDetails.options.sentiment === 'positive' ? 'bg-[#00FF94]' : techDetails.options.sentiment === 'negative' ? 'bg-[#FF2E2E]' : 'bg-white/20'}`}></div>
-                                        <span className="text-xs text-white/70 font-bold leading-relaxed">{techDetails.options.text}</span>
                                     </div>
                                 </div>
                             </div>
