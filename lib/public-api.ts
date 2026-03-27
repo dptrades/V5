@@ -228,16 +228,7 @@ export class PublicClient {
             return cached.data;
         }
 
-        if (!this.isConfigured()) {
-            return {
-                symbol,
-                price: 150.00 + (Math.random() * 5),
-                change: 1.25,
-                changePercent: 0.85,
-                volume: 1200000,
-                timestamp: Date.now()
-            };
-        }
+        if (!this.isConfigured()) return null;
 
         const results = await this.getQuotes([symbol]);
         return results[0] || null;
@@ -265,16 +256,7 @@ export class PublicClient {
 
         if (toFetch.length === 0) return results;
 
-        if (!this.isConfigured()) {
-            return [...results, ...toFetch.map(s => ({
-                symbol: s,
-                price: 150.00 + (Math.random() * 5),
-                change: 1.25,
-                changePercent: 0.85,
-                volume: 1200000,
-                timestamp: now
-            }))];
-        }
+        if (!this.isConfigured()) return results;
 
         try {
             console.log(`[PublicAPI] Batch fetching ${toFetch.length} quotes...`);
