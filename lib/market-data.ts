@@ -88,7 +88,7 @@ export interface MultiTimeframeAnalysis {
 }
 
 // 1. Live Price Waterfall: Public -> Schwab -> Alpaca -> Yahoo
-export async function fetchLivePrice(symbol: string): Promise<{ price: number, source: string } | null> {
+export async function fetchLivePrice(symbol: string): Promise<{ price: number, source: string, volume?: number } | null> {
     const start = Date.now();
 
     // A. Public.com (Primary for Real-Time) - 60s Cache internal
@@ -96,7 +96,11 @@ export async function fetchLivePrice(symbol: string): Promise<{ price: number, s
         const publicQuote = await publicClient.getQuote(symbol);
         if (publicQuote && publicQuote.price > 0) {
             console.log(`[Waterfall] ${symbol} resolved via Public.com in ${Date.now() - start}ms`);
-            return { price: publicQuote.price, source: 'Public.com' };
+            return { 
+                price: publicQuote.price, 
+                source: 'Public.com',
+                volume: publicQuote.volume
+            };
         }
     } catch (e) {
         console.warn(`[Waterfall] Public.com failed for ${symbol}`);
@@ -108,7 +112,11 @@ export async function fetchLivePrice(symbol: string): Promise<{ price: number, s
             const schwabGreeks = await schwabClient.getGreeks(symbol);
             if (schwabGreeks && schwabGreeks.lastPrice > 0) {
                 console.log(`[Waterfall] ${symbol} resolved via Schwab in ${Date.now() - start}ms`);
-                return { price: schwabGreeks.lastPrice, source: 'Schwab Pro' };
+                return { 
+                    price: schwabGreeks.lastPrice, 
+                    source: 'Schwab Pro',
+                    volume: schwabGreeks.totalVolume
+                };
             }
         } catch (e) {
             console.warn(`[Waterfall] Schwab failed for ${symbol}`);
@@ -131,7 +139,11 @@ export async function fetchLivePrice(symbol: string): Promise<{ price: number, s
         const quote = await yahooFinance.quote(symbol);
         if (quote && quote.regularMarketPrice) {
             console.log(`[Waterfall] ${symbol} resolved via Yahoo in ${Date.now() - start}ms`);
-            return { price: quote.regularMarketPrice, source: 'Yahoo Finance' };
+            return { 
+                price: quote.regularMarketPrice, 
+                source: 'Yahoo Finance',
+                volume: quote.regularMarketVolume
+            };
         }
     } catch (e) {
         console.error(`[Waterfall] All sources failed for ${symbol} (${Date.now() - start}ms)`);
@@ -261,6 +273,7 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
 
     dailyData = dailyResult.bars;
     livePrice = liveData?.price || 0;
+    const liveVolume = liveData?.volume || 0;
     const beta = finnhubMetrics?.metric?.beta;
     const dataOrigin = dailyResult.source;
 
@@ -283,17 +296,18 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
         if (isSameDay) {
             // Update today's bar
             dailyData[dailyData.length - 1].close = livePrice;
-            if (livePrice > lastBar.high) dailyData[dailyData.length - 1].high = livePrice;
-            if (livePrice < lastBar.low) dailyData[dailyData.length - 1].low = livePrice;
-        } else if (now > lastBar.time + 24 * 60 * 60 * 1000) {
-            // Append new day bar if current day is missing from history
+            if (livePrice > dailyData[dailyData.length - 1].high) dailyData[dailyData.length - 1].high = livePrice;
+            if (livePrice < dailyData[dailyData.length - 1].low) dailyData[dailyData.length - 1].low = livePrice;
+            if (liveVolume > dailyData[dailyData.length - 1].volume) dailyData[dailyData.length - 1].volume = liveVolume;
+        } else {
+            // Append today's bar
             dailyData.push({
                 time: now,
                 open: livePrice,
                 high: livePrice,
                 low: livePrice,
                 close: livePrice,
-                volume: 0
+                volume: liveVolume || 100
             });
         }
     }
@@ -368,12 +382,16 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
             const hoursDiff = (now - lastBar.time) / (1000 * 60 * 60);
 
             // 1. Simulation/Stale Environment Shift
-            // If data is > 3 intervals stale, shift the whole history to align with the current timeframe boundary
+            // If data is > 3 units stale, shift the history by FULL DAYS to preserve timeframe boundaries and session starts
             if (hoursDiff > (timeframeMs / (1000 * 60 * 60)) * 3) {
-                // Align to the top of the current timeframe unit (e.g., top of hour for 1h)
-                const nowRounded = Math.floor(now / timeframeMs) * timeframeMs;
-                const lastRounded = Math.floor(lastBar.time / timeframeMs) * timeframeMs;
-                const timeShift = nowRounded - lastRounded;
+                const oneDayMs = 24 * 60 * 60 * 1000;
+                // Calculate day difference
+                const dayDiffMs = now - lastBar.time;
+                const fullDaysShift = Math.floor(dayDiffMs / oneDayMs) * oneDayMs;
+                
+                // If it's less than a day but still stale, we still need to shift to "Today"
+                // but we align the last bar's TIME-OF-DAY to the last bar in history
+                const timeShift = fullDaysShift > 0 ? fullDaysShift : (Math.floor(now / oneDayMs) * oneDayMs - Math.floor(lastBar.time / oneDayMs) * oneDayMs);
 
                 let priceScale = 1;
                 if (livePrice > 0 && lastBar.close > 0) {
@@ -405,7 +423,8 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                         ...updatedLastBar,
                         close: livePrice,
                         high: Math.max(updatedLastBar.high, livePrice),
-                        low: Math.min(updatedLastBar.low, livePrice)
+                        low: Math.min(updatedLastBar.low, livePrice),
+                        volume: Math.max(updatedLastBar.volume, liveVolume || 0)
                     };
                 } else {
                     // Append new partial bar
@@ -415,7 +434,7 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                         high: Math.max(updatedLastBar.close, livePrice),
                         low: Math.min(updatedLastBar.close, livePrice),
                         close: livePrice,
-                        volume: 0
+                        volume: liveVolume || 100 // Minimal volume to allow VWAP to move
                     }];
                 }
             }
