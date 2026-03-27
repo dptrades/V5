@@ -413,30 +413,51 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                 }));
             }
 
-            // 2. Live Price Injection (Append or Overwrite)
+            // 2. Intraday Gap Filling (Bridge history to now)
+            // If the last bar is from a previous day or significantly earlier today,
+            // we synthesize intermediate bars to "warm up" indicators.
+            if (livePrice > 0 && hoursDiff > 1.1) {
+                let bridgeTime = lastBar.time + timeframeMs;
+                const limit = 24; // Safety limit: don't synth more than 24 bars
+                let count = 0;
+                while (bridgeTime < now - timeframeMs/2 && count < limit) {
+                    data.push({
+                        time: bridgeTime,
+                        open: lastBar.close,
+                        high: Math.max(lastBar.close, livePrice),
+                        low: Math.min(lastBar.close, livePrice),
+                        close: lastBar.close, // Keep it flat-ish but at the price level
+                        volume: 100
+                    });
+                    bridgeTime += timeframeMs;
+                    count++;
+                }
+            }
+
+            // 3. Live Price Injection (Append or Overwrite)
             if (livePrice > 0) {
-                const updatedLastBar = data[data.length - 1];
-                const isWithinTimeframe = (now - updatedLastBar.time) < timeframeMs;
+                const refreshedLastBar = data[data.length - 1];
+                const isWithinTimeframe = (now - refreshedLastBar.time) < timeframeMs;
 
                 if (isWithinTimeframe) {
                     // Update current bar
                     data = [...data];
                     data[data.length - 1] = {
-                        ...updatedLastBar,
+                        ...refreshedLastBar,
                         close: livePrice,
-                        high: Math.max(updatedLastBar.high, livePrice),
-                        low: Math.min(updatedLastBar.low, livePrice),
-                        volume: Math.max(updatedLastBar.volume, liveVolume || 0)
+                        high: Math.max(refreshedLastBar.high, livePrice),
+                        low: Math.min(refreshedLastBar.low, livePrice),
+                        volume: Math.max(refreshedLastBar.volume, liveVolume || 0)
                     };
                 } else {
                     // Append new partial bar
                     data = [...data, {
                         time: now,
-                        open: updatedLastBar.close,
-                        high: Math.max(updatedLastBar.close, livePrice),
-                        low: Math.min(updatedLastBar.close, livePrice),
+                        open: refreshedLastBar.close,
+                        high: Math.max(refreshedLastBar.close, livePrice),
+                        low: Math.min(refreshedLastBar.close, livePrice),
                         close: livePrice,
-                        volume: liveVolume || 100 // Minimal volume to allow VWAP to move
+                        volume: liveVolume || 100
                     }];
                 }
             }
