@@ -20,17 +20,22 @@ export function calculateAnchoredVWAP(data: OHLCVData[], anchor: VWAPAnchor = 'n
         let currentAnchorKey = '';
 
         if (anchor === 'daily') {
-            currentAnchorKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            currentAnchorKey = date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // YYYY-MM-DD
         } else if (anchor === 'weekly') {
-            // Get Monday of the week
-            const day = date.getDay();
-            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-            const monday = new Date(date).setDate(diff); // Use temporary date for calc
-            currentAnchorKey = new Date(monday).toISOString().split('T')[0];
+            // Get Monday of the week in ET
+            const etDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            const day = etDate.getDay();
+            const diff = etDate.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(etDate).setDate(diff);
+            currentAnchorKey = new Date(monday).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
         } else if (anchor === 'monthly') {
-            currentAnchorKey = `${date.getFullYear()}-${date.getMonth()}`;
+            const etTime = date.toLocaleString('en-US', { timeZone: 'America/New_York' });
+            const etDate = new Date(etTime);
+            currentAnchorKey = `${etDate.getFullYear()}-${etDate.getMonth()}`;
         } else if (anchor === 'yearly') {
-            currentAnchorKey = `${date.getFullYear()}`;
+            const etTime = date.toLocaleString('en-US', { timeZone: 'America/New_York' });
+            const etDate = new Date(etTime);
+            currentAnchorKey = `${etDate.getFullYear()}`;
         }
 
         // Reset if anchor changed

@@ -273,10 +273,29 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
     const dailyIndicators = calculateIndicators(dailyData);
     const latestDaily = dailyIndicators[dailyIndicators.length - 1];
 
-    // HYBRID MERGE: Use live price to update the last bar's close for sub-second accuracy
+    // HYBRID MERGE: Use live price to update the dataset for sub-second accuracy
     currentPrice = livePrice || latestDaily.close;
     if (livePrice > 0) {
-        dailyData[dailyData.length - 1].close = livePrice;
+        const lastBar = dailyData[dailyData.length - 1];
+        const now = Date.now();
+        const isSameDay = new Date(lastBar.time).toDateString() === new Date(now).toDateString();
+
+        if (isSameDay) {
+            // Update today's bar
+            dailyData[dailyData.length - 1].close = livePrice;
+            if (livePrice > lastBar.high) dailyData[dailyData.length - 1].high = livePrice;
+            if (livePrice < lastBar.low) dailyData[dailyData.length - 1].low = livePrice;
+        } else if (now > lastBar.time + 24 * 60 * 60 * 1000) {
+            // Append new day bar if current day is missing from history
+            dailyData.push({
+                time: now,
+                open: livePrice,
+                high: livePrice,
+                low: livePrice,
+                close: livePrice,
+                volume: 0
+            });
+        }
     }
 
     dailyAtr = latestDaily.atr14 || 0;
@@ -342,62 +361,62 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
         }
 
         if (data && data.length > 0) {
-            // HYBRID STITCH: Inject live price into intraday datasets
-            if (livePrice > 0 && tf === '1h') {
-                const lastBar = data[data.length - 1];
-                // Staleness check: allow up to 5 days (covers long holiday weekends)
-                const stalenessThreshold = 5 * 24 * 60 * 60 * 1000;
-                const isStale = (Date.now() - lastBar.time) > stalenessThreshold;
+            // ─── HYBRID SYNC & STITCH ───
+            const lastBar = data[data.length - 1];
+            const now = Date.now();
+            const timeframeMs = (tf === '1h') ? 60 * 60 * 1000 : (tf === '1w') ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+            const hoursDiff = (now - lastBar.time) / (1000 * 60 * 60);
 
-                // 1. Time-Staleness Check (Market is active but data is really old)
-                if (isStale && marketSession !== 'OFF') {
-                    // console.warn(`[MarketData] ${symbol} ${tf} data is stale. Skipping.`);
-                    // Relaxed for dev/demo purposes where system time might mismatch data time
-                }
+            // 1. Simulation/Stale Environment Shift
+            // If data is > 3 intervals stale, shift the whole history to align with "now"
+            // This is critical for indicators that use absolute dates (like VWAP anchors) 
+            // especially when fetching 2025 data in a 2026 local environment.
+            if (hoursDiff > (timeframeMs / (1000 * 60 * 60)) * 3) {
+                const timeShift = now - lastBar.time;
+                let priceScale = 1;
 
-                // 2. Simulation Environment Sync (Dev/Test)
-                // If data is "stale" (> 5 days), it likely means we are in a simulation time (e.g. 2026) 
-                // but fetching real data (2025). We must shift the history to "now" to allow valid indicators.
-                const hoursDiff = (Date.now() - lastBar.time) / (1000 * 60 * 60);
-
-
-                if (hoursDiff > 120) { // > 5 days gap
-                    // console.log(`[MarketData] Detected data lag of ${hoursDiff.toFixed(1)}h. Syncing history to present time.`);
-
-                    // Calculate exact shift to bring the last bar to "now" (minus a small buffer if needed? no, EXACT is fine for indicators)
-                    // Actually, let's keep the time-of-day alignment if possible?
-                    // If we just add difference, we change 9:30 AM to 2:15 PM if that's the offset.
-                    // Ideally we shift by full days?
-                    // But if the gap is 1.1 years...
-                    // Let's just shift by the difference. Indicators like EMA rely on relative time/sequence, not wall-clock time.
-
-                    const timeShift = Date.now() - lastBar.time;
-
-                    // Check for significant price level mismatch (e.g. 2025 vs 2026 prices)
-                    let priceScale = 1;
-                    if (livePrice && lastBar.close) {
-                        const rawChange = Math.abs(livePrice - lastBar.close) / lastBar.close;
-                        if (rawChange > 0.05) {
-                            // console.log(`[MarketData] Price mistmatch ${(rawChange * 100).toFixed(1)}%. Scaling history.`);
-                            priceScale = livePrice / lastBar.close;
-                        }
+                if (livePrice > 0 && lastBar.close > 0) {
+                    const rawChange = Math.abs(livePrice - lastBar.close) / lastBar.close;
+                    if (rawChange > 0.05) {
+                        priceScale = livePrice / lastBar.close;
                     }
-
-                    data = data.map(b => ({
-                        ...b,
-                        time: b.time + timeShift,
-                        open: b.open * priceScale,
-                        high: b.high * priceScale,
-                        low: b.low * priceScale,
-                        close: b.close * priceScale
-                    }));
                 }
 
-                data = [...data];
-                data[data.length - 1] = {
-                    ...data[data.length - 1], // Use the shifted last bar
-                    close: livePrice
-                };
+                data = data.map(b => ({
+                    ...b,
+                    time: b.time + timeShift,
+                    open: b.open * priceScale,
+                    high: b.high * priceScale,
+                    low: b.low * priceScale,
+                    close: b.close * priceScale
+                }));
+            }
+
+            // 2. Live Price Injection (Append or Overwrite)
+            if (livePrice > 0) {
+                const updatedLastBar = data[data.length - 1];
+                const isWithinTimeframe = (now - updatedLastBar.time) < timeframeMs;
+
+                if (isWithinTimeframe) {
+                    // Update current bar
+                    data = [...data];
+                    data[data.length - 1] = {
+                        ...updatedLastBar,
+                        close: livePrice,
+                        high: Math.max(updatedLastBar.high, livePrice),
+                        low: Math.min(updatedLastBar.low, livePrice)
+                    };
+                } else {
+                    // Append new partial bar
+                    data = [...data, {
+                        time: now,
+                        open: updatedLastBar.close,
+                        high: Math.max(updatedLastBar.close, livePrice),
+                        low: Math.min(updatedLastBar.close, livePrice),
+                        close: livePrice,
+                        volume: 0
+                    }];
+                }
             }
 
             const vwapAnchor: any = (tf === '1w') ? 'yearly' : (tf === '1d') ? 'weekly' : 'daily';
