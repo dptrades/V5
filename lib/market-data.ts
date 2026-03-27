@@ -223,7 +223,7 @@ async function fetchHistoricalData(symbol: string, alpacaTf: string, yahooTf: st
         }
     }
 
-    // Tier 2: Alpaca
+    // Tier 2: Alpaca (HF Real-time)
     try {
         const bars = await fetchAlpacaBars(symbol, alpacaTf as any, limit);
         if (bars && bars.length > 0) {
@@ -232,14 +232,38 @@ async function fetchHistoricalData(symbol: string, alpacaTf: string, yahooTf: st
                     time: new Date(b.t).getTime(),
                     open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v
                 })),
-                source: 'Alpaca'
+                source: 'Alpaca (HF)'
             };
         }
     } catch (e) {
-        console.warn(`[Waterfall] Alpaca historical failed for ${symbol}, falling to Yahoo...`);
+        console.warn(`[Waterfall] Alpaca failed for ${symbol}, falling to Finnhub...`);
     }
 
-    // Tier 3: Yahoo Finance (Optimized for Intraday)
+    // Tier 3: Finnhub (HF Candles)
+    if (finnhubClient) {
+        try {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const fromSec = nowSec - (limit * 3600 * 2); // Buffer
+            const res = (alpacaTf === '1Day') ? 'D' : (alpacaTf === '1Hour') ? '60' : (alpacaTf === '15Min') ? '15' : 'D';
+            
+            const data = await finnhubClient.getCandles(symbol, res as any, fromSec, nowSec);
+            if (data && data.s === 'ok') {
+                const bars = data.t.map((t: number, i: number) => ({
+                    time: t * 1000,
+                    open: data.o[i],
+                    high: data.h[i],
+                    low: data.l[i],
+                    close: data.c[i],
+                    volume: data.v[i]
+                }));
+                return { bars, source: 'Finnhub (HF)' };
+            }
+        } catch (e) {
+            console.warn(`[Waterfall] Finnhub failed for ${symbol}, falling to Yahoo...`);
+        }
+    }
+
+    // Tier 4: Yahoo Finance (Optimized for Intraday)
     try {
         const now = new Date();
         

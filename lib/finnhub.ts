@@ -172,6 +172,19 @@ class FinnhubClient {
         const data = await this.rateLimitedFetch('/calendar/economic', { from, to });
         return data?.economicCalendar || [];
     }
+
+    /**
+     * Get historical candles (OHLCV) for a symbol.
+     * Valid resolutions: 1, 5, 15, 30, 60 (1 hour), D, W, M
+     */
+    async getCandles(symbol: string, resolution: '1' | '5' | '15' | '30' | '60' | 'D' | 'W' | 'M', from: number, to: number): Promise<any> {
+        return await this.rateLimitedFetch('/stock/candle', {
+            symbol,
+            resolution,
+            from: from.toString(),
+            to: to.toString()
+        });
+    }
 }
 
 export const finnhubClient = new FinnhubClient();

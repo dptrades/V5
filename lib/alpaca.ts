@@ -26,7 +26,8 @@ export async function fetchAlpacaBars(symbol: string, timeframe: '1Day' | '1Week
     const apiSecret = env.ALPACA_API_SECRET;
 
     if (!apiKey || !apiSecret) {
-        console.warn(`[Alpaca] Missing Keys for ${symbol}`);
+        if (!apiKey) console.warn(`[Alpaca] Missing API Key for ${symbol}`);
+        if (!apiSecret) console.warn(`[Alpaca] Missing API Secret for ${symbol}`);
         return [];
     }
 
@@ -50,10 +51,12 @@ export async function fetchAlpacaBars(symbol: string, timeframe: '1Day' | '1Week
         const startIso = startDate.toISOString();
 
         // 2. Request limit * 2 (buffer) to ensure we cover the period.
-        // We just need enough to return 'limit' bars at the end.
+        // Feed: 'sip' is for Pro users, 'iex' is for Free users.
+        const useSip = apiKey.includes('PRO') || apiKey.length > 20; // Heuristic
+        const feed = useSip ? 'sip' : 'iex';
         const apiLimit = Math.min(10000, limit * 3);
 
-        let url = `${DATA_URL}/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${apiLimit}&start=${startIso}&adjustment=raw&feed=iex`;
+        let url = `${DATA_URL}/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${apiLimit}&start=${startIso}&adjustment=raw&feed=${feed}`;
 
         // extended_hours is only valid for intraday timeframes
         // if (timeframe !== '1Day') {

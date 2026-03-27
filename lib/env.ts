@@ -2,6 +2,13 @@
  * Environment Variable Configuration
  * Centralizes environment variable access with validation and defaults
  */
+import { config } from 'dotenv';
+
+// Load .env.local if present (useful for standalone scripts/tsx)
+if (typeof window === 'undefined') {
+    config({ path: '.env.local' });
+    config(); // Also load default .env
+}
 
 // Helper to get required env var (throws if missing in production)
 function getEnvOrThrow(key: string): string {
