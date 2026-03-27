@@ -382,6 +382,7 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
             const now = Date.now();
             const timeframeMs = (tf === '1h') ? 60 * 60 * 1000 : (tf === '1w') ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
             const hoursDiff = (now - lastBar.time) / (1000 * 60 * 60);
+            let priceScale = 1;
 
             // 1. Simulation/Stale Environment Shift
             // If data is > 3 units stale, shift the history by FULL DAYS to preserve timeframe boundaries and session starts
@@ -395,10 +396,10 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                 // but we align the last bar's TIME-OF-DAY to the last bar in history
                 const timeShift = fullDaysShift > 0 ? fullDaysShift : (Math.floor(now / oneDayMs) * oneDayMs - Math.floor(lastBar.time / oneDayMs) * oneDayMs);
 
-                let priceScale = 1;
                 if (livePrice > 0 && lastBar.close > 0) {
                     const rawChange = Math.abs(livePrice - lastBar.close) / lastBar.close;
-                    if (rawChange > 0.05) {
+                    // Lower threshold to 0.5% for indices like SPY where 4% is massive
+                    if (rawChange > 0.005) {
                         priceScale = livePrice / lastBar.close;
                     }
                 }
@@ -420,13 +421,14 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
                 let bridgeTime = lastBar.time + timeframeMs;
                 const limit = 24; // Safety limit: don't synth more than 24 bars
                 let count = 0;
+                const bridgePrice = lastBar.close * priceScale; // Use scaled price for bridge
                 while (bridgeTime < now - timeframeMs/2 && count < limit) {
                     data.push({
                         time: bridgeTime,
-                        open: lastBar.close,
-                        high: Math.max(lastBar.close, livePrice),
-                        low: Math.min(lastBar.close, livePrice),
-                        close: lastBar.close, // Keep it flat-ish but at the price level
+                        open: bridgePrice,
+                        high: bridgePrice,
+                        low: bridgePrice,
+                        close: bridgePrice,
                         volume: 100
                     });
                     bridgeTime += timeframeMs;
