@@ -24,3 +24,34 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes call-flash {
+  0%, 100% {
+    border-color: rgba(34, 197, 94, 0.2);
+    box-shadow: 0 0 0px rgba(34, 197, 94, 0);
+  }
+  50% {
+    border-color: rgba(34, 197, 94, 0.85);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+  }
+}
+
+@keyframes put-flash {
+  0%, 100% {
+    border-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 0.85);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+  }
+}
+
+.animate-call-flash {
+  animation: call-flash 2.5s infinite ease-in-out;
+}
+
+.animate-put-flash {
+  animation: put-flash 2.5s infinite ease-in-out;
+}
+

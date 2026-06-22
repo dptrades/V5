@@ -117,9 +117,10 @@ export default function Sidebar({
             : pathname.startsWith('/picks') ? 'picks'
                 : pathname.startsWith('/conviction') ? 'conviction'
                     : pathname.startsWith('/social-pulse') ? 'social'
-                        : pathname.startsWith('/performance') ? 'performance'
-                            : pathname.startsWith('/terminal') ? 'terminal'
-                                : 'dashboard';
+                        : pathname.startsWith('/pulse-360') ? 'pulse-360'
+                            : pathname.startsWith('/performance') ? 'performance'
+                                : pathname.startsWith('/terminal') ? 'terminal'
+                                    : 'dashboard';
 
 
 
@@ -201,6 +202,15 @@ export default function Sidebar({
                         }`}
                 >
                     <span className="truncate">🔥 Social Pulse</span>
+                </Link>
+                <Link
+                    href="/pulse-360"
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'pulse-360'
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 border border-transparent'
+                        }`}
+                >
+                    <span className="truncate">🔮 Pulse 360</span>
                 </Link>
                 {enableBetaFeatures && (
                     <>

@@ -1,194 +1,51 @@
 [
   {
-    "id": "NFLX260410P00095000",
-    "ticker": "NFLX",
-    "companyName": "Netflix, Inc.",
-    "strike": 95,
-    "expiry": "2026-04-10",
-    "type": "PUT",
-    "entryPremium": 3.4749999999999996,
-    "entryStockPrice": 93.39,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price < EMA50",
-      "Price < EMA200",
-      "Bollinger Downtrend",
-      "1W Timeframe is Bearish (30% weight)",
-      "1D Timeframe is Bearish (50% weight)",
-      "1H Timeframe is Bullish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 3.4749999999999996,
-        "stockPrice": 93.39
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "AMD260410P00197500",
+    "id": "AMD260626C00550000",
     "ticker": "AMD",
     "companyName": "Advanced Micro Devices, Inc.",
-    "strike": 197.5,
-    "expiry": "2026-04-10",
-    "type": "PUT",
-    "entryPremium": 6.85,
-    "entryStockPrice": 202.67,
-    "entryDate": "2026-03-24",
+    "strike": 550,
+    "expiry": "2026-06-26",
+    "type": "CALL",
+    "entryPremium": 18.725,
+    "entryStockPrice": 547.02,
+    "entryDate": "2026-06-22",
     "reasoning": [
-      "Price < EMA50",
-      "EMA Stack Bearish (Short < Mid < Long)",
+      "CALL $550 — Vol 7,412, OI 6,227."
+    ],
+    "history": [
+      {
+        "date": "2026-06-22",
+        "optionPremium": 18.725,
+        "stockPrice": 547.02
+      }
+    ],
+    "status": "ACTIVE"
+  },
+  {
+    "id": "RSI260717C00030000",
+    "ticker": "RSI",
+    "companyName": "Rush Street Interactive, Inc.",
+    "strike": 30,
+    "expiry": "2026-07-17",
+    "type": "CALL",
+    "entryPremium": 2.025,
+    "entryStockPrice": 30.56,
+    "entryDate": "2026-06-22",
+    "reasoning": [
+      "Price > EMA50",
+      "Price > EMA200",
+      "EMA Stack Bullish (Short > Mid > Long)",
+      "Strong Bullish Momentum",
+      "MACD Bullish Cross",
       "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bearish (50% weight)",
+      "1D Timeframe is Bullish (50% weight)",
       "1H Timeframe is Bearish (20% weight)"
     ],
     "history": [
       {
-        "date": "2026-03-24",
-        "optionPremium": 6.85,
-        "stockPrice": 202.67
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "MRVL260410C00093000",
-    "ticker": "MRVL",
-    "companyName": "Marvell Technology, Inc.",
-    "strike": 93,
-    "expiry": "2026-04-10",
-    "type": "CALL",
-    "entryPremium": 2.5599999999999996,
-    "entryStockPrice": 89.195,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend",
-      "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bullish (50% weight)",
-      "1H Timeframe is Bearish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 2.5599999999999996,
-        "stockPrice": 89.195
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "DELL260410C00170000",
-    "ticker": "DELL",
-    "companyName": "Dell Technologies Inc.",
-    "strike": 170,
-    "expiry": "2026-04-10",
-    "type": "CALL",
-    "entryPremium": 5.05,
-    "entryStockPrice": 164.97,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bullish (50% weight)",
-      "1H Timeframe is Bullish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 5.05,
-        "stockPrice": 164.97
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "PLTR260410C00165000",
-    "ticker": "PLTR",
-    "companyName": "Palantir Technologies Inc.",
-    "strike": 165,
-    "expiry": "2026-04-10",
-    "type": "CALL",
-    "entryPremium": 2.85,
-    "entryStockPrice": 154.83,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend",
-      "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bullish (50% weight)",
-      "1H Timeframe is Bullish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 2.85,
-        "stockPrice": 154.83
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "DELL260410C00172500",
-    "ticker": "DELL",
-    "companyName": "Dell Technologies Inc.",
-    "strike": 172.5,
-    "expiry": "2026-04-10",
-    "type": "CALL",
-    "entryPremium": 4.725,
-    "entryStockPrice": 166.915,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "EMA Stack Bullish (Short > Mid > Long)",
-      "MACD Bullish Cross",
-      "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bullish (50% weight)",
-      "1H Timeframe is Bullish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 4.725,
-        "stockPrice": 166.915
-      }
-    ],
-    "status": "ACTIVE"
-  },
-  {
-    "id": "PLTR260410C00160000",
-    "ticker": "PLTR",
-    "companyName": "Palantir Technologies Inc.",
-    "strike": 160,
-    "expiry": "2026-04-10",
-    "type": "CALL",
-    "entryPremium": 4.699999999999999,
-    "entryStockPrice": 155.28,
-    "entryDate": "2026-03-24",
-    "reasoning": [
-      "Price > EMA50",
-      "Price > EMA200",
-      "MACD Bullish Cross",
-      "Bollinger Uptrend",
-      "1W Timeframe is Bullish (30% weight)",
-      "1D Timeframe is Bullish (50% weight)",
-      "1H Timeframe is Bullish (20% weight)"
-    ],
-    "history": [
-      {
-        "date": "2026-03-24",
-        "optionPremium": 4.699999999999999,
-        "stockPrice": 155.28
+        "date": "2026-06-22",
+        "optionPremium": 2.025,
+        "stockPrice": 30.56
       }
     ],
     "status": "ACTIVE"

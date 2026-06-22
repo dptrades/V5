@@ -139,6 +139,10 @@ class FinnhubClient {
         return await this.rateLimitedFetch('/company-news', { symbol, from, to }) || [];
     }
 
+    async getGeneralNews(category: string = 'general'): Promise<any[]> {
+        return await this.rateLimitedFetch('/news', { category }) || [];
+    }
+
     async getNewsSentiment(symbol: string): Promise<FinnhubSentiment | null> {
         // Feature disabled: Requires Premium API Key.
         // It triggers a 403 error which wastes 1.1s in the API rate limiter
