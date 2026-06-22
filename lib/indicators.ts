@@ -35,6 +35,7 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
     // 1. STANDARD INDICATORS
     // -------------------------------------------------------------------------
     const ema9 = EMA.calculate({ period: 9, values: closes });
+    const ema20 = EMA.calculate({ period: 20, values: closes });
     const ema21 = EMA.calculate({ period: 21, values: closes });
     const ema50 = EMA.calculate({ period: 50, values: closes });
     const ema100 = EMA.calculate({ period: 100, values: closes });
@@ -133,6 +134,25 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
         // ADX(14) in technicalindicators needs 14 (DM) + 14 (smoothing) = 28 bars for the first valid result at index 27
         const adxVal = i >= 27 ? adx[i - 27] : undefined;
         d.adx14 = adxVal?.adx;
+
+        // ── Keltner Channels & Volatility Squeeze ──
+        const ema20Index = i - 19;
+        const ema20Val = (ema20Index >= 0 && ema20Index < ema20.length) ? ema20[ema20Index] : undefined;
+        const atr = atrs[i];
+        if (ema20Val !== undefined && atr !== undefined && atr > 0) {
+            const keltnerUpper = ema20Val + 2 * atr;
+            const keltnerLower = ema20Val - 2 * atr;
+            
+            d.keltner = {
+                middle: ema20Val,
+                upper: keltnerUpper,
+                lower: keltnerLower
+            };
+
+            if (d.bollinger && d.bollinger.upper !== undefined && d.bollinger.lower !== undefined) {
+                d.squeeze = d.bollinger.upper < keltnerUpper && d.bollinger.lower > keltnerLower;
+            }
+        }
 
         // -------------------------------------------------------------------------
         // 4. FAIR VALUE GAP (FVG) DETECTION & TRACKING

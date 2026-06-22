@@ -36,6 +36,12 @@ export interface IndicatorData extends OHLCVData {
   vwap?: number;
   atr14?: number;
   adx14?: number;
+  squeeze?: boolean;
+  keltner?: {
+    upper: number;
+    middle: number;
+    lower: number;
+  };
 
   fvg?: {
     type: 'BULLISH' | 'BEARISH' | 'NONE';

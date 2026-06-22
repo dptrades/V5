@@ -4,16 +4,22 @@ import { publicClient, PublicOptionChain } from './public-api';
 import { schwabClient } from './schwab';
 import { calculateConfluenceScore, calculateMultiTimeframeConfluence } from './indicators';
 import { MultiTimeframeConfluenceResult } from '../types/financial';
+import yahooFinance from 'yahoo-finance2';
 export type { OptionRecommendation } from '../types/options';
 
-// In-memory cache for PCR and unusual volume
+// In-memory cache for PCR, unusual volume, and earnings dates
 declare global {
     var _pcrCache: Map<string, { data: any, timestamp: number }>;
+    var _earningsCache: Map<string, { date: string | null, timestamp: number }>;
 }
 if (!(globalThis as any)._pcrCache) {
     (globalThis as any)._pcrCache = new Map<string, { data: any; timestamp: number }>();
 }
+if (!(globalThis as any)._earningsCache) {
+    (globalThis as any)._earningsCache = new Map<string, { date: string | null; timestamp: number }>();
+}
 const PCR_CACHE_TTL = 15 * 60 * 1000; // 15 minutes (increased for reliability)
+const EARNINGS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 // Force server rebuild: 1
 export function getNextMonthlyExpiry(): string {
@@ -86,7 +92,47 @@ export async function generateOptionSignal(
 
     const isCall = (bullScore > bearScore && bullScore >= 15);
     const isPut = (bearScore > bullScore && bearScore >= 15);
-    const direction: 'CALL' | 'PUT' | 'WAIT' = isCall ? 'CALL' : isPut ? 'PUT' : 'WAIT';
+    let direction: 'CALL' | 'PUT' | 'WAIT' = isCall ? 'CALL' : isPut ? 'PUT' : 'WAIT';
+
+    // ── ADX Trend Strength Filter ──
+    const ADX_THRESHOLD = 22;
+    let adxFilterTriggered = false;
+    if (direction !== 'WAIT' && indicators?.adx14 !== undefined && indicators.adx14 < ADX_THRESHOLD) {
+        adxFilterTriggered = true;
+        direction = 'WAIT';
+    }
+
+    // ── Earnings Calendar Protection ──
+    let earningsDateStr: string | null = null;
+    let daysUntilEarnings = -1;
+    let earningsFilterTriggered = false;
+
+    if (symbol) {
+        try {
+            const cached = global._earningsCache.get(symbol);
+            if (cached && (Date.now() - cached.timestamp < EARNINGS_CACHE_TTL)) {
+                earningsDateStr = cached.date;
+            } else {
+                const summary = await yahooFinance.quoteSummary(symbol, { modules: ['calendarEvents'] }) as any;
+                earningsDateStr = summary?.calendarEvents?.earnings?.earningsDate?.[0] || null;
+                global._earningsCache.set(symbol, { date: earningsDateStr, timestamp: Date.now() });
+            }
+
+            if (earningsDateStr) {
+                const earningsDate = new Date(earningsDateStr);
+                const msDiff = earningsDate.getTime() - Date.now();
+                daysUntilEarnings = Math.ceil(msDiff / (1000 * 3600 * 24));
+            }
+        } catch (e) {
+            console.error(`[Options] Error fetching earnings for ${symbol}:`, e);
+        }
+    }
+
+    // Strict Deferral Check (Earnings <= 7 days away)
+    if (direction !== 'WAIT' && daysUntilEarnings >= 0 && daysUntilEarnings <= 7) {
+        earningsFilterTriggered = true;
+        direction = 'WAIT';
+    }
 
     // ── PCR: fetch early (nearly always cached) ────────────────────────────────
     let pcr: { volumeRatio: number; oiRatio: number; totalCalls: number; totalPuts: number } | null = null;
@@ -96,12 +142,20 @@ export async function generateOptionSignal(
 
     if (direction === 'WAIT') {
         const fallbackSignals = bullScore >= bearScore ? bullSignals : bearSignals;
+        let waitReason = `Mixed signals. ${fallbackSignals[0] || 'Monitoring Price Action'}`;
+        if (adxFilterTriggered) {
+            waitReason = `Weak trend strength (ADX = ${indicators!.adx14!.toFixed(1)} is under ${ADX_THRESHOLD}). Monitoring for breakout.`;
+        } else if (earningsFilterTriggered && earningsDateStr) {
+            const formattedDate = new Date(earningsDateStr).toLocaleDateString();
+            waitReason = `WAIT Setup: Earnings upcoming on ${formattedDate} (${daysUntilEarnings} days away). Deferring directional options due to IV crush risk.`;
+        }
         return {
             type: 'WAIT', strike: 0, expiry: '', confidence: 50,
-            reason: `Mixed signals. ${fallbackSignals[0] || 'Monitoring Price Action'}`,
+            reason: waitReason,
             technicalConfirmations: 0,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1, dte: 30
+            socialConfirmations: socialConfirmations || 1, dte: 30,
+            earningsDate: earningsDateStr || undefined
         };
     }
 
@@ -364,7 +418,48 @@ export async function generateOptionSignal(
         tacticalNote = ` Validated by heavy Tactical Flow (${realOption.volume} Vol).`;
     }
 
+    // ── Volatility Squeeze Confluence ──
+    let squeezeNote = '';
+    if (indicators?.squeeze) {
+        confidence += 10;
+        squeezeNote = ` Volatility Squeeze active (breakout potential).`;
+    }
+
+    // ── Multi-Timeframe Trend Confirmation (Weekly Alignment check) ──
+    let mtcWarningNote = '';
+    let mtcAlignedNote = '';
+    if (mtc) {
+        const weeklyTrend = mtc.timeframeDetails['1w']?.trend;
+        if ((direction === 'CALL' && weeklyTrend === 'BEARISH') || (direction === 'PUT' && weeklyTrend === 'BULLISH')) {
+            confidence = Math.max(50, confidence - 15);
+            mtcWarningNote = ` ⚠️ Warning: Trade opposes weekly macro trend (${weeklyTrend}).`;
+        } else if ((direction === 'CALL' && weeklyTrend === 'BULLISH') || (direction === 'PUT' && weeklyTrend === 'BEARISH')) {
+            confidence = Math.min(99, confidence + 5);
+            mtcAlignedNote = ` Aligned with weekly macro trend.`;
+        }
+    }
+
     confidence = Math.min(99, Math.max(50, Math.round(confidence)));
+
+    // ── Earnings Calendar Warning Check (Earnings within Option Lifespan but > 7 days) ──
+    let earningsWarning = false;
+    if (daysUntilEarnings > 7 && daysUntilEarnings <= finalDte) {
+        confidence = Math.max(50, confidence - 15);
+        earningsWarning = true;
+    }
+
+    // ── Time Decay (Theta) Safeguard Check ──
+    let thetaRisk: 'HIGH' | 'MODERATE' | 'NONE' = 'NONE';
+    let thetaNote = '';
+    if (finalDte < 7) {
+        confidence = Math.max(50, confidence - 20);
+        thetaRisk = 'HIGH';
+        thetaNote = ` ⚠️ Theta Warning: Extremely short DTE (${finalDte} days). High time decay active.`;
+    } else if (finalDte < 14) {
+        confidence = Math.max(50, confidence - 10);
+        thetaRisk = 'MODERATE';
+        thetaNote = ` ⚠️ Theta Warning: Short DTE (${finalDte} days). Active time decay.`;
+    }
 
     // ── 8. EMA-anchored stop loss ──────────────────────────────────────────────
     // Use EMA-50 as a logical support/resistance floor instead of bare ATR
@@ -388,7 +483,17 @@ export async function generateOptionSignal(
     // ── 9. Rich reason string ──────────────────────────────────────────────────
     const ivDisplay = ` IV ${(atmIV * 100).toFixed(0)}%.`;
     const deltaDisplay = probabilityITM ? ` Δ${probabilityITM.toFixed(2)}` : '';
-    const reason = `${direction} Setup: RSI ${Math.round(rsi)}, ${signals.slice(0, 2).join(' + ') || 'Confluent signals'}.${pcrNote}${tacticalNote}${ivDisplay}${deltaDisplay} ${techConfirmations} tech signals.`;
+    let reason = `${direction} Setup: RSI ${Math.round(rsi)}, ${signals.slice(0, 2).join(' + ') || 'Confluent signals'}.${pcrNote}${tacticalNote}${squeezeNote}${mtcAlignedNote}${ivDisplay}${deltaDisplay} ${techConfirmations} tech signals.`;
+    if (earningsWarning && earningsDateStr) {
+        const formattedDate = new Date(earningsDateStr).toLocaleDateString();
+        reason += ` ⚠️ Warning: Option holds through earnings on ${formattedDate} (${daysUntilEarnings} days away). Plan to exit before earnings to avoid IV crush.`;
+    }
+    if (thetaNote) {
+        reason += thetaNote;
+    }
+    if (mtcWarningNote) {
+        reason += mtcWarningNote;
+    }
 
     const fundamentalDetails = (fundamentalConfirmations || 0) >= 2
         ? ["Strong Earnings Growth", "Undervalued P/E Ratio", "Healthy Debt-to-Equity"]
@@ -397,29 +502,65 @@ export async function generateOptionSignal(
         ? ["High Reddit Mention Frequency", "Positive StockTwits Sentiment", "Bullish Options Flow"]
         : ["Moderate Retail Interest", "Stable Institutional Sentiment"];
 
+    // Sizing Warning
+    const positionSizingWarning = atmIV > 0.45 
+        ? "High Volatility Regime: Restrict size to 1-2% of portfolio max."
+        : "Moderate Volatility: Restrict size to 3-5% of portfolio max.";
+
     if (!realOption) {
+        let waitReason = `No liquid contract at $${intendedStrike} strike.${ivDisplay}`;
+        if (earningsWarning && earningsDateStr) {
+            const formattedDate = new Date(earningsDateStr).toLocaleDateString();
+            waitReason += ` ⚠️ Warning: Option holds through earnings on ${formattedDate} (${daysUntilEarnings} days away).`;
+        }
+        if (thetaNote) {
+            waitReason += thetaNote;
+        }
+        if (mtcWarningNote) {
+            waitReason += mtcWarningNote;
+        }
         return {
             type: 'WAIT', strike: intendedStrike, expiry: finalExpiry, confidence: Math.min(confidence, 65),
-            reason: `No liquid contract at $${intendedStrike} strike.${ivDisplay}`,
+            reason: waitReason,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1, dte: finalDte
+            socialConfirmations: socialConfirmations || 1, dte: finalDte,
+            earningsDate: earningsDateStr || undefined,
+            positionSizingWarning,
+            thetaRisk
         };
     }
 
     if ((realOption.volume || 0) < volumeThreshold) {
+        let waitReason = `Low liquidity at $${intendedStrike} strike. Monitoring for volume entry.`;
+        if (earningsWarning && earningsDateStr) {
+            const formattedDate = new Date(earningsDateStr).toLocaleDateString();
+            waitReason += ` ⚠️ Warning: Option holds through earnings on ${formattedDate} (${daysUntilEarnings} days away).`;
+        }
+        if (thetaNote) {
+            waitReason += thetaNote;
+        }
+        if (mtcWarningNote) {
+            waitReason += mtcWarningNote;
+        }
         return {
             type: 'WAIT', strike: intendedStrike, expiry: finalExpiry, confidence: Math.min(confidence, 60),
-            reason: `Low liquidity at $${intendedStrike} strike. Monitoring for volume entry.`,
+            reason: waitReason,
             technicalConfirmations: techConfirmations,
             fundamentalConfirmations: fundamentalConfirmations || 1,
-            socialConfirmations: socialConfirmations || 1, dte: finalDte
+            socialConfirmations: socialConfirmations || 1, dte: finalDte,
+            earningsDate: earningsDateStr || undefined,
+            positionSizingWarning,
+            thetaRisk
         };
     }
 
     const midPrice = (realOption.bid && realOption.ask)
         ? (realOption.bid + realOption.ask) / 2
         : (realOption.last || realOption.bid || realOption.ask || 0);
+
+    const optionStopLossPrice = midPrice ? parseFloat((midPrice * 0.50).toFixed(2)) : undefined;
+    const optionTakeProfitPrice = midPrice ? parseFloat((midPrice * 1.80).toFixed(2)) : undefined;
 
     return {
         type: direction,
@@ -450,7 +591,12 @@ export async function generateOptionSignal(
         multiTimeframeConfluence: mtc || undefined,
         symbol: realOption.symbol || `${symbol}_${finalExpiry}_${realOption.strike || intendedStrike}${isCall ? 'C' : 'P'}`,
         probabilityITM: realOption.greeks?.delta ? Math.abs(realOption.greeks.delta) : probabilityITM,
-        dte: finalDte
+        dte: finalDte,
+        earningsDate: earningsDateStr || undefined,
+        optionStopLossPrice,
+        optionTakeProfitPrice,
+        positionSizingWarning,
+        thetaRisk
     };
 }
 

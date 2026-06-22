@@ -39,6 +39,11 @@ export interface OptionRecommendation {
     putCallRatio?: number;     // Put/Call ratio based on volume
     probabilityITM?: number;    // Estimated probability of expiring ITM (0.0 to 1.0)
     dte?: number;              // Days To Expiration
+    earningsDate?: string;     // Next upcoming earnings date
+    optionStopLossPrice?: number;
+    optionTakeProfitPrice?: number;
+    positionSizingWarning?: string;
+    thetaRisk?: 'HIGH' | 'MODERATE' | 'NONE';
 }
 
 export interface OptionsChain {
