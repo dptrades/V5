@@ -272,12 +272,13 @@ async function getSectorTrending(symbol: string): Promise<boolean> {
   }
 }
 
-// ── VIX 52-week percentile via VIXY bars ──────────────────────────────────────
+// ── VIX 52-week percentile via Yahoo ^VIX ──────────────────────────────────────
 async function getVixPercentile(currentVix: number): Promise<number> {
   try {
-    const bars = await fetchAlpacaBars('VIXY', '1Day', 252); // ~1 trading year
-    if (bars.length < 50) return 50;
-    const closes = bars.map(b => b.c);
+    const chart = await yahooFinance.chart('^VIX', { period1: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), interval: '1d' });
+    if (!chart || !chart.quotes || chart.quotes.length < 50) return 50;
+    const closes = chart.quotes.map(q => q.close).filter(c => c !== null && c !== undefined) as number[];
+    if (closes.length < 50) return 50;
     const below = closes.filter(c => c < currentVix).length;
     return Math.round((below / closes.length) * 100);
   } catch {
@@ -507,11 +508,18 @@ export async function GET(request: NextRequest) {
     const volatilityScore = Math.max(0, Math.min(100, 100 - (vix - 15) * (100 / 15)));
 
     const positiveSectors = sectorSymbols.filter(sym => (dataMap[sym]?.changePercent ?? 0) > 0);
-    const breadthScore = (positiveSectors.length / sectorSymbols.length) * 100;
+    let breadthScore = (positiveSectors.length / sectorSymbols.length) * 100;
+    
+    if (breadthInternals && (breadthInternals as any).above50 !== null && (breadthInternals as any).above200 !== null) {
+      const internalScore = ((breadthInternals as any).above50 + (breadthInternals as any).above200) / 2;
+      breadthScore = (breadthScore * 0.4) + (internalScore * 0.6);
+    }
 
-    // Macro Score: Penalty for rising yields across the curve + rising dollar
-    const yieldImpact = (Math.max(0, irxChange) + Math.max(0, fvxChange) + Math.max(0, tnxChange) + Math.max(0, tyxChange)) / 4;
-    const macroScore = Math.max(0, Math.min(100, 100 - (yieldImpact * 15 + Math.max(0, dxyChange) * 15)));
+    // Macro Score: Normalize around 50 so falling yields/dollar boost it, and rising drops it
+    const avgYieldChange = (irxChange + fvxChange + tnxChange + tyxChange) / 4;
+    const yieldPenalty = avgYieldChange * 15;
+    const dxyPenalty = dxyChange * 15;
+    const macroScore = Math.max(0, Math.min(100, 50 - (yieldPenalty + dxyPenalty)));
 
     // --- Mode-Aware Scoring Weights ---
     const weights = mode === 'TACTICAL'

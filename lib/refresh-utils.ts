@@ -124,3 +124,20 @@ export const getNextMarketOpen = (): Date => {
 export const formatLastUpdated = (date: Date): string => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 };
+
+export const isCacheStaleBy930AM = (cacheTimestamp: number): boolean => {
+    const now = new Date();
+    const estNow = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const estCache = new Date(new Date(cacheTimestamp).toLocaleString("en-US", { timeZone: "America/New_York" }));
+    
+    const today930 = new Date(estNow);
+    today930.setHours(9, 30, 0, 0);
+    
+    if (estNow.getTime() >= today930.getTime()) {
+        if (estCache.getTime() < today930.getTime()) {
+            return true;
+        }
+    }
+    return false;
+};
+

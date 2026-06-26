@@ -30,7 +30,12 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
         executionAction, 
         entryPrice, 
         entryReason, 
-        techDetails 
+        techDetails,
+        regime,
+        stopLoss,
+        targetPrice,
+        rrRatio,
+        optionStrategy
     } = generateSignal(symbol, analysis, optionsFlow, fundamentals);
 
     const isBullish = score >= 6.5;
@@ -49,11 +54,16 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                 {/* LEFT COLUMN: PRIMARY SIGNAL & EXECUTION (4/12) */}
                 <div className="lg:col-span-4 flex flex-col gap-6">
                     {/* Header Row */}
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
-                            <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                            </div>
+                            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Live AI Assessment</h3>
                         </div>
-                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Live AI Assessment</h3>
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 uppercase tracking-widest">
+                            {regime}
+                        </span>
                     </div>
 
                     {/* AI SIGNAL CARD */}
@@ -70,18 +80,53 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
                     </div>
 
                     {/* EXECUTION STRATEGY */}
-                    <div className={`p-6 rounded-2xl border flex flex-col gap-4 shadow-2xl ${executionAction === 'BUY' ? 'bg-[#00FF94]/5 border-[#00FF94]/20' : 'bg-[#FFB800]/5 border-[#FFB800]/20'}`}>
+                    <div className={`p-6 rounded-2xl border flex flex-col gap-4 shadow-2xl ${
+                        executionAction === 'BUY' ? 'bg-[#00FF94]/5 border-[#00FF94]/20' : 
+                        executionAction === 'SELL' ? 'bg-[#FF2E2E]/5 border-[#FF2E2E]/20' : 
+                        'bg-[#FFB800]/5 border-[#FFB800]/20'
+                    }`}>
                         <div className="flex items-center gap-2">
-                            <Clock className={`w-4 h-4 ${executionAction === 'BUY' ? 'text-[#00FF94]' : 'text-[#FFB800]'}`} />
+                            <Clock className={`w-4 h-4 ${
+                                executionAction === 'BUY' ? 'text-[#00FF94]' : 
+                                executionAction === 'SELL' ? 'text-[#FF2E2E]' : 
+                                'text-[#FFB800]'
+                            }`} />
                             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Execution Strategy</span>
                         </div>
-                        <div className={`text-xl font-black ${executionAction === 'BUY' ? 'text-[#00FF94]' : 'text-[#FFB800]'}`}>
-                            {executionAction === 'BUY' ? 'BUY / ENTER NOW' : 'WAIT FOR SETUP'}
+                        <div className={`text-xl font-black ${
+                            executionAction === 'BUY' ? 'text-[#00FF94]' : 
+                            executionAction === 'SELL' ? 'text-[#FF2E2E]' : 
+                            'text-[#FFB800]'
+                        }`}>
+                            {executionAction === 'BUY' ? 'BUY / ENTER NOW' : 
+                             executionAction === 'SELL' ? 'SELL / SHORT NOW' : 
+                             'WAIT FOR SETUP'}
                         </div>
-                        <div className="text-[11px] font-bold text-white/80 leading-relaxed bg-black/40 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
-                            {executionAction === 'BUY' 
-                                ? `Primary Entry: $${entryPrice.toFixed(2)}`
-                                : "No immediate entry identified. Await confluence reversal."}
+                        
+                        {/* R:R Details & Options Strategy */}
+                        <div className="text-[11px] font-bold text-white/80 leading-relaxed bg-black/40 p-3.5 rounded-xl border border-white/5 backdrop-blur-sm space-y-2">
+                            {executionAction !== 'WAIT' ? (
+                                <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[10px]">
+                                    <div>Entry Zone: <span className="text-white font-black">${entryPrice.toFixed(2)}</span></div>
+                                    <div>R:R Ratio: <span className={`${executionAction === 'BUY' ? 'text-[#00FF94]' : 'text-[#FF2E2E]'} font-black`}>{rrRatio.toFixed(1)}:1</span></div>
+                                    <div>Target Price: <span className="text-white font-black">${targetPrice.toFixed(2)}</span></div>
+                                    <div>Stop Loss: <span className="text-white/60 font-black">${stopLoss.toFixed(2)}</span></div>
+                                </div>
+                            ) : (
+                                <div className="text-[10px] text-white/60">
+                                    No optimal risk-to-reward ratio entry zone identified. Await reversal signals.
+                                </div>
+                            )}
+                            <div className="pt-2 border-t border-white/5 mt-2">
+                                <div className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-0.5">Optimal Options Play</div>
+                                <span className={`text-[10.5px] font-black uppercase ${
+                                    executionAction === 'BUY' ? 'text-[#00FF94]' : 
+                                    executionAction === 'SELL' ? 'text-[#FF2E2E]' : 
+                                    'text-indigo-400'
+                                }`}>
+                                    {optionStrategy}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -207,7 +252,7 @@ export default function AIAnalysisWidget({ symbol, analysis, optionsFlow, fundam
     );
 }
 
-function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, options: UnusualOption[], fundamentals: Fundamentals) {
+export function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, options: UnusualOption[], fundamentals: Fundamentals) {
     let score = 5.0; // Neutral Start
     
     // Detailed Technical Object
@@ -222,7 +267,26 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
     const daily = analysis.timeframes.find(t => t.timeframe === '1d');
     const price = analysis.currentPrice;
 
-    // 1. EMA ANALYSIS (Analyst Logic)
+    // 1. Regime Classification
+    const adx = daily?.adx || 0;
+    const isTrending = adx > 22;
+    const regime = isTrending ? "TRENDING (Momentum)" : "MEAN-REVERSION (Range)";
+
+    // 2. Trend Bias
+    let bias: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
+    if (daily) {
+        const priceAboveEma200 = price > (daily.ema200 || 0);
+        const priceAboveEma50 = price > (daily.ema50 || 0);
+        const emaCrossBullish = daily.ema9 && daily.ema21 ? daily.ema9 > daily.ema21 : false;
+
+        if (priceAboveEma200 && priceAboveEma50 && emaCrossBullish) {
+            bias = 'BULLISH';
+        } else if (!priceAboveEma200 && !priceAboveEma50 && !emaCrossBullish) {
+            bias = 'BEARISH';
+        }
+    }
+
+    // 3. EMA ANALYSIS (Analyst Logic)
     if (daily) {
         if (price > daily.ema200!) {
             techDetails.emas.push({ text: "Maintaining long-term bullish structural integrity above the 200-day EMA.", sentiment: 'positive' });
@@ -249,7 +313,7 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
         }
     }
 
-    // 2. MULTI-TIMEFRAME RSI ANALYSIS
+    // 4. MULTI-TIMEFRAME RSI ANALYSIS (With Trend-Following Override)
     const rsiTimeframes = [
         { label: 'H1', data: analysis.timeframes.find(t => t.timeframe === '1h') },
         { label: 'D1', data: analysis.timeframes.find(t => t.timeframe === '1d') },
@@ -260,13 +324,22 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
         if (tf.data && tf.data.rsi) {
             const rsi = tf.data.rsi;
             if (rsi > 70) {
-                techDetails.rsi.push({ text: `${tf.label} RSI Overextended at ${rsi.toFixed(1)}, suggesting high exhaustion risk.`, sentiment: 'negative' });
-                score -= tf.label === 'D1' ? 1.0 : 0.5;
+                if (isTrending && bias === 'BULLISH') {
+                    // Trend strength override (RSI staying overbought is a sign of momentum power)
+                    techDetails.rsi.push({ text: `${tf.label} RSI Overbought at ${rsi.toFixed(1)} (Strong Momentum; no execution penalty).`, sentiment: 'positive' });
+                } else {
+                    techDetails.rsi.push({ text: `${tf.label} RSI Overextended at ${rsi.toFixed(1)}, suggesting high exhaustion risk.`, sentiment: 'negative' });
+                    score -= tf.label === 'D1' ? 1.0 : 0.5;
+                }
             } else if (rsi < 30) {
-                techDetails.rsi.push({ text: `${tf.label} RSI Oversold at ${rsi.toFixed(1)}, indicating a potential bottoming process.`, sentiment: 'positive' });
-                score += tf.label === 'D1' ? 1.0 : 0.5;
+                if (isTrending && bias === 'BEARISH') {
+                    // Trend weakness override (RSI staying oversold is a sign of downward momentum)
+                    techDetails.rsi.push({ text: `${tf.label} RSI Oversold at ${rsi.toFixed(1)} (Severe Downtrend; do not buy).`, sentiment: 'negative' });
+                } else {
+                    techDetails.rsi.push({ text: `${tf.label} RSI Oversold at ${rsi.toFixed(1)}, indicating a potential bottoming process.`, sentiment: 'positive' });
+                    score += tf.label === 'D1' ? 1.0 : 0.5;
+                }
             } else {
-                // Only show neutral for D1 to avoid clutter, or if there are NO other RSI points
                 if (tf.label === 'D1' || techDetails.rsi.length === 0) {
                     techDetails.rsi.push({ text: `${tf.label} RSI Neutral at ${rsi.toFixed(0)}, leaving room for expansion.`, sentiment: 'neutral' });
                 }
@@ -296,20 +369,20 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
         techDetails.rsi.push({ text: "Searching H1, D1, & W1 for momentum divergence — None detected in current regime.", sentiment: 'neutral' });
     }
 
-    // 3. BOLLINGER BANDS
+    // 5. BOLLINGER BANDS
     if (daily && daily.bollinger) {
         const { pb } = daily.bollinger;
         if (pb > 0.9) {
             techDetails.bb = { text: "Price riding the Upper Bollinger Band; signaling strength but high extension risk.", sentiment: 'positive' };
             score += 0.5;
         } else if (pb < 0.1) {
-            techDetails.bb = { text: "Price tagging Lower Bollinger Band; historically an institutional dip-buy zone.", sentiment: 'negative' }; // negative position, but potential positive
+            techDetails.bb = { text: "Price tagging Lower Bollinger Band; historically an institutional dip-buy zone.", sentiment: 'negative' };
         } else {
             techDetails.bb = { text: "Volatility contracting within bands; suggesting upcoming directional expansion.", sentiment: 'neutral' };
         }
     }
 
-    // 4. FVG Analysis
+    // 6. FVG Analysis
     if (daily?.fvg?.type === 'BULLISH') {
         techDetails.fvg = { text: `Bullish FVG support identified ($${daily.fvg.gapLow.toFixed(2)}-${daily.fvg.gapHigh.toFixed(2)}). Acts as a liquidity magnet.`, sentiment: 'positive' };
         score += 1.0;
@@ -318,7 +391,7 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
         score -= 1.0;
     }
 
-    // 5. Options Flow
+    // 7. Options Flow
     const callVol = options.filter(o => o.type === 'CALL').reduce((a, b) => a + (b.volume || 0), 0);
     const putVol = options.filter(o => o.type === 'PUT').reduce((a, b) => a + (b.volume || 0), 0);
     if (callVol > putVol * 1.5) {
@@ -333,31 +406,90 @@ function generateSignal(symbol: string, analysis: MultiTimeframeAnalysis, option
     score = Math.min(10, Math.max(0, score));
     score = Number(score.toFixed(1));
 
+    // 8. R:R Calculations
+    let stopLoss = 0;
+    let targetPrice = 0;
+    let rrRatio = 0;
+
+    if (bias === 'BULLISH') {
+        stopLoss = daily?.fvg?.type === 'BULLISH' ? daily.fvg.gapLow * 0.995 : (daily?.ema21 ? daily.ema21 * 0.985 : price * 0.97);
+        targetPrice = daily?.bollinger?.upper || price * 1.08;
+        rrRatio = (targetPrice - price) / (price - stopLoss);
+    } else if (bias === 'BEARISH') {
+        stopLoss = daily?.fvg?.type === 'BEARISH' ? daily.fvg.gapHigh * 1.005 : (daily?.ema21 ? daily.ema21 * 1.015 : price * 1.03);
+        targetPrice = daily?.bollinger?.lower || price * 0.92;
+        rrRatio = (price - targetPrice) / (stopLoss - price);
+    }
+
+    if (rrRatio < 0) rrRatio = 0;
+
+    // Enforce 1.8 min R:R ratio for momentum buy, otherwise wait
+    const isRrValid = rrRatio >= 1.8;
+
     // Determine Signal & Strategy
     let signal = "NEUTRAL";
-    if (score >= 8) signal = "STRONG BUY";
-    else if (score >= 6.5) signal = "BUY";
+    if (score >= 8 && isRrValid) signal = "STRONG BUY";
+    else if (score >= 6.5 && isRrValid) signal = "BUY";
     else if (score <= 2) signal = "STRONG SELL";
     else if (score <= 4) signal = "SELL";
 
-    const executionAction = score >= 6.5 ? 'BUY' : 'WAIT';
-    
+    // Set execution action
+    let executionAction: 'BUY' | 'SELL' | 'WAIT' = 'WAIT';
+    if (bias === 'BULLISH' && score >= 6.5) {
+        executionAction = isRrValid ? 'BUY' : 'WAIT';
+    } else if (bias === 'BEARISH' && score <= 4.0) {
+        executionAction = isRrValid ? 'SELL' : 'WAIT';
+    }
+
+    // 9. Volatility and Options Strategy Selection
+    const detailsStr = (analysis.metrics.gammaSqueeze?.details || []).join(' ').toLowerCase();
+    const isHighIV = detailsStr.includes('high implied volatility') || detailsStr.includes('explosive iv') || (analysis.metrics.volatility || 0) > 0.45;
+
+    let optionStrategy = "Awaiting Setup";
+    if (executionAction === 'BUY') {
+        optionStrategy = isHighIV ? "Bull Put Credit Spread (Sell OTM Put)" : "Bull Call Debit Spread / Long Call";
+    } else if (executionAction === 'SELL') {
+        optionStrategy = isHighIV ? "Bear Call Credit Spread (Sell OTM Call)" : "Bear Put Debit Spread / Long Put";
+    } else {
+        optionStrategy = isHighIV ? "Iron Condor / Short Strangle (Range Income)" : "Calendar / Diagonal Spread";
+    }
+
     // Entry Point Explanation
     let entryReason = "";
     const entryPrice = price;
     if (executionAction === 'BUY') {
         if (daily?.fvg?.type === 'BULLISH') {
-            entryReason = `Long entry recommended near $${daily.fvg.gapHigh.toFixed(2)} (FVG Top) or on a retest of the daily 21 EMA. Overall confluence suggests high conviction for upside expansion with minimal drawdown expected.`;
+            entryReason = `Regime: ${regime}. Long entry verified near $${daily.fvg.gapHigh.toFixed(2)} (FVG support). Confluence and R:R ratio ($${rrRatio.toFixed(1)}:1) indicate high entry quality.`;
         } else {
-            entryReason = `Current market price is attractive for momentum. Scaling in near the 9 EMA ($${daily?.ema9?.toFixed(2)}) is advised to maintain a tight risk-to-reward while trend remains intact.`;
+            entryReason = `Regime: ${regime}. Bullish momentum confirmed. Scaling in near the 9 EMA ($${daily?.ema9?.toFixed(2)}) optimizes risk-to-reward. Target: $${targetPrice.toFixed(2)}.`;
+        }
+    } else if (executionAction === 'SELL') {
+        if (daily?.fvg?.type === 'BEARISH') {
+            entryReason = `Regime: ${regime}. Short entry verified near $${daily.fvg.gapLow.toFixed(2)} (FVG ceiling). Confluence and R:R ratio ($${rrRatio.toFixed(1)}:1) indicate high short-sale entry quality.`;
+        } else {
+            entryReason = `Regime: ${regime}. Bearish momentum confirmed. Short entry optimized near the 9 EMA ($${daily?.ema9?.toFixed(2)}). Target: $${targetPrice.toFixed(2)}.`;
         }
     } else {
-        if (daily?.fvg?.type === 'BEARISH') {
-            entryReason = `Wait for a daily close above the $${daily.fvg.gapHigh.toFixed(2)} 'Hard Ceiling' before seeking long entry. Current overhead supply of $${daily.fvg.gapLow.toFixed(2)} is suppressing price discovery.`;
+        if (!isRrValid && (bias === 'BULLISH' || bias === 'BEARISH')) {
+            entryReason = `Bias is ${bias} but Risk-to-Reward is unfavorable (${rrRatio.toFixed(2)}:1). Entry is currently extended. Wait for a pullback to $${(bias === 'BULLISH' ? (daily?.ema21 || price * 0.98) : (daily?.ema21 || price * 1.02)).toFixed(2)} to improve R:R.`;
+        } else if (daily?.fvg?.type === 'BEARISH') {
+            entryReason = `Wait for a daily close above the $${daily.fvg.gapHigh.toFixed(2)} resistance ceiling before seeking long entry. Current overhead supply is suppressing price.`;
         } else {
-            entryReason = `Market currently in 'Price Discovery' with no clear confluence. Patience required. Monitor for a breach of the daily 50 EMA or an RSI divergence before deployment.`;
+            entryReason = `Market currently in a low-confluence ${regime} phase. Await a clear EMA cross, FVG formation, or RSI divergence before deployment.`;
         }
     }
 
-    return { signal, score, executionAction, entryPrice, entryReason, techDetails };
+    return { 
+        signal, 
+        score, 
+        executionAction, 
+        entryPrice, 
+        entryReason, 
+        techDetails,
+        regime,
+        stopLoss,
+        targetPrice,
+        rrRatio,
+        optionStrategy
+    };
 }

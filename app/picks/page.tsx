@@ -20,6 +20,7 @@ export default function TopPicksPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [countdown, setCountdown] = useState(900); // 15m
+    const [optionFilter, setOptionFilter] = useState<'ALL' | 'CALL' | 'PUT'>('ALL');
 
     // Persistence: Load sidebar state on mount
     useEffect(() => {
@@ -80,6 +81,10 @@ export default function TopPicksPage() {
         router.push(`/?symbol=${symbol}`);
     };
 
+    const filteredPicks = picks.filter(pick => {
+        if (optionFilter === 'ALL') return true;
+        return pick.suggestedOption?.type === optionFilter;
+    });
 
     return (
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
@@ -150,6 +155,28 @@ export default function TopPicksPage() {
                             <p className="text-sm text-gray-100 mt-2">
                                 High Mega Cap picks from S&P 500 & Nasdaq 100 • AI-analyzed for Momentum, Trends & Technicals
                             </p>
+                            
+                            {/* Filter Buttons */}
+                            <div className="flex items-center gap-2 mt-4">
+                                <button 
+                                    onClick={() => setOptionFilter('ALL')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'ALL' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    ALL
+                                </button>
+                                <button 
+                                    onClick={() => setOptionFilter('CALL')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'CALL' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    CALLS
+                                </button>
+                                <button 
+                                    onClick={() => setOptionFilter('PUT')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'PUT' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    PUTS
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
@@ -181,12 +208,17 @@ export default function TopPicksPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
-                                {picks.map((pick, index) => {
+                                {filteredPicks.map((pick, index) => {
+                                    const isCall = pick.suggestedOption?.type === 'CALL';
+                                    const isPut = pick.suggestedOption?.type === 'PUT';
+                                    const cardBg = isCall ? 'bg-green-800' : isPut ? 'bg-red-800' : 'bg-gray-800';
+                                    const cardBorder = isCall ? 'border-green-500 hover:border-green-400' : isPut ? 'border-red-500 hover:border-red-400' : 'border-gray-700 hover:border-blue-500';
+
                                     return (
                                         <div
                                             key={pick.symbol}
                                             onClick={() => handleSelect(pick.symbol)}
-                                            className="bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-all shadow-lg relative overflow-hidden group cursor-pointer hover:-translate-y-1"
+                                            className={`${cardBg} rounded-xl border ${cardBorder} transition-all shadow-lg relative overflow-hidden group cursor-pointer hover:-translate-y-1`}
                                         >
                                             {/* Rank Badge */}
                                             <div className="absolute top-0 right-0 bg-gray-700 text-gray-200 text-xs font-bold px-3 py-1 rounded-bl-xl border-b border-l border-gray-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">

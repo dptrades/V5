@@ -13,8 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request, context: { params: Promise<{ ticker: string }> }) {
     try {
         const { ticker } = await context.params;
-        const { searchParams } = new URL(request.url);
-        const skipCache = searchParams.get('refresh') === 'true';
+        const skipCache = false; // Disable manual refresh bypass
 
         if (!ticker) {
             return NextResponse.json({ error: "Ticker is required" }, { status: 400 });

@@ -24,10 +24,15 @@ export default function ConvictionCard({ stock, onSelect }: Props) {
         return 'bg-red-500';
     };
 
+    const isCall = stock.suggestedOption?.type === 'CALL';
+    const isPut = stock.suggestedOption?.type === 'PUT';
+    const cardBg = isCall ? 'bg-green-800' : isPut ? 'bg-red-800' : 'bg-gray-800';
+    const cardBorder = isCall ? 'border-green-500 hover:border-green-400' : isPut ? 'border-red-500 hover:border-red-400' : 'border-gray-700 hover:border-gray-500';
+
     return (
         <div
             onClick={() => onSelect && onSelect(stock.symbol)}
-            className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-500 transition-all shadow-lg cursor-pointer transform hover:-translate-y-1"
+            className={`${cardBg} border ${cardBorder} rounded-xl p-5 transition-all shadow-lg cursor-pointer transform hover:-translate-y-1`}
         >
             {/* Header */}
             <div className="flex justify-between items-start mb-4">

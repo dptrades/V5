@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily-scan",
-      "schedule": "0 14 * * 1-5"
-    },
-    {
       "path": "/api/cron/alpha-hunter-report",
       "schedule": "35 14 * * 1-5"
     },
@@ -18,9 +14,6 @@
       "maxDuration": 300
     },
     "app/api/alpha-hunter/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/daily-scan/route.ts": {
       "maxDuration": 300
     },
     "app/api/cron/alpha-hunter-report/route.ts": {

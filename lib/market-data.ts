@@ -7,13 +7,13 @@ import { publicClient } from './public-api';
 import { schwabClient } from './schwab';
 import { calculateGammaSqueezeProbability } from './options';
 import { finnhubClient } from './finnhub';
-import { getMarketSession } from './refresh-utils';
+import { getMarketSession, isCacheStaleBy930AM } from './refresh-utils';
 
 const yahooFinance = new YahooFinance();
 
 // ── Server-side MTA Cache ──────────────────────────────────────────────────────
 // Caches the expensive fetchMultiTimeframeAnalysis result per symbol.
-// TTL: 1 minute during market hours (live data changes), 30 minutes off-hours.
+// TTL: 15 minutes during market hours, 15 minutes off-hours.
 interface MtaCacheEntry {
     data: NonNullable<Awaited<ReturnType<typeof _fetchMtaUncached>>>;
     timestamp: number;
@@ -24,8 +24,9 @@ declare global {
 }
 if (!global._mtaCacheV2) global._mtaCacheV2 = new Map();
 
-const MTA_TTL_MARKET = 5 * 1000;         // 5 seconds — practically live
-const MTA_TTL_OFFHRS = 60 * 1000;        // 1 minute — no new data off hours
+const MTA_TTL_MARKET = 15 * 60 * 1000;     // 15 minutes
+const MTA_TTL_OFFHRS = 15 * 60 * 1000;     // 15 minutes
+
 
 export interface TimeframeData {
     timeframe: '1h' | '4h' | '1d' | '1w';  // 10m removed — too noisy, adds a full extra API call per load
@@ -625,29 +626,41 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
 
             // 3. Live Price Injection (Append or Overwrite)
             if (livePrice > 0) {
-                const refreshedLastBar = data[data.length - 1];
-                const isWithinTimeframe = (now - refreshedLastBar.time) < timeframeMs;
-
-                if (isWithinTimeframe) {
-                    // Update current bar
-                    data = [...data];
-                    data[data.length - 1] = {
-                        ...refreshedLastBar,
-                        close: livePrice,
-                        high: Math.max(refreshedLastBar.high, livePrice),
-                        low: Math.min(refreshedLastBar.low, livePrice),
-                        volume: Math.max(refreshedLastBar.volume, liveVolume || 0)
-                    };
-                } else {
-                    // Append new partial bar
-                    data = [...data, {
+                if (data.length === 0) {
+                    // Initialize with a single bar if extremely stale pre-market wiped history
+                    data = [{
                         time: now,
-                        open: refreshedLastBar.close,
-                        high: Math.max(refreshedLastBar.close, livePrice),
-                        low: Math.min(refreshedLastBar.close, livePrice),
+                        open: livePrice,
+                        high: livePrice,
+                        low: livePrice,
                         close: livePrice,
                         volume: liveVolume || 100
                     }];
+                } else {
+                    const refreshedLastBar = data[data.length - 1];
+                    const isWithinTimeframe = (now - refreshedLastBar.time) < timeframeMs;
+
+                    if (isWithinTimeframe) {
+                        // Update current bar
+                        data = [...data];
+                        data[data.length - 1] = {
+                            ...refreshedLastBar,
+                            close: livePrice,
+                            high: Math.max(refreshedLastBar.high, livePrice),
+                            low: Math.min(refreshedLastBar.low, livePrice),
+                            volume: Math.max(refreshedLastBar.volume, liveVolume || 0)
+                        };
+                    } else {
+                        // Append new partial bar
+                        data = [...data, {
+                            time: now,
+                            open: refreshedLastBar.close,
+                            high: Math.max(refreshedLastBar.close, livePrice),
+                            low: Math.min(refreshedLastBar.close, livePrice),
+                            close: livePrice,
+                            volume: liveVolume || 100
+                        }];
+                    }
                 }
             }
 
@@ -763,6 +776,16 @@ export async function fetchMultiTimeframeAnalysis(
     const now = Date.now();
     const session = publicClient.getMarketSession();
     const ttl = session === 'OFF' ? MTA_TTL_OFFHRS : MTA_TTL_MARKET;
+
+    const cached = global._mtaCacheV2.get(symbol);
+    if (cached) {
+        const isStale = isCacheStaleBy930AM(cached.timestamp);
+        const hasExpired = (now - cached.timestamp >= ttl);
+        if (!isStale && !hasExpired) {
+            console.log(`⚡ [MTA Cache] Returning cached analysis for ${symbol} (last updated ${new Date(cached.timestamp).toLocaleTimeString()})`);
+            return cached.data;
+        }
+    }
 
     const result = await _fetchMtaUncached(symbol);
     if (result) {

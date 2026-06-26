@@ -18,6 +18,7 @@ import {
   ChevronLeft, RefreshCw, Clock, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
+import NotificationBell from "@/components/NotificationBell";
 
 type Benchmark = "SPY" | "QQQ" | "IWM";
 type Mode = "TACTICAL" | "POSITIONAL";
@@ -207,6 +208,11 @@ export default function TerminalPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Notification Bell */}
+            <div className="flex items-center">
+              <NotificationBell />
             </div>
 
             {/* Refresh Timer */}

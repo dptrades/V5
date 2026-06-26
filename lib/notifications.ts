@@ -178,7 +178,6 @@ export async function sendAlerts(payload: NotificationPayload): Promise<{ email:
 export interface MorningBriefPayload {
     topPicks: Array<{ symbol: string; signal: string; score: number; change: number }>;
     alphaHunter: Array<{ symbol: string; signal: string; score: number; change: number }>;
-    socialPulse: Array<{ symbol: string; signal: string; heat: number; change: number }>;
 }
 
 export async function sendMorningBriefAlert(payload: MorningBriefPayload): Promise<boolean> {
@@ -216,12 +215,6 @@ export async function sendMorningBriefAlert(payload: MorningBriefPayload): Promi
                     <h2 style="color: #0f172a; font-size: 18px; border-bottom: 2px solid #8b5cf6; padding-bottom: 8px;">🐺 Alpha Hunter (Growth & Momentum)</h2>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                         ${payload.alphaHunter.map(s => renderRow(s, 'score', 'pts')).join('')}
-                    </table>
-
-                    <!-- SOCIAL PULSE -->
-                    <h2 style="color: #0f172a; font-size: 18px; border-bottom: 2px solid #ef4444; padding-bottom: 8px;">🔥 Social Pulse (Retail Momentum)</h2>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        ${payload.socialPulse.map(s => renderRow(s, 'heat', '🔥')).join('')}
                     </table>
 
                     <div style="text-align: center; margin-top: 40px;">

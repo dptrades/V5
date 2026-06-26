@@ -80,14 +80,7 @@ export function calculateVolatilityProxy(price: number, atr?: number, symbol?: s
     if (price <= 0) return 0.35;
 
     // Annulized Volatility formula: (ATR / Price) * sqrt(252)
-    let annualizedVol = (effectiveAtr / price) * Math.sqrt(252);
-
-    // Add a ticker-specific variance so different stocks don't look identical
-    if (symbol) {
-        const hash = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        // Variance +/- 15% to make it obvious
-        annualizedVol += (hash % 30 - 15) / 100;
-    }
+    const annualizedVol = (effectiveAtr / price) * Math.sqrt(252);
 
     // Standardize to realistic range (20% to 150%)
     return Math.min(1.5, Math.max(0.20, annualizedVol));
@@ -272,8 +265,16 @@ export async function generateOptionSignal(
             if (opt.greeks?.delta && opt.greeks.delta !== 0) {
                 delta = Math.abs(opt.greeks.delta);
             } else {
-                const atmAdjusted = isCall ? -((strike - currentPrice) / currentPrice) : ((strike - currentPrice) / currentPrice);
-                delta = Math.max(0.05, Math.min(0.95, 0.50 + atmAdjusted * 3));
+                const expDays = Math.max(1, (new Date(exp).getTime() - Date.now()) / (1000 * 3600 * 24));
+                const timeToMaturity = expDays / 365;
+                const distance = (currentPrice - strike) / currentPrice;
+                // d1 approximation: distance / (IV * sqrt(T))
+                const d1Approx = distance / (Math.max(0.1, atmIV) * Math.sqrt(timeToMaturity));
+                // Normal CDF linear approximation around ATM: 0.5 + 0.4 * d1
+                const callDelta = 0.5 + 0.4 * d1Approx;
+                
+                const rawDelta = isCall ? callDelta : (1 - callDelta);
+                delta = Math.max(0.05, Math.min(0.95, rawDelta));
             }
 
             const diff = Math.abs(delta - TARGET_DELTA);

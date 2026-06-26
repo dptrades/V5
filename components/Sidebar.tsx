@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SidebarInternals from './SidebarInternals';
 import { Search, Activity, Clock, Zap, BarChart2, Hash, Newspaper, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Terminal } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 import { IndicatorData } from '../types/financial';
 import { PriceStats } from '../lib/stats';
-import PreMarketMovers from './PreMarketMovers';
 
 
 interface SidebarProps {
@@ -113,14 +113,11 @@ export default function Sidebar({
 }: SidebarProps) {
     const pathname = usePathname();
     const activePage = pathname === '/' ? 'dashboard'
-        : pathname.startsWith('/pre-market') ? 'pre-market'
-            : pathname.startsWith('/picks') ? 'picks'
-                : pathname.startsWith('/conviction') ? 'conviction'
-                    : pathname.startsWith('/social-pulse') ? 'social'
-                        : pathname.startsWith('/pulse-360') ? 'pulse-360'
-                            : pathname.startsWith('/performance') ? 'performance'
-                                : pathname.startsWith('/terminal') ? 'terminal'
-                                    : 'dashboard';
+        : pathname.startsWith('/picks') ? 'picks'
+            : pathname.startsWith('/conviction') ? 'conviction'
+                : pathname.startsWith('/performance') ? 'performance'
+                    : pathname.startsWith('/terminal') ? 'terminal'
+                        : 'dashboard';
 
 
 
@@ -136,6 +133,7 @@ export default function Sidebar({
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
+                    <NotificationBell />
                     <button
                         onClick={() => setIsOpen(false)}
                         className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-blue-400 border border-gray-700 transition-all active:scale-95 shadow-lg flex items-center gap-1 group"
@@ -167,15 +165,7 @@ export default function Sidebar({
                 >
                     <span className="truncate">🖥️ 3 Index Terminal</span>
                 </Link>
-                <Link
-                    href="/pre-market"
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'pre-market'
-                        ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                        : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 border border-transparent'
-                        }`}
-                >
-                    <span className="truncate">⚡ Pre-Market</span>
-                </Link>
+
                 <Link
                     href="/picks"
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'picks'
@@ -194,24 +184,8 @@ export default function Sidebar({
                 >
                     <span className="truncate">✨ Alpha Hunter</span>
                 </Link>
-                <Link
-                    href="/social-pulse"
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'social'
-                        ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-                        : 'text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 border border-transparent'
-                        }`}
-                >
-                    <span className="truncate">🔥 Social Pulse</span>
-                </Link>
-                <Link
-                    href="/pulse-360"
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'pulse-360'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 border border-transparent'
-                        }`}
-                >
-                    <span className="truncate">🔮 Pulse 360</span>
-                </Link>
+
+
                 {enableBetaFeatures && (
                     <>
                         <Link

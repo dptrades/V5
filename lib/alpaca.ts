@@ -106,7 +106,7 @@ export async function fetchAlpacaPrice(symbol: string): Promise<number | null> {
     if (!apiKey || !apiSecret) return null;
 
     try {
-        const url = `${DATA_URL}/stocks/${symbol}/quotes/latest?feed=iex`;
+        const url = `${DATA_URL}/stocks/${symbol}/snapshot?feed=iex`;
 
         const response = await fetch(url, {
             headers: {
@@ -125,13 +125,89 @@ export async function fetchAlpacaPrice(symbol: string): Promise<number | null> {
         }
 
         const data = await response.json();
-        // Return mid-price or last trade if quote is empty
-        if (data.quote && data.quote.ap && data.quote.bp) {
-            return (data.quote.ap + data.quote.bp) / 2;
+        // 1. Try mid-price from latest quote
+        if (data.latestQuote && data.latestQuote.ap > 0 && data.latestQuote.bp > 0) {
+            return (data.latestQuote.ap + data.latestQuote.bp) / 2;
+        }
+        // 2. Fallback to latest trade price
+        if (data.latestTrade && data.latestTrade.p > 0) {
+            return data.latestTrade.p;
+        }
+        // 3. Fallback to previous daily bar close
+        if (data.prevDailyBar && data.prevDailyBar.c > 0) {
+            return data.prevDailyBar.c;
         }
         return null;
     } catch (e) {
         console.error("Failed to fetch Alpaca price:", e);
         return null;
+    }
+}
+
+export async function fetchMultiAlpacaBars(
+    symbols: string[],
+    timeframe: '1Day' | '1Week' | '1Hour' | '15Min' = '1Day',
+    limit: number = 100
+): Promise<Record<string, AlpacaBar[]>> {
+    if (symbols.length === 0) return {};
+    if (Date.now() < alpacaThrottledUntil) {
+        console.warn(`[Alpaca] Rate limit cool-down active. Skipping multi bars.`);
+        return {};
+    }
+    const apiKey = env.ALPACA_API_KEY;
+    const apiSecret = env.ALPACA_API_SECRET;
+
+    if (!apiKey || !apiSecret) return {};
+
+    try {
+        let barsPerDay = 1;
+        if (timeframe === '1Hour') barsPerDay = 7;
+        else if (timeframe === '15Min') barsPerDay = 26;
+        else if (timeframe === '1Week' as any) barsPerDay = 0.2;
+
+        const daysBack = Math.ceil((limit / barsPerDay) * 3.0) + 15;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - daysBack);
+        const startIso = startDate.toISOString();
+
+        const useSip = apiKey.includes('PRO') || apiKey.length > 20;
+        const feed = useSip ? 'sip' : 'iex';
+        const apiLimit = Math.min(10000, limit * 3);
+
+        const symbolsStr = symbols.join(',');
+        const url = `${DATA_URL}/stocks/bars?symbols=${symbolsStr}&timeframe=${timeframe}&limit=${apiLimit}&start=${startIso}&adjustment=raw&feed=${feed}`;
+
+        console.log(`[Alpaca] Fetching multi-bars for ${symbols.length} symbols: ${url}`);
+
+        const response = await fetch(url, {
+            headers: {
+                'APCA-API-KEY-ID': apiKey,
+                'APCA-API-SECRET-KEY': apiSecret,
+                'Content-Type': 'application/json'
+            },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[Alpaca] Multi-bars Error ${response.status}: ${errorText}`);
+            if (response.status === 429) {
+                alpacaThrottledUntil = Date.now() + (30 * 1000);
+                console.error('[Alpaca] 🛑 Rate limit hit (429). Cooldown 30s.');
+            }
+            return {};
+        }
+
+        const data = await response.json();
+        const barsMap: Record<string, AlpacaBar[]> = {};
+        if (data.bars) {
+            for (const sym of Object.keys(data.bars)) {
+                barsMap[sym] = data.bars[sym].slice(-limit);
+            }
+        }
+        return barsMap;
+    } catch (e) {
+        console.error("Failed to fetch multi Alpaca bars:", e);
+        return {};
     }
 }

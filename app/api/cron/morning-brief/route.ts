@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { scanConviction, scanAlphaHunter } from '@/lib/conviction';
-import { scanSocialPulse } from '@/lib/social';
 import { sendMorningBriefAlert } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
@@ -22,10 +21,9 @@ export async function GET(request: Request) {
         const startTime = Date.now();
 
         // 1. Run all three scans concurrently, forcing a refresh to get the absolute newest data
-        const [topPicks, alphaHunter, socialPulse] = await Promise.all([
+        const [topPicks, alphaHunter] = await Promise.all([
             scanConviction(true),
-            scanAlphaHunter(true),
-            scanSocialPulse(true)
+            scanAlphaHunter(true)
         ]);
 
         // 2. Extract Top 5 from each strategy
@@ -43,22 +41,10 @@ export async function GET(request: Request) {
             change: s.change24h || 0
         }));
 
-        // Sort social pulse by explicitly highest heat first and grab top 5
-        const curatedSocialPulse = socialPulse
-            .sort((a, b) => b.heat - a.heat)
-            .slice(0, 5)
-            .map(s => ({
-                symbol: s.symbol,
-                signal: s.description || 'Rising Social Interest',
-                heat: s.heat,
-                change: s.change || 0
-            }));
-
         // 3. Send email!
         const emailSuccess = await sendMorningBriefAlert({
             topPicks: curatedTopPicks,
-            alphaHunter: curatedAlphaHunter,
-            socialPulse: curatedSocialPulse
+            alphaHunter: curatedAlphaHunter
         });
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -69,7 +55,6 @@ export async function GET(request: Request) {
             emailSent: emailSuccess,
             topPicksCount: curatedTopPicks.length,
             alphaHunterCount: curatedAlphaHunter.length,
-            socialPulseCount: curatedSocialPulse.length,
             elapsed: `${elapsed}s`
         });
 

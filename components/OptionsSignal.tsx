@@ -91,16 +91,8 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
             <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-4 opacity-75">
                 <div className="flex items-center gap-2 mb-2 text-gray-100">
                     <MousePointerClick className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Options AI</span>
-                    {onRefresh && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onRefresh(); }}
-                            className="p-1 hover:bg-gray-700 rounded-md transition-colors text-gray-200 hover:text-white"
-                            title="Refresh Signal"
-                        >
-                            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                        </button>
-                    )}
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-100">Options AI</span>
+                    {/* Manual refresh button removed to enforce 15-minute sync rule */}
                 </div>
                 <div className="text-center py-2">
                     <div className="text-gray-200 font-bold text-lg mb-1">No High-Prob Setup</div>
@@ -216,15 +208,7 @@ export default function OptionsSignal({ data, loading, onRefresh, companyName, u
                 <div className="flex items-center gap-2">
                     <MousePointerClick className={`w-4 h-4 ${color}`} />
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-100">Options AI</span>
-                    {onRefresh && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onRefresh(); }}
-                            className="p-1 hover:bg-gray-700 rounded-md transition-colors text-gray-200 hover:text-white"
-                            title="Refresh Signal"
-                        >
-                            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                        </button>
-                    )}
+                    {/* Manual refresh button removed to enforce 15-minute sync rule */}
                 </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full bg-gray-700 ${color} font-bold`}>
                     {data.confidence}% Confidence

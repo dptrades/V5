@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { fetchOHLCV } from '../lib/api';
 import { REFRESH_INTERVALS, isMarketActive, getMarketSession, getNextMarketOpen } from '../lib/refresh-utils';
@@ -58,6 +58,7 @@ export default function Dashboard() {
 
   // Initialize from localStorage if available, otherwise default to SPY
   const [symbol, setSymbol] = useState('SPY');
+  const previousSymbolRef = useRef(symbol);
   const [stockInput, setStockInput] = useState('SPY');
   const [refreshTrigger, setRefreshTrigger] = useState(0); // For manual refresh
   const [priceRefreshKey, setPriceRefreshKey] = useState(0); // Synchronized 60s price timer for header + deep dive
@@ -158,18 +159,25 @@ export default function Dashboard() {
   // Initialize symbol state safely to avoid overwriting localStorage on mount
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Keep a ref to the current symbol state to avoid race conditions in useEffect
+  const currentSymbolRef = useRef(symbol);
+  currentSymbolRef.current = symbol;
+
   // Load initial symbol from URL or localStorage on mount (client-side only)
   useEffect(() => {
     if (urlSymbol) {
-      setSymbol(urlSymbol);
-      setStockInput(urlSymbol);
-      setLoading(true); // Show loader immediately when navigating via URL
+      if (urlSymbol !== currentSymbolRef.current) {
+        setSymbol(urlSymbol);
+        setStockInput(urlSymbol);
+        setLoading(true); // Show loader immediately when navigating via URL
+      }
       setIsInitialized(true);
     } else {
       const savedSymbol = localStorage.getItem('lastTicker');
-      if (savedSymbol) {
+      if (savedSymbol && savedSymbol !== currentSymbolRef.current) {
         setSymbol(savedSymbol);
         setStockInput(savedSymbol);
+        setLoading(true);
       }
       setIsInitialized(true);
     }
@@ -182,11 +190,14 @@ export default function Dashboard() {
       // 1. Save to localStorage
       localStorage.setItem('lastTicker', symbol);
 
-      // 2. Update URL silently without a full reload
-      const params = new URLSearchParams(searchParams.toString());
-      if (params.get('symbol') !== symbol) {
-        params.set('symbol', symbol);
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      // 2. Update URL silently without a full reload if state changed
+      if (symbol !== previousSymbolRef.current) {
+        previousSymbolRef.current = symbol;
+        const params = new URLSearchParams(searchParams.toString());
+        if (params.get('symbol') !== symbol) {
+          params.set('symbol', symbol);
+          router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        }
       }
     }
   }, [symbol, router, pathname, searchParams, isInitialized]);

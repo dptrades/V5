@@ -32,6 +32,7 @@ export default function ConvictionPage() {
     const [error, setError] = useState('');
     const [showLogic, setShowLogic] = useState(false);
     const [selectedSector, setSelectedSector] = useState<any>(null);
+    const [optionFilter, setOptionFilter] = useState<'ALL' | 'CALL' | 'PUT'>('ALL');
 
     // Persistence: Load sidebar state on mount
     useEffect(() => {
@@ -128,6 +129,10 @@ export default function ConvictionPage() {
         router.push(`/?symbol=${symbol}`);
     };
 
+    const filteredStocks = stocks.filter(stock => {
+        if (optionFilter === 'ALL') return true;
+        return stock.suggestedOption?.type === optionFilter;
+    });
 
     return (
         <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
@@ -191,6 +196,28 @@ export default function ConvictionPage() {
                             <p className="text-sm text-gray-100 mt-2 max-w-2xl">
                                 Scans for high-probability setups with Smart Discovery.
                             </p>
+
+                            {/* Filter Buttons */}
+                            <div className="flex items-center gap-2 mt-4">
+                                <button 
+                                    onClick={() => setOptionFilter('ALL')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'ALL' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    ALL
+                                </button>
+                                <button 
+                                    onClick={() => setOptionFilter('CALL')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'CALL' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    CALLS
+                                </button>
+                                <button 
+                                    onClick={() => setOptionFilter('PUT')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${optionFilter === 'PUT' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    PUTS
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex flex-col items-start xl:items-end gap-2">
@@ -229,7 +256,7 @@ export default function ConvictionPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-                            {stocks.map((stock) => (
+                            {filteredStocks.map((stock) => (
                                 <ConvictionCard
                                     key={stock.symbol}
                                     stock={stock}

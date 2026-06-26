@@ -105,15 +105,22 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
         return Math.max(d.high - d.low, Math.abs(d.high - prevClose), Math.abs(d.low - prevClose));
     });
 
-    // Calculate ATR 14
+    // Calculate ATR 14 using Wilder's Smoothing (RMA)
     const atrs: number[] = [];
+    let prevAtr: number | null = null;
     for (let i = 0; i < trs.length; i++) {
         if (i < 13) {
             atrs.push(0);
             continue;
         }
-        const sum = trs.slice(i - 13, i + 1).reduce((a, b) => a + b, 0);
-        atrs.push(sum / 14);
+        if (i === 13) {
+            const sum = trs.slice(0, 14).reduce((a, b) => a + b, 0);
+            prevAtr = sum / 14;
+            atrs.push(prevAtr);
+        } else {
+            prevAtr = (prevAtr! * 13 + trs[i]) / 14;
+            atrs.push(prevAtr);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -127,7 +134,7 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
     };
     const adx = ADX.calculate(adxInput);
 
-    let activeFvg: { type: 'BULLISH' | 'BEARISH' | 'NONE'; gapLow: number; gapHigh: number } = { type: 'NONE', gapLow: 0, gapHigh: 0 };
+    let activeFvgs: Array<{ type: 'BULLISH' | 'BEARISH'; gapLow: number; gapHigh: number }> = [];
 
     results.forEach((d, i) => {
         d.atr14 = atrs[i];
@@ -163,21 +170,43 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
 
             // A. Detect NEW FVG
             if (c3.low > c1.high) {
-                activeFvg = { type: 'BULLISH', gapLow: c1.high, gapHigh: c3.low };
+                activeFvgs.push({ type: 'BULLISH', gapLow: c1.high, gapHigh: c3.low });
             } else if (c3.high < c1.low) {
-                activeFvg = { type: 'BEARISH', gapLow: c3.high, gapHigh: c1.low };
+                activeFvgs.push({ type: 'BEARISH', gapLow: c3.high, gapHigh: c1.low });
             }
 
             // B. Check if price "FILLED" the active FVG
-            if (activeFvg.type === 'BULLISH' && d.low <= activeFvg.gapLow) {
-                activeFvg = { type: 'NONE', gapLow: 0, gapHigh: 0 };
-            } else if (activeFvg.type === 'BEARISH' && d.high >= activeFvg.gapHigh) {
-                activeFvg = { type: 'NONE', gapLow: 0, gapHigh: 0 };
+            activeFvgs = activeFvgs.filter(fvg => {
+                if (fvg.type === 'BULLISH' && d.low <= fvg.gapLow) return false;
+                if (fvg.type === 'BEARISH' && d.high >= fvg.gapHigh) return false;
+                return true;
+            });
+
+            // Keep only the most recent 5 FVGs
+            if (activeFvgs.length > 5) {
+                activeFvgs = activeFvgs.slice(-5);
             }
 
-            d.fvg = { ...activeFvg };
+            // Expose the closest FVG to current price for UI backward compatibility
+            if (activeFvgs.length > 0) {
+                let closestFvg = activeFvgs[0];
+                let minDist = Infinity;
+                activeFvgs.forEach(f => {
+                    const midPoint = (f.gapLow + f.gapHigh) / 2;
+                    const dist = Math.abs(d.close - midPoint);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestFvg = f;
+                    }
+                });
+                d.fvg = { ...closestFvg };
+            } else {
+                d.fvg = { type: 'NONE', gapLow: 0, gapHigh: 0 };
+            }
+            (d as any).fvgs = [...activeFvgs];
         } else {
             d.fvg = { type: 'NONE', gapLow: 0, gapHigh: 0 };
+            (d as any).fvgs = [];
         }
         // -------------------------------------------------------------------------
         // 5. CANDLESTICK PATTERN DETECTION
@@ -288,7 +317,8 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
 
                     if (lastRsi !== undefined && prevRsi !== undefined) {
                         const priceMovePct = prevPrice > 0 ? (prevPrice - lastPrice) / prevPrice : 0;
-                        if (lastPrice < prevPrice && lastRsi > prevRsi && lastRsi < 40
+                        const isJustConfirmed = lastLowIdx === priceWindow.length - 2;
+                        if (isJustConfirmed && lastPrice < prevPrice && lastRsi > prevRsi && lastRsi < 40
                             && priceMovePct >= MIN_PRICE_MOVE_PCT && (lastRsi - prevRsi) >= MIN_RSI_MOVE) {
                             d.divergence = { type: 'BULLISH', price: lastPrice, rsi: lastRsi };
                         }
@@ -307,7 +337,8 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
 
                     if (lastRsi !== undefined && prevRsi !== undefined) {
                         const priceMovePct = prevPrice > 0 ? (lastPrice - prevPrice) / prevPrice : 0;
-                        if (lastPrice > prevPrice && lastRsi < prevRsi && lastRsi > 60
+                        const isJustConfirmed = lastHighIdx === priceWindow.length - 2;
+                        if (isJustConfirmed && lastPrice > prevPrice && lastRsi < prevRsi && lastRsi > 60
                             && priceMovePct >= MIN_PRICE_MOVE_PCT && (prevRsi - lastRsi) >= MIN_RSI_MOVE) {
                             d.divergence = { type: 'BEARISH', price: lastPrice, rsi: lastRsi };
                         }

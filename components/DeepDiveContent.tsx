@@ -150,14 +150,7 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                         <div className="flex flex-col items-end gap-1 mt-1">
                             {/* Meta Info Line */}
                             <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => fetchDetails(symbol, true)}
-                                    className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] font-bold border border-blue-500/20 transition-colors"
-                                    title="Force Refresh Data"
-                                >
-                                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                                    REFRESH
-                                </button>
+                                {/* Manual refresh button removed to enforce 15-minute sync rule */}
                                 {data.analysis.lastUpdated && (
                                     <div className="text-[10px] text-gray-500 font-mono">
                                         Last Scan: <span className="text-gray-300">{new Date(data.analysis.lastUpdated).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} ET</span>

@@ -8,6 +8,8 @@ import {
 } from '@/lib/alpaca-trading';
 import { scanConviction, scanAlphaHunter } from '@/lib/conviction';
 import { getEarningsInfo } from '@/lib/options';
+import { GET as getTerminal } from '@/app/api/terminal/route';
+import { NextRequest } from 'next/server';
 import {
     MIN_TECHNICAL_SCORE,
     MIN_ANALYST_SCORE,
@@ -78,6 +80,43 @@ export async function GET(request: Request) {
                 message: 'Market is closed',
                 timestamp: new Date().toISOString()
             });
+        }
+
+        // Terminal Guardrail Integration: verify 3 Index Terminal score & VIX
+        try {
+            const mockReq = new NextRequest(new URL('http://localhost/api/terminal?mode=TACTICAL&benchmark=SPY'));
+            const terminalRes = await getTerminal(mockReq);
+            if (terminalRes.ok) {
+                const terminalData = await terminalRes.json();
+                const terminalScore = terminalData.score || 0;
+                const vixLevel = terminalData.topBar?.vix?.price || 0;
+                
+                if (terminalScore < 40) {
+                    console.log(`[Cron Auto-Trade] Terminal Guardrail blocked trades. Score: ${terminalScore}`);
+                    return NextResponse.json({
+                        success: false,
+                        message: 'Terminal Guardrail triggered: Total score is below 40. Market conditions are too poor for new trades.',
+                        terminalScore,
+                        vixLevel,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                if (vixLevel > 25) {
+                    console.log(`[Cron Auto-Trade] Terminal Guardrail blocked trades. VIX: ${vixLevel}`);
+                    return NextResponse.json({
+                        success: false,
+                        message: 'Terminal Guardrail triggered: VIX is elevated (> 25). Volatility is too high for new trades.',
+                        terminalScore,
+                        vixLevel,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            } else {
+                console.warn('[Cron Auto-Trade] Failed to fetch terminal guardrail data');
+            }
+        } catch (e) {
+            console.error('[Cron Auto-Trade] Error fetching terminal guardrail:', e);
         }
 
         // Get account and positions

@@ -9,6 +9,7 @@ import { runSmartScan, DiscoveredStock } from './smart-scanner';
 import { getSectorMap, SCANNER_WATCHLIST, CONVICTION_SCORE_THRESHOLD, MAX_STOCKS_PER_SECTOR, MIN_TECHNICAL_SCORE, MIN_ANALYST_SCORE } from './constants';
 import { generateOptionSignal } from './options';
 import { logger } from './logger';
+import { isCacheStaleBy930AM } from './refresh-utils';
 
 
 // Import and re-export types for backwards compatibility
@@ -121,9 +122,9 @@ let isScanning = false;
  */
 function calcVolStats(data: any[]): { avg: number; diff: number } {
     if (data.length < 10) return { avg: 0, diff: 0 };
-    const lookback = data.slice(-252);
+    const lookback = data.slice(-253, -1);
     const sum = lookback.reduce((acc: number, val: any) => acc + (val.volume || 0), 0);
-    const avg = sum / lookback.length;
+    const avg = sum / (lookback.length || 1);
     const lastVol = data[data.length - 1].volume || 0;
     const diff = avg > 0 ? ((lastVol - avg) / avg) * 100 : 0;
     return { avg, diff };
@@ -142,8 +143,11 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
 
     // Return cached data if valid and not force-refresh
     if (!forceRefresh && global._megaCapCacheV9 && (Date.now() - global._megaCapCacheV9.timestamp < CACHE_TTL)) {
-        console.log("⚡ Returning cached mega-cap conviction data");
-        return returnAll ? global._megaCapCacheV9.rawData : global._megaCapCacheV9.data;
+        const isStale = isCacheStaleBy930AM(global._megaCapCacheV9.timestamp);
+        if (!isStale) {
+            console.log("⚡ Returning cached mega-cap conviction data");
+            return returnAll ? global._megaCapCacheV9.rawData : global._megaCapCacheV9.data;
+        }
     }
 
     // Clear old cache to force immediate update for user
@@ -231,6 +235,8 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
 
                 // Fetch chart data efficiently: Alpaca primary, Yahoo fallback
                 let alpacaBars = await fetchAlpacaBars(symbol, '1Day', 253).catch(() => null);
+                let alpaca1hBars = await fetchAlpacaBars(symbol, '1Hour', 100).catch(() => null);
+                let alpaca1wBars = await fetchAlpacaBars(symbol, '1Week', 52).catch(() => null);
                 let yahooChart = null;
 
                 if (!alpacaBars || alpacaBars.length <= 50) {
@@ -266,6 +272,23 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
 
                 const indicators = calculateIndicators(cleanData);
                 const latest = indicators[indicators.length - 1];
+                latest.timeframe = '1d';
+                
+                const allTimeframes = [latest];
+                if (alpaca1hBars && alpaca1hBars.length > 20) {
+                    const h1Data = alpaca1hBars.map((b: any) => ({ time: new Date(b.t).getTime(), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
+                    const h1Inds = calculateIndicators(h1Data);
+                    const h1Latest = h1Inds[h1Inds.length - 1];
+                    h1Latest.timeframe = '1h';
+                    allTimeframes.push(h1Latest);
+                }
+                if (alpaca1wBars && alpaca1wBars.length > 20) {
+                    const w1Data = alpaca1wBars.map((b: any) => ({ time: new Date(b.t).getTime(), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
+                    const w1Inds = calculateIndicators(w1Data);
+                    const w1Latest = w1Inds[w1Inds.length - 1];
+                    w1Latest.timeframe = '1w';
+                    allTimeframes.push(w1Latest);
+                }
 
                 // Synchronized Technical Scoring
                 const confluence = calculateConfluenceScore(latest);
@@ -493,7 +516,7 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                 // Use ATR if available, else 2% proxy
                 const atr = latest.atr14 || (latest.close * 0.02);
                 const trendLower = trend.toLowerCase() as 'bullish' | 'bearish' | 'neutral';
-                const optionSignal = await generateOptionSignal(latest.close, atr, trendLower, rsi, latest.ema50, latest, symbol);
+                const optionSignal = await generateOptionSignal(latest.close, atr, trendLower, rsi, latest.ema50, latest, symbol, undefined, undefined, undefined, false, allTimeframes);
 
 
                 // Add option reason if high confidence
@@ -615,8 +638,11 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
 
     // Return cached data if valid
     if (!forceRefresh && global._alphaHunterCacheV8 && (Date.now() - global._alphaHunterCacheV8.timestamp < CACHE_TTL)) {
-        console.log("⚡ Returning cached Alpha Hunter data");
-        return returnAll ? global._alphaHunterCacheV8.rawData : global._alphaHunterCacheV8.data;
+        const isStale = isCacheStaleBy930AM(global._alphaHunterCacheV8.timestamp);
+        if (!isStale) {
+            console.log("⚡ Returning cached Alpha Hunter data");
+            return returnAll ? global._alphaHunterCacheV8.rawData : global._alphaHunterCacheV8.data;
+        }
     }
 
     // Clear old cache to force immediate update for user
@@ -695,6 +721,8 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
 
                 // Fetch chart data efficiently: Alpaca primary, Yahoo fallback
                 let alpacaBars = await fetchAlpacaBars(symbol, '1Day', 253).catch(() => null);
+                let alpaca1hBars = await fetchAlpacaBars(symbol, '1Hour', 100).catch(() => null);
+                let alpaca1wBars = await fetchAlpacaBars(symbol, '1Week', 52).catch(() => null);
                 let yahooChart = null;
 
                 if (!alpacaBars || alpacaBars.length <= 50) {
@@ -730,6 +758,23 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
 
                 const indicators = calculateIndicators(cleanData);
                 const latest = indicators[indicators.length - 1];
+                latest.timeframe = '1d';
+                
+                const allTimeframes = [latest];
+                if (alpaca1hBars && alpaca1hBars.length > 20) {
+                    const h1Data = alpaca1hBars.map((b: any) => ({ time: new Date(b.t).getTime(), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
+                    const h1Inds = calculateIndicators(h1Data);
+                    const h1Latest = h1Inds[h1Inds.length - 1];
+                    h1Latest.timeframe = '1h';
+                    allTimeframes.push(h1Latest);
+                }
+                if (alpaca1wBars && alpaca1wBars.length > 20) {
+                    const w1Data = alpaca1wBars.map((b: any) => ({ time: new Date(b.t).getTime(), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
+                    const w1Inds = calculateIndicators(w1Data);
+                    const w1Latest = w1Inds[w1Inds.length - 1];
+                    w1Latest.timeframe = '1w';
+                    allTimeframes.push(w1Latest);
+                }
 
                 // Synchronized Technical Scoring
                 const confluence = calculateConfluenceScore(latest);
@@ -940,8 +985,8 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                 }
 
                 // Alpha Hunter: Volume surge detection — boost techScore if today is 1.5x the 20-day avg
-                if (cleanData.length >= 20 && volume > 0) {
-                    const vol20dAvg = cleanData.slice(-20).reduce((sum: number, d: any) => sum + (d.volume || 0), 0) / 20;
+                if (cleanData.length >= 21 && volume > 0) {
+                    const vol20dAvg = cleanData.slice(-21, -1).reduce((sum: number, d: any) => sum + (d.volume || 0), 0) / 20;
                     if (vol20dAvg > 0 && volume > vol20dAvg * 1.5) {
                         techScore = Math.min(100, techScore + 10);
                         volumeSurge = true;
@@ -967,7 +1012,7 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                 // Use ATR if available, else 2% proxy
                 const atr = latest.atr14 || (latest.close * 0.02);
                 const trendLower = trend.toLowerCase() as 'bullish' | 'bearish' | 'neutral';
-                const optionSignal = await generateOptionSignal(latest.close, atr, trendLower, rsi, latest.ema50, latest, symbol);
+                const optionSignal = await generateOptionSignal(latest.close, atr, trendLower, rsi, latest.ema50, latest, symbol, undefined, undefined, undefined, false, allTimeframes);
 
 
                 // Add option reason if high confidence
