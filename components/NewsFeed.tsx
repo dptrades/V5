@@ -1,5 +1,5 @@
 import { Newspaper, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
-import { NewsItem } from '../lib/news';
+import { NewsItem } from '../types';
 import DataSourceIndicator from './ui/DataSourceIndicator';
 
 interface NewsFeedProps {

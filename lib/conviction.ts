@@ -1,8 +1,7 @@
 import YahooFinance from 'yahoo-finance2';
 const yahooFinance = new YahooFinance();
 import { calculateIndicators, calculateConfluenceScore } from './indicators';
-import { calculateSentimentScore } from './news';
-import { getNewsData } from './news-service';
+import { calculateSentimentScore, getNewsData } from './news';
 import { fetchAlpacaBars } from './alpaca';
 import { publicClient } from './public-api';
 import { runSmartScan, DiscoveredStock } from './smart-scanner';
@@ -228,7 +227,7 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                     (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile', 'earningsTrend'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
                     // Audit fix #4: despite the 'social' type arg, getNewsData() returns
                     // news-headline sentiment (Yahoo + Finnhub NLP bias), not real
-                    // Reddit/Twitter/StockTwits data — see lib/news-service.ts. Labeled
+                    // Reddit/Twitter/StockTwits data — see lib/news.ts. Labeled
                     // "News Sentiment" (not "Social Sentiment") in the UI accordingly.
                     (getNewsData(symbol, 'social') as Promise<any>).catch(e => [])
                 ]);
@@ -714,7 +713,7 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                     (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
                     // Audit fix #4: despite the 'social' type arg, getNewsData() returns
                     // news-headline sentiment (Yahoo + Finnhub NLP bias), not real
-                    // Reddit/Twitter/StockTwits data — see lib/news-service.ts. Labeled
+                    // Reddit/Twitter/StockTwits data — see lib/news.ts. Labeled
                     // "News Sentiment" (not "Social Sentiment") in the UI accordingly.
                     (getNewsData(symbol, 'social') as Promise<any>).catch(e => [])
                 ]);

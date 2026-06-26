@@ -9,7 +9,8 @@ export type {
     MACDOutput,
     BollingerBandsOutput,
     IndicatorData,
-    ChartDataPoints
+    ChartDataPoints,
+    NewsItem
 } from './financial';
 
 // Stock types

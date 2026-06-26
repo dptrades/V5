@@ -4,13 +4,12 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { fetchOHLCV } from '../lib/api';
 import { REFRESH_INTERVALS, isMarketActive, getMarketSession, getNextMarketOpen } from '../lib/refresh-utils';
-import { fetchStockNews, fetchSocialSentiment, fetchAnalystRatings, NewsItem } from '../lib/news';
+import { NewsItem } from '../types/financial';
 import { OHLCVData, IndicatorData } from '../types/financial';
 import { calculateIndicators } from '../lib/indicators';
 import { calculatePriceStats, PriceStats } from '../lib/stats';
 import { OptionRecommendation } from '../lib/options';
 
-import { detectPatterns } from '../lib/patterns';
 // import PriceChart from '../components/PriceChart'; // Removed
 import Sidebar from '../components/Sidebar';
 import LoginOverlay from '../components/LoginOverlay';
@@ -35,6 +34,32 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Zap, ChevronRight, Activity, RefreshCw, Database } from 'lucide-react';
 import SectorPerformanceWidget from '../components/SectorPerformanceWidget';
 import SectorDetailModal from '../components/SectorDetailModal';
+
+const fetchStockNews = async (symbol: string, trend: 'bullish' | 'bearish' | 'neutral' = 'neutral'): Promise<NewsItem[]> => {
+  try {
+    const response = await fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch news:", error);
+    return [];
+  }
+};
+
+const fetchAnalystRatings = async (symbol: string): Promise<NewsItem[]> => {
+  try {
+    const response = await fetch(`/api/news?symbol=${encodeURIComponent(symbol)}&type=analyst`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch analyst ratings:", error);
+    return [];
+  }
+};
 
 interface SectorGroup {
   name: string;
@@ -241,15 +266,14 @@ export default function Dashboard() {
           setStats(null);
         } else {
           const withIndicators = calculateIndicators(rawData);
-          const withPatterns = detectPatterns(withIndicators); // Detect patterns
           const computedStats = calculatePriceStats(rawData);
 
-          setData(withPatterns); // Set data with patterns
+          setData(withIndicators); // Set data with indicators
           setStats(computedStats);
           setLastUpdated(new Date());
 
           // Determine simplistic trend for news generation
-          const latest = withPatterns[withPatterns.length - 1]; // Use withPatterns
+          const latest = withIndicators[withIndicators.length - 1]; // Use withIndicators
           let trend: 'bullish' | 'bearish' | 'neutral' = 'neutral';
 
           if (latest.ema50 && latest.close > latest.ema50) {
@@ -402,36 +426,6 @@ export default function Dashboard() {
     fetchSignal();
     return () => { ignore = true; };
   }, [latest, stats, currentTrend, analystData.length, sentimentScore, symbol, refreshTrigger, analysis]);
-
-  // 4. Passive Tracking Update Trigger (Market Close)
-  useEffect(() => {
-    const checkAndTriggerUpdate = async () => {
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const hour = now.getHours();
-
-      // Trigger if it's after 4 PM and hasn't been triggered today
-      if (hour >= 16) {
-        const lastPassiveUpdate = localStorage.getItem('lastPassiveTrackingUpdate');
-        if (lastPassiveUpdate !== today) {
-          console.log('[Passive-Trigger] Market closed. Triggering performance tracking update...');
-          try {
-            const res = await fetch('/api/options/track/update');
-            if (res.ok) {
-              localStorage.setItem('lastPassiveTrackingUpdate', today);
-              console.log('[Passive-Trigger] Performance tracking updated successfully.');
-            }
-          } catch (e) {
-            console.error('[Passive-Trigger] Failed to trigger update:', e);
-          }
-        }
-      }
-    };
-
-    // Slight delay to not compete with initial data load
-    const timer = setTimeout(checkAndTriggerUpdate, 5000);
-    return () => clearTimeout(timer);
-  }, []);
 
   if (isAuthenticated === null) return <Loading message="Authenticating session..." />;
 

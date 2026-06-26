@@ -1,5 +1,5 @@
 
-import { getNewsData } from '../lib/news-service';
+import { getNewsData } from '../lib/news';
 
 async function test() {
     console.log("Fetching news for AAPL...");

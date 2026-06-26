@@ -186,19 +186,7 @@ export default function Sidebar({
                 </Link>
 
 
-                {enableBetaFeatures && (
-                    <>
-                        <Link
-                            href="/performance"
-                            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all w-full group ${activePage === 'performance'
-                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                                : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 border border-transparent'
-                                }`}
-                        >
-                            <span className="truncate">📈 Performance</span>
-                        </Link>
-                    </>
-                )}
+
             </nav>
 
             <div className="flex-1 overflow-y-auto mt-4">

@@ -48,3 +48,4 @@ output.txt
 test-*.ts
 test-*.js
 scripts/test-*
+*.log

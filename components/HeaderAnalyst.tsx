@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Target, ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { NewsItem } from '../lib/news';
+import { NewsItem } from '../types';
 
 interface HeaderAnalystProps {
     symbol: string;

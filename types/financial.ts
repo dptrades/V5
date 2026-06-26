@@ -91,3 +91,12 @@ export interface MultiTimeframeConfluenceResult {
         };
     };
 }
+
+export interface NewsItem {
+    id: string;
+    title: string;
+    source: string;
+    time: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    url: string;
+}
