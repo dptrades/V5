@@ -23,60 +23,63 @@ export default function PicksCard({ pick, index, onSelect }: Props) {
         }
     };
 
+    const getScoreColor = (s: number) => {
+        if (s >= 80) return 'text-green-400';
+        if (s >= 60) return 'text-blue-400';
+        if (s >= 40) return 'text-yellow-400';
+        return 'text-red-400';
+    };
+
     // Collapsed View
     if (!isExpanded) {
         return (
             <div
                 onClick={() => setIsExpanded(true)}
-                className={`${cardBg} border ${cardBorder} rounded-xl p-4 transition-all shadow-md cursor-pointer hover:brightness-110 flex items-center justify-between w-full relative overflow-hidden`}
+                className={`${cardBg} border ${cardBorder} rounded-xl p-4 transition-all shadow-md cursor-pointer hover:brightness-105 flex flex-col gap-3 w-full relative overflow-hidden`}
             >
                 {/* Rank indicator */}
-                <div className="absolute top-0 left-0 bg-gray-900/50 text-gray-300 text-[9px] font-bold px-2 py-0.5 rounded-br-lg border-b border-r border-gray-700/50 shrink-0">
+                <div className="absolute top-0 left-0 bg-gray-900/60 text-gray-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded-br-lg border-b border-r border-gray-700/50">
                     #{index + 1}
                 </div>
 
-                {/* Ticker, Sector, Name */}
-                <div className="flex items-center gap-3 min-w-0 flex-1 pl-4 mt-1">
-                    <div 
-                        onClick={handleSelect}
-                        className="flex items-center gap-1 bg-gray-900/60 hover:bg-blue-600/30 px-2.5 py-1 rounded-lg border border-gray-700/50 transition-all group shrink-0"
-                        title="Go to Live Dashboard"
-                    >
-                        <span className="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{pick.symbol}</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-400 shrink-0" />
-                    </div>
-                    <div className="min-w-0">
-                        <span className="text-[9px] text-gray-200 bg-gray-900/60 px-2 py-0.5 rounded border border-gray-700/50 uppercase tracking-widest block w-fit shrink-0 truncate max-w-[100px]">
+                {/* Top Row: Ticker, Sector, Score, Chevron */}
+                <div className="flex justify-between items-center w-full pl-3 mt-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div 
+                            onClick={handleSelect}
+                            className="flex items-center gap-1 bg-gray-900/80 hover:bg-blue-600/30 px-2 py-0.5 rounded border border-gray-700/50 transition-all group shrink-0"
+                            title="Go to Live Dashboard"
+                        >
+                            <span className="text-base font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{pick.symbol}</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-blue-400 shrink-0" />
+                        </div>
+                        <span className="text-[9px] text-gray-300 bg-gray-900/40 px-1.5 py-0.5 rounded border border-gray-800 uppercase tracking-wider truncate max-w-[100px]">
                             {pick.sector || 'Stock'}
                         </span>
-                        <p className="text-[10px] text-gray-400 truncate max-w-[140px] mt-0.5 hidden sm:block">{pick.name}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-mono font-bold ${getScoreColor(pick.score)} bg-gray-900/60 px-2 py-0.5 rounded border border-gray-800`}>
+                            {pick.score} <span className="text-[8px] text-gray-400 uppercase font-bold ml-0.5">Win</span>
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
                     </div>
                 </div>
 
-                {/* Price and 24h change */}
-                <div className="text-right shrink-0 mx-4">
-                    <div className="text-sm font-mono font-bold text-white">
-                        ${pick.price?.toFixed(2) ?? 'N/A'}
+                {/* Bottom Row: Price, Change, Trend Signal */}
+                <div className="flex justify-between items-center w-full pl-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white">${pick.price?.toFixed(2) ?? 'N/A'}</span>
+                        <span className={`text-[10px] font-bold ${pick.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {pick.change24h > 0 ? '+' : ''}{pick.change24h?.toFixed(2) ?? '0.00'}%
+                        </span>
                     </div>
-                    <div className={`text-[10px] font-bold ${pick.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {pick.change24h > 0 ? '+' : ''}{pick.change24h?.toFixed(2) ?? '0.00'}%
-                    </div>
-                </div>
 
-                {/* Signal Badge */}
-                <div className="shrink-0 mr-4">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${pick.metrics.trend === 'BULLISH' ? 'bg-green-900/40 text-green-400 border border-green-500/20' : 'bg-red-900/40 text-red-400 border border-red-500/20'}`}>
-                        {pick.metrics.trend}
-                    </span>
-                </div>
-
-                {/* Score and Toggle */}
-                <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-center bg-gray-900/80 px-2.5 py-1 rounded-lg border border-gray-800/80 min-w-[56px]">
-                        <div className="text-lg font-mono font-bold text-blue-400">{pick.score}</div>
-                        <div className="text-[8px] text-gray-300 uppercase font-bold tracking-wider -mt-1">Win Prob</div>
+                    <div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${pick.metrics.trend === 'BULLISH' ? 'bg-green-900/40 text-green-400 border border-green-500/20' : 'bg-red-900/40 text-red-400 border border-red-500/20'}`}>
+                            {pick.metrics.trend}
+                        </span>
                     </div>
-                    <ChevronDown className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
                 </div>
             </div>
         );
