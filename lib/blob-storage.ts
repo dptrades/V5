@@ -1,4 +1,4 @@
-import { put, list } from '@vercel/blob';
+import { put, list, get } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
 
@@ -33,8 +33,9 @@ export async function saveToBlob(pathname: string, data: any): Promise<string | 
     // Vercel Blob write
     try {
         const result = await put(pathname, jsonString, {
-            access: 'public',
-            addRandomSuffix: false // keeps the file URL static and deterministic
+            access: 'private', // Support private Blob stores
+            addRandomSuffix: false, // keeps the file URL static and deterministic
+            allowOverwrite: true // Allow overwriting existing files
         });
         console.log(`[Storage] Uploaded to Vercel Blob: ${pathname} -> ${result.url}`);
         return result.url;
@@ -72,11 +73,12 @@ export async function getFromBlob<T>(pathname: string, fallback: T): Promise<T> 
             return fallback;
         }
         
-        // Fetch raw JSON from public URL
-        const res = await fetch(found.url);
-        if (!res.ok) {
-            throw new Error(`HTTP error ${res.status}`);
+        // Retrieve raw JSON from URL using get() for secure/private authentication
+        const result = await get(found.url, { access: 'private' });
+        if (!result) {
+            throw new Error(`Blob not found at URL: ${found.url}`);
         }
+        const res = new Response(result.stream);
         return await res.json() as T;
     } catch (e) {
         console.error(`[Storage] Vercel Blob read failed for ${pathname}, using local fallback:`, e);
