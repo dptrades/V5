@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
 import { fetchMultiAlpacaBars } from '@/lib/alpaca';
 import { calculateIndicators } from '@/lib/indicators';
-import { scanConviction } from '@/lib/conviction';
+import { scanConviction, RELATIVE_CONVICTION_CACHE_PATH, RELATIVE_ALPHA_CACHE_PATH } from '@/lib/conviction';
+import { getFromBlob } from '@/lib/blob-storage';
 
 const yahooFinance = new YahooFinance();
 
@@ -10,7 +11,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        // 1. Get cached symbols from Top Picks and Alpha Hunter
+        // 1. Get cached symbols from Top Picks and Alpha Hunter (with Blob storage fallbacks on cold start)
+        if (!global._megaCapCacheV9) {
+            global._megaCapCacheV9 = await getFromBlob(RELATIVE_CONVICTION_CACHE_PATH, null);
+        }
+        if (!global._alphaHunterCacheV8) {
+            global._alphaHunterCacheV8 = await getFromBlob(RELATIVE_ALPHA_CACHE_PATH, null);
+        }
+
         let megaCapStocks = global._megaCapCacheV9?.data || [];
         let alphaStocks = global._alphaHunterCacheV8?.data || [];
 

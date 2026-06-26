@@ -1,9 +1,9 @@
 {
   "account": {
     "cash": 67.63,
-    "equity": 1000.51,
+    "equity": 1008.91,
     "initialBalance": 1000,
-    "lastUpdated": "2026-06-26T13:22:53.758Z"
+    "lastUpdated": "2026-06-26T13:49:15.359Z"
   },
   "positions": [
     {
@@ -13,7 +13,7 @@
       "entryTime": "2026-06-26T13:18:26.869Z",
       "stopLoss": 231.30319221930654,
       "targetProfit": 253.43907704092467,
-      "currentPrice": 243.14,
+      "currentPrice": 247.06,
       "sector": "Health Care"
     },
     {
@@ -23,7 +23,7 @@
       "entryTime": "2026-06-26T13:18:27.024Z",
       "stopLoss": 56.869962383483376,
       "targetProfit": 61.02338348868884,
-      "currentPrice": 58.19,
+      "currentPrice": 57.58,
       "sector": "Financials"
     },
     {
@@ -33,7 +33,7 @@
       "entryTime": "2026-06-26T13:18:27.258Z",
       "stopLoss": 237.17514369918797,
       "targetProfit": 255.15314173441604,
-      "currentPrice": 244.88,
+      "currentPrice": 251.65,
       "sector": "Health Care"
     },
     {
@@ -43,7 +43,7 @@
       "entryTime": "2026-06-26T13:18:27.442Z",
       "stopLoss": 67.57800027656964,
       "targetProfit": 76.94399944686072,
-      "currentPrice": 70.7,
+      "currentPrice": 70.75,
       "sector": "Healthcare"
     }
   ],

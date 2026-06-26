@@ -11,7 +11,7 @@ export async function POST() {
     console.log('[Admin] Resetting simulated portfolio...');
 
     try {
-        resetPaperPortfolio();
+        await resetPaperPortfolio();
 
         return NextResponse.json({
             success: true,

@@ -20,7 +20,7 @@ export async function GET() {
         // Automatically check if stop-loss or profit-target is hit on reload/fetch
         await updatePositionsAndExits();
         
-        const portfolio = loadPaperPortfolio();
+        const portfolio = await loadPaperPortfolio();
 
         return NextResponse.json({
             account: {

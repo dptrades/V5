@@ -11,28 +11,20 @@ import path from 'path';
 const yahooFinance = new YahooFinance();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-const HISTORY_FILE = path.join(process.cwd(), 'data', 'terminal_history.json');
+import { saveToBlob, getFromBlob } from '@/lib/blob-storage';
 
-function loadHistory(): Record<string, number[]> {
-  try {
-    if (fs.existsSync(HISTORY_FILE)) {
-      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
-    }
-  } catch (e) { console.error("[Terminal] Failed to load history", e); }
-  return {};
+const RELATIVE_HISTORY_PATH = 'data/terminal_history.json';
+const RELATIVE_CACHE_PATH = 'data/terminal_cache.json';
+
+async function loadHistory(): Promise<Record<string, number[]>> {
+  return getFromBlob<Record<string, number[]>>(RELATIVE_HISTORY_PATH, {});
 }
 
-function saveHistory(history: Record<string, number[]>) {
+async function saveHistory(history: Record<string, number[]>) {
   try {
-    if (!fs.existsSync(path.dirname(HISTORY_FILE))) {
-      fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
-    }
-    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+    await saveToBlob(RELATIVE_HISTORY_PATH, history);
   } catch (e) { console.error("[Terminal] Failed to save history", e); }
 }
-
-// In-memory score history (initialized from file)
-let scoreHistory: Record<string, number[]> = loadHistory();
 
 // ── 60-second response cache (key = `${benchmark}-${mode}`) ────────────────────
 const CACHE_TTL_MS = 60_000;
@@ -224,27 +216,19 @@ function getMarketStatus() {
 }
 
 // ── Persistence: Full Terminal Cache ──────────────────────────────────────────
-const CACHE_FILE = path.join(process.cwd(), 'data', 'terminal_cache.json');
-
-function saveTerminalCache(key: string, data: any) {
+async function saveTerminalCache(key: string, data: any) {
   try {
-    const dir = path.dirname(CACHE_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    let cache: any = {};
-    if (fs.existsSync(CACHE_FILE)) {
-      cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
-    }
+    let cache = await getFromBlob<Record<string, any>>(RELATIVE_CACHE_PATH, {});
     cache[key] = { ...data, cachedAt: new Date().toISOString() };
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+    await saveToBlob(RELATIVE_CACHE_PATH, cache);
   } catch (e) {
     console.error("Cache save failed:", e);
   }
 }
 
-function getTerminalCache(key: string) {
+async function getTerminalCache(key: string) {
   try {
-    if (!fs.existsSync(CACHE_FILE)) return null;
-    const cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+    const cache = await getFromBlob<Record<string, any>>(RELATIVE_CACHE_PATH, {});
     const entry = cache[key];
     if (!entry) return null;
     return entry;
@@ -351,12 +335,12 @@ export async function GET(request: NextRequest) {
 
     // Serve from cache if market is closed
     if (!marketStatus.isOpen) {
-      const cached = getTerminalCache(cacheKey);
+      const cached = await getTerminalCache(cacheKey);
       if (cached) {
         console.log(`[Terminal] Cache hit for ${cacheKey} (market closed)`);
         
         // SYNC HEADER: Get the absolute latest market prices from the global cache
-        const globalMarket = getTerminalCache('__GLOBAL_MARKET__');
+        const globalMarket = await getTerminalCache('__GLOBAL_MARKET__');
         
         return NextResponse.json({
           ...cached,
@@ -368,7 +352,7 @@ export async function GET(request: NextRequest) {
     console.log(`[Terminal] Cache miss or market open — fetching fresh data for ${cacheKey}`);
 
     // ── Shared Market Data Logic ──
-    const globalCache = getTerminalCache('__GLOBAL_MARKET__');
+    const globalCache = await getTerminalCache('__GLOBAL_MARKET__');
     const useSharedMarket = isCacheValid(globalCache, 60_000); // 60s TTL for shared market data
 
     const sectorSymbols = ['XLE', 'XLI', 'XLU', 'XLK', 'XLF', 'XLV', 'XLY', 'XLP', 'XLRE', 'XLC', 'XLB'];
@@ -567,14 +551,15 @@ export async function GET(request: NextRequest) {
 
     // --- Score History & Delta ---
     // --- History & Delta ---
-    if (!scoreHistory[benchmark]) scoreHistory[benchmark] = [];
-    const prev = scoreHistory[benchmark];
+    const history = await loadHistory();
+    if (!history[benchmark]) history[benchmark] = [];
+    const prev = history[benchmark];
     const scoreDelta = prev.length > 0 ? totalScore - prev[prev.length - 1] : 0;
     
     // Update and persist
     prev.push(totalScore);
     if (prev.length > 30) prev.shift();
-    saveHistory(scoreHistory);
+    await saveHistory(history);
 
     // --- EMA Divergence ---
     const emaDivergence = (dailyBullEmas <= 1 && weeklyBullEmas >= 4) || (dailyBullEmas >= 4 && weeklyBullEmas <= 1);
@@ -680,7 +665,7 @@ Return ONLY valid JSON with this exact structure:
       signalReadiness,
       eventAlert,
       scoreDelta,
-      scoreHistory: [...(scoreHistory[benchmark] || [])],
+      scoreHistory: [...(history[benchmark] || [])],
       emaDivergence,
       multiDivergence, // Include the multi-timeframe divergence data
       checklist,
@@ -771,7 +756,7 @@ Return ONLY valid JSON with this exact structure:
     // 1. Save/Update the Global Market Cache if we just performed a fresh fetch
     if (!useSharedMarket) {
       console.log(`[Terminal] Updating __GLOBAL_MARKET__ cache (fresher state available)`);
-      saveTerminalCache('__GLOBAL_MARKET__', {
+      await saveTerminalCache('__GLOBAL_MARKET__', {
         topBar: finalResponse.topBar,
         marketStatus: finalResponse.marketStatus,
         metrics: {
@@ -796,9 +781,9 @@ Return ONLY valid JSON with this exact structure:
     }
 
     // 2. Save the benchmark-specific result
-    const existingCache = getTerminalCache(cacheKey);
+    const existingCache = await getTerminalCache(cacheKey);
     if (marketStatus.isOpen || !existingCache) {
-      saveTerminalCache(cacheKey, finalResponse);
+      await saveTerminalCache(cacheKey, finalResponse);
     }
 
     return NextResponse.json(finalResponse);

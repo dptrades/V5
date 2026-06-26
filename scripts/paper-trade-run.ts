@@ -2,8 +2,7 @@ import {
     updatePositionsAndExits,
     runSimulatedMorningScan,
     logDailyPerformance,
-    sendDailySummary,
-    loadPaperPortfolio
+    sendDailySummary
 } from '../lib/paper-trading';
 
 // Load env variables

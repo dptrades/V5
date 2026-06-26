@@ -3,27 +3,27 @@
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 743.51,
-        "change": -0.4338801473049895,
-        "changeAmount": -3.240000000000009
+        "price": 729.07,
+        "change": -0.5809117314169597,
+        "changeAmount": -4.259999999999991
       },
       {
         "symbol": "QQQ",
-        "price": 735.64,
-        "change": -0.5650022978562439,
-        "changeAmount": -4.180000000000064
+        "price": 706.19,
+        "change": -1.4134842911289027,
+        "changeAmount": -10.125
       },
       {
         "symbol": "IWM",
-        "price": 298.07,
-        "change": 0.8628857606930196,
-        "changeAmount": 2.5500000000000114
+        "price": 297.69,
+        "change": -0.39482049051427265,
+        "changeAmount": -1.1800000000000068
       },
       {
         "symbol": "VIX",
-        "price": 17.49,
-        "change": 4.233745,
-        "changeAmount": 0.7099991
+        "price": 20.21,
+        "change": 6.973057,
+        "changeAmount": 1.3199997
       }
     ],
     "marketStatus": {
@@ -32,94 +32,94 @@
     },
     "metrics": {
       "macro": {
-        "value": 81,
-        "status": "Supportive",
-        "type": "positive",
+        "value": 55,
+        "status": "Headwind",
+        "type": "warning",
         "subMetrics": [
           {
             "label": "2Y Yield",
-            "value": "3.68%",
-            "status": "negative"
+            "value": "3.67%",
+            "status": "positive"
           },
           {
             "label": "5Y Yield",
-            "value": "4.29%",
-            "status": "negative"
+            "value": "4.15%",
+            "status": "positive"
           },
           {
             "label": "10Y Yield",
-            "value": "4.51%",
+            "value": "4.40%",
             "status": "negative"
           },
           {
             "label": "30Y Yield",
-            "value": "4.95%",
+            "value": "4.89%",
             "status": "negative"
           },
           {
             "label": "US Dollar (DXY)",
-            "value": "101.05",
+            "value": "101.09",
             "status": "positive"
           }
         ]
       },
       "volatility": {
-        "value": 83,
-        "status": "Stable",
-        "type": "positive",
+        "value": 65,
+        "status": "Elevated",
+        "type": "warning",
         "subMetrics": [
           {
             "label": "VIX Level",
-            "value": "17.49",
-            "status": "positive"
+            "value": "20.21",
+            "status": "warning"
           },
           {
             "label": "VIX Percentile",
-            "value": "0th %ile",
-            "statusLabel": "Low Fear",
-            "status": "positive"
+            "value": "81th %ile",
+            "statusLabel": "Extreme",
+            "status": "negative"
           },
           {
             "label": "Put/Call Ratio",
-            "value": "1.03",
+            "value": "1.87",
             "statusLabel": "Bearish Bias",
             "status": "negative"
           },
           {
             "label": "BB Width",
-            "value": "4.74%",
-            "status": "warning"
+            "value": "5.51%",
+            "status": "neutral"
           }
         ]
       },
       "breadth": {
-        "value": 55,
+        "value": 52,
         "status": "Healthy",
         "type": "positive",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "6/11",
+            "value": "5/11",
             "status": "positive"
           },
           {
             "label": "Trending > 20d",
-            "value": "5/11",
-            "status": "warning"
+            "value": "7/11",
+            "status": "positive"
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "32.0%",
+            "value": "48.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "46.0%",
-            "status": "negative"
+            "value": "54.0%",
+            "status": "positive"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "56.0%",
+            "value": "58.0%",
             "status": "positive"
           }
         ]
@@ -130,96 +130,96 @@
         false,
         true,
         true,
+        false,
         true,
         true,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
         false,
         true
       ],
       "etfQuotes": [
         {
-          "price": 743.51,
-          "changePercent": -0.4338801473049895,
-          "changeAmount": -3.240000000000009
+          "price": 729.07,
+          "changePercent": -0.5809117314169597,
+          "changeAmount": -4.259999999999991
         },
         {
-          "price": 735.64,
-          "changePercent": -0.5650022978562439,
-          "changeAmount": -4.180000000000064
+          "price": 706.19,
+          "changePercent": -1.4134842911289027,
+          "changeAmount": -10.125
         },
         {
-          "price": 298.07,
-          "changePercent": 0.8628857606930196,
-          "changeAmount": 2.5500000000000114
+          "price": 297.69,
+          "changePercent": -0.39482049051427265,
+          "changeAmount": -1.1800000000000068
         },
         {
-          "price": 21.835,
-          "changePercent": -0.478577939835918,
-          "changeAmount": -0.10500000000000043
+          "price": 23.32,
+          "changePercent": 3.690529124055144,
+          "changeAmount": 0.8300000000000018
         },
         {
-          "price": 54.01,
-          "changePercent": 0.4837209302325544,
-          "changeAmount": 0.259999999999998
+          "price": 53.96,
+          "changePercent": -0.24034017378443806,
+          "changeAmount": -0.13000000000000256
         },
         {
-          "price": 181.415,
-          "changePercent": 0.29577620521892783,
-          "changeAmount": 0.5349999999999966
+          "price": 182.09,
+          "changePercent": -1.1347594744271927,
+          "changeAmount": -2.0900000000000034
         },
         {
-          "price": 44.745,
-          "changePercent": -0.03351206434316481,
-          "changeAmount": -0.015000000000000568
+          "price": 45.97,
+          "changePercent": 0.2180074122520197,
+          "changeAmount": 0.10000000000000142
         },
         {
-          "price": 191.32,
-          "changePercent": 0.005227118289682141,
-          "changeAmount": 0.009999999999990905
+          "price": 180.98,
+          "changePercent": -1.9503738216491615,
+          "changeAmount": -3.6000000000000227
         },
         {
-          "price": 53.63,
-          "changePercent": 0.13069454817027684,
-          "changeAmount": 0.07000000000000028
+          "price": 53.34,
+          "changePercent": -0.224466891133553,
+          "changeAmount": -0.11999999999999744
         },
         {
-          "price": 149.79,
-          "changePercent": 0.2744678002409939,
-          "changeAmount": 0.4099999999999966
+          "price": 158.62,
+          "changePercent": 1.8950343675724397,
+          "changeAmount": 2.950000000000017
         },
         {
-          "price": 115.01,
-          "changePercent": -1.8769729545260547,
-          "changeAmount": -2.1999999999999886
+          "price": 113.63,
+          "changePercent": 0.2249173098125649,
+          "changeAmount": 0.25499999999999545
         },
         {
-          "price": 82.325,
-          "changePercent": -1.1586024732861129,
-          "changeAmount": -0.9650000000000034
+          "price": 84.89,
+          "changePercent": 1.1197141155449646,
+          "changeAmount": 0.9399999999999977
         },
         {
-          "price": 44.055,
-          "changePercent": 0.46750285062713404,
-          "changeAmount": 0.2049999999999983
+          "price": 44.85,
+          "changePercent": 0.6169377453729636,
+          "changeAmount": 0.2749999999999986
         },
         {
-          "price": 106.795,
-          "changePercent": -2.4346793349168574,
-          "changeAmount": -2.664999999999992
+          "price": 105.57,
+          "changePercent": -0.03314237015293859,
+          "changeAmount": -0.0350000000000108
         },
         {
-          "price": 51.45,
-          "changePercent": -0.6756756756756647,
-          "changeAmount": -0.3499999999999943
+          "price": 51.72,
+          "changePercent": -0.25072324011572333,
+          "changeAmount": -0.13000000000000256
         }
       ],
       "dxyData": {
-        "price": 28.355,
-        "changePercent": 0.21205159922247294,
-        "changeAmount": 0.05999999999999872
+        "price": 28.485,
+        "changePercent": -0.15772870662461166,
+        "changeAmount": -0.045000000000001705
       },
       "yahooVix": {
         "language": "en-US",
@@ -229,18 +229,42 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "fiftyDayAverage": 17.7902,
-        "fiftyDayAverageChange": -0.3001995,
-        "fiftyDayAverageChangePercent": -0.016874433,
-        "twoHundredDayAverage": 18.55975,
-        "twoHundredDayAverageChange": -1.0697498,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
-        "tradeable": false,
-        "cryptoTradeable": false,
-        "regularMarketChangePercent": 4.233745,
-        "regularMarketPrice": 17.49,
+        "shortName": "CBOE Volatility Index",
+        "longName": "CBOE Volatility Index",
         "marketState": "REGULAR",
+        "corporateActions": [],
+        "regularMarketTime": "2026-06-26T13:32:01.000Z",
+        "hasPrePostMarketData": false,
+        "firstTradeDateMilliseconds": "1990-01-02T08:00:00.000Z",
+        "priceHint": 2,
+        "regularMarketChange": 1.3199997,
+        "regularMarketDayHigh": 20.5,
+        "regularMarketDayRange": {
+          "low": 19.52,
+          "high": 20.5
+        },
+        "regularMarketDayLow": 19.52,
+        "regularMarketVolume": 0,
+        "regularMarketPreviousClose": 18.63,
+        "bid": 0,
+        "ask": 0,
+        "bidSize": 0,
+        "askSize": 0,
+        "fullExchangeName": "Cboe Indices",
+        "regularMarketOpen": 19.7,
+        "averageDailyVolume3Month": 0,
+        "averageDailyVolume10Day": 0,
+        "fiftyTwoWeekLowChange": 6.829999,
+        "fiftyTwoWeekLowChangePercent": 0.5104633,
+        "fiftyTwoWeekRange": {
+          "low": 13.38,
+          "high": 35.3
+        },
+        "fiftyTwoWeekHighChange": -15.09,
+        "fiftyTwoWeekHighChangePercent": -0.42747876,
+        "fiftyTwoWeekLow": 13.38,
+        "fiftyTwoWeekHigh": 35.3,
+        "fiftyTwoWeekChangePercent": 15.747547,
         "exchange": "CXI",
         "messageBoardId": "finmb_INDEXVIX",
         "exchangeTimezoneName": "America/Chicago",
@@ -248,42 +272,18 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "cboe_market",
         "esgPopulated": false,
-        "corporateActions": [],
-        "regularMarketTime": "2026-06-22T19:15:01.000Z",
-        "regularMarketDayLow": 16.49,
-        "regularMarketVolume": 0,
-        "regularMarketPreviousClose": 16.78,
-        "bid": 0,
-        "ask": 0,
-        "bidSize": 0,
-        "askSize": 0,
-        "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 17.48,
-        "averageDailyVolume3Month": 0,
-        "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 4.1099997,
-        "fiftyTwoWeekLowChangePercent": 0.30717486,
-        "fiftyTwoWeekRange": {
-          "low": 13.38,
-          "high": 35.3
-        },
-        "fiftyTwoWeekHighChange": -17.81,
-        "fiftyTwoWeekHighChangePercent": -0.5045326,
-        "fiftyTwoWeekLow": 13.38,
-        "fiftyTwoWeekHigh": 35.3,
-        "fiftyTwoWeekChangePercent": -17.297024,
-        "twoHundredDayAverageChangePercent": -0.05763816,
-        "hasPrePostMarketData": false,
-        "firstTradeDateMilliseconds": "1990-01-02T08:00:00.000Z",
-        "priceHint": 2,
-        "regularMarketChange": 0.7099991,
-        "regularMarketDayHigh": 17.92,
-        "regularMarketDayRange": {
-          "low": 16.49,
-          "high": 17.92
-        },
-        "shortName": "CBOE Volatility Index",
-        "longName": "CBOE Volatility Index",
+        "regularMarketChangePercent": 6.973057,
+        "regularMarketPrice": 20.21,
+        "fiftyDayAverage": 17.7784,
+        "fiftyDayAverageChange": 2.4315987,
+        "fiftyDayAverageChangePercent": 0.13677263,
+        "twoHundredDayAverage": 18.62805,
+        "twoHundredDayAverageChange": 1.5819492,
+        "twoHundredDayAverageChangePercent": 0.08492296,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "tradeable": false,
+        "cryptoTradeable": false,
         "symbol": "^VIX"
       },
       "yahooDxy": {
@@ -293,26 +293,11 @@
         "typeDisp": "Index",
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
+        "shortName": "ICE US Dollar Index - Index - C",
+        "longName": "US Dollar Index",
         "currency": "USD",
-        "fiftyTwoWeekLowChange": 5.4979935,
-        "fiftyTwoWeekLowChangePercent": 0.057540484,
-        "fiftyTwoWeekRange": {
-          "low": 95.55,
-          "high": 101.056
-        },
-        "fiftyTwoWeekHighChange": -0.008003235,
-        "fiftyDayAverageChangePercent": 0.021433853,
-        "twoHundredDayAverage": 98.6821,
-        "twoHundredDayAverageChange": 2.3658981,
-        "twoHundredDayAverageChangePercent": 0.023974948,
-        "sourceInterval": 30,
-        "exchangeDataDelayedBy": 10,
-        "tradeable": false,
-        "cryptoTradeable": false,
-        "hasPrePostMarketData": false,
-        "firstTradeDateMilliseconds": "1971-01-04T05:00:00.000Z",
         "corporateActions": [],
-        "regularMarketTime": "2026-06-22T19:20:12.000Z",
+        "regularMarketTime": "2026-06-26T13:37:14.000Z",
         "exchange": "NYB",
         "messageBoardId": "finmb_INDEXDX-Y.NYB",
         "exchangeTimezoneName": "America/New_York",
@@ -320,34 +305,49 @@
         "gmtOffSetMilliseconds": -14400000,
         "market": "us24_market",
         "esgPopulated": false,
+        "regularMarketChangePercent": -0.33125824,
+        "regularMarketPrice": 101.095,
         "marketState": "REGULAR",
-        "regularMarketChangePercent": 0.19732223,
-        "regularMarketPrice": 101.048,
+        "fiftyDayAverage": 99.173,
+        "fiftyDayAverageChange": 1.9220047,
+        "fiftyDayAverageChangePercent": 0.019380324,
+        "twoHundredDayAverage": 98.7555,
+        "twoHundredDayAverageChange": 2.3395004,
+        "twoHundredDayAverageChangePercent": 0.023689823,
+        "sourceInterval": 30,
+        "exchangeDataDelayedBy": 10,
+        "tradeable": false,
+        "cryptoTradeable": false,
+        "hasPrePostMarketData": false,
+        "firstTradeDateMilliseconds": "1971-01-04T05:00:00.000Z",
         "priceHint": 2,
-        "regularMarketChange": 0.1989975,
-        "regularMarketDayHigh": 101.056,
+        "regularMarketChange": -0.33599854,
+        "regularMarketDayHigh": 101.57,
         "regularMarketDayRange": {
-          "low": 100.76,
-          "high": 101.056
+          "low": 101.045,
+          "high": 101.57
         },
-        "regularMarketDayLow": 100.76,
-        "regularMarketPreviousClose": 100.849,
+        "regularMarketDayLow": 101.045,
+        "regularMarketPreviousClose": 101.431,
         "bid": 0,
         "ask": 0,
         "bidSize": 0,
         "askSize": 0,
         "fullExchangeName": "ICE Futures",
-        "regularMarketOpen": 100.839,
+        "regularMarketOpen": 101.503,
         "averageDailyVolume3Month": 0,
         "averageDailyVolume10Day": 0,
-        "longName": "US Dollar Index",
-        "shortName": "ICE US Dollar Index - Index - C",
-        "fiftyTwoWeekHighChangePercent": -0.00007919604,
+        "fiftyTwoWeekLowChange": 5.544998,
+        "fiftyTwoWeekLowChangePercent": 0.058032423,
+        "fiftyTwoWeekRange": {
+          "low": 95.55,
+          "high": 101.8
+        },
+        "fiftyTwoWeekHighChange": -0.70500183,
+        "fiftyTwoWeekHighChangePercent": -0.0069253617,
         "fiftyTwoWeekLow": 95.55,
-        "fiftyTwoWeekHigh": 101.056,
-        "fiftyTwoWeekChangePercent": 2.4690151,
-        "fiftyDayAverage": 98.9276,
-        "fiftyDayAverageChange": 2.1203995,
+        "fiftyTwoWeekHigh": 101.8,
+        "fiftyTwoWeekChangePercent": 4.1375756,
         "displayName": "US Dollar Index",
         "symbol": "DX-Y.NYB"
       },
@@ -358,62 +358,62 @@
         "typeDisp": "Index",
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
-        "marketState": "POSTPOST",
         "currency": "USD",
+        "shortName": "13 WEEK TREASURY BILL",
+        "regularMarketChangePercent": -0.4075986,
+        "regularMarketPrice": 3.6650002,
+        "corporateActions": [],
+        "regularMarketTime": "2026-06-26T13:32:05.000Z",
+        "exchange": "CGI",
+        "messageBoardId": "finmb_INDEXIRX",
         "exchangeTimezoneName": "America/Chicago",
         "exchangeTimezoneShortName": "CDT",
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
+        "marketState": "REGULAR",
         "hasPrePostMarketData": false,
         "firstTradeDateMilliseconds": "1960-01-04T13:20:00.000Z",
         "priceHint": 4,
-        "regularMarketChange": 0.021999598,
-        "regularMarketDayHigh": 3.682,
+        "regularMarketChange": -0.014999628,
+        "regularMarketDayHigh": 3.67,
         "regularMarketDayRange": {
-          "low": 3.6599998,
-          "high": 3.682
+          "low": 3.6650002,
+          "high": 3.67
         },
-        "regularMarketDayLow": 3.6599998,
+        "regularMarketDayLow": 3.6650002,
         "regularMarketVolume": 0,
-        "regularMarketPreviousClose": 3.6580002,
+        "regularMarketPreviousClose": 3.6799998,
         "bid": 0,
         "ask": 0,
         "bidSize": 0,
         "askSize": 0,
         "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 3.6599998,
-        "averageDailyVolume3Month": 0,
-        "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 0.01999998,
-        "fiftyTwoWeekLowChangePercent": 0.005464476,
-        "fiftyTwoWeekRange": {
-          "low": 3.6599998,
-          "high": 5.348
-        },
-        "fiftyTwoWeekHighChange": -1.6680002,
-        "fiftyTwoWeekHighChangePercent": -0.31189233,
-        "fiftyTwoWeekLow": 3.6599998,
-        "fiftyTwoWeekHigh": 5.348,
-        "fiftyTwoWeekChangePercent": 3.0493855,
-        "regularMarketChangePercent": 0.6014105,
-        "regularMarketPrice": 3.6799998,
-        "shortName": "13 WEEK TREASURY BILL",
-        "fiftyDayAverage": 5.23192,
-        "fiftyDayAverageChange": -1.5519199,
-        "fiftyDayAverageChangePercent": -0.29662535,
-        "twoHundredDayAverage": 5.254455,
-        "twoHundredDayAverageChange": -1.5744553,
-        "twoHundredDayAverageChangePercent": -0.29964197,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
+        "longName": "13 WEEK TREASURY BILL",
         "tradeable": false,
         "cryptoTradeable": false,
-        "corporateActions": [],
-        "regularMarketTime": "2026-06-22T18:59:53.000Z",
-        "exchange": "CGI",
-        "messageBoardId": "finmb_INDEXIRX",
-        "longName": "13 WEEK TREASURY BILL",
+        "regularMarketOpen": 3.668,
+        "averageDailyVolume3Month": 0,
+        "averageDailyVolume10Day": 0,
+        "fiftyTwoWeekLowChange": 0,
+        "fiftyTwoWeekLowChangePercent": 0,
+        "fiftyTwoWeekRange": {
+          "low": 3.6650002,
+          "high": 5.348
+        },
+        "fiftyTwoWeekHighChange": -1.6829998,
+        "fiftyTwoWeekHighChangePercent": -0.31469706,
+        "fiftyTwoWeekLow": 3.6650002,
+        "fiftyTwoWeekHigh": 5.348,
+        "fiftyTwoWeekChangePercent": 3.0493855,
+        "fiftyDayAverage": 5.23192,
+        "fiftyDayAverageChange": -1.5669196,
+        "fiftyDayAverageChangePercent": -0.29949227,
+        "twoHundredDayAverage": 5.254455,
+        "twoHundredDayAverageChange": -1.5894549,
+        "twoHundredDayAverageChangePercent": -0.3024966,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
         "symbol": "^IRX"
       },
       "yahooFvx": {
@@ -424,19 +424,54 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "fiftyDayAverage": 4.38596,
-        "fiftyDayAverageChange": -0.0989604,
-        "fiftyDayAverageChangePercent": -0.022562996,
-        "twoHundredDayAverage": 4.33374,
-        "twoHundredDayAverageChange": -0.046740532,
-        "twoHundredDayAverageChangePercent": -0.010785264,
+        "marketState": "REGULAR",
+        "corporateActions": [],
+        "regularMarketTime": "2026-06-26T13:32:05.000Z",
+        "regularMarketChangePercent": -0.28825566,
+        "regularMarketPrice": 4.151,
+        "shortName": "Treasury Yield 5 Years",
+        "longName": "Treasury Yield 5 Years",
         "sourceInterval": 15,
         "exchangeDataDelayedBy": 0,
         "tradeable": false,
         "cryptoTradeable": false,
-        "regularMarketChangePercent": 1.4674509,
-        "regularMarketPrice": 4.2869997,
-        "regularMarketTime": "2026-06-22T18:59:53.000Z",
+        "hasPrePostMarketData": false,
+        "firstTradeDateMilliseconds": "1962-01-02T13:20:00.000Z",
+        "priceHint": 4,
+        "regularMarketChange": -0.012000084,
+        "regularMarketDayHigh": 4.167,
+        "regularMarketDayRange": {
+          "low": 4.148,
+          "high": 4.167
+        },
+        "regularMarketDayLow": 4.148,
+        "regularMarketVolume": 0,
+        "regularMarketPreviousClose": 4.163,
+        "bid": 0,
+        "ask": 0,
+        "bidSize": 0,
+        "askSize": 0,
+        "fullExchangeName": "Cboe Indices",
+        "regularMarketOpen": 4.148,
+        "averageDailyVolume3Month": 0,
+        "averageDailyVolume10Day": 0,
+        "fiftyTwoWeekLowChange": 0.86899996,
+        "fiftyTwoWeekLowChangePercent": 0.26477757,
+        "fiftyTwoWeekRange": {
+          "low": 3.282,
+          "high": 4.988
+        },
+        "fiftyTwoWeekHighChange": -0.8369999,
+        "fiftyTwoWeekHighChangePercent": -0.1678027,
+        "fiftyTwoWeekLow": 3.282,
+        "fiftyTwoWeekHigh": 4.988,
+        "fiftyTwoWeekChangePercent": 30.485714,
+        "fiftyDayAverage": 4.38596,
+        "fiftyDayAverageChange": -0.23496008,
+        "fiftyDayAverageChangePercent": -0.053570956,
+        "twoHundredDayAverage": 4.33374,
+        "twoHundredDayAverageChange": -0.18274021,
+        "twoHundredDayAverageChangePercent": -0.04216686,
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXFVX",
         "exchangeTimezoneName": "America/Chicago",
@@ -444,41 +479,6 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
-        "hasPrePostMarketData": false,
-        "firstTradeDateMilliseconds": "1962-01-02T13:20:00.000Z",
-        "priceHint": 4,
-        "regularMarketChange": 0.061999798,
-        "regularMarketDayHigh": 4.289,
-        "regularMarketDayRange": {
-          "low": 4.263,
-          "high": 4.289
-        },
-        "regularMarketDayLow": 4.263,
-        "regularMarketVolume": 0,
-        "regularMarketPreviousClose": 4.225,
-        "bid": 0,
-        "ask": 0,
-        "bidSize": 0,
-        "askSize": 0,
-        "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 4.275,
-        "averageDailyVolume3Month": 0,
-        "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 1.0049996,
-        "fiftyTwoWeekLowChangePercent": 0.3062156,
-        "fiftyTwoWeekRange": {
-          "low": 3.282,
-          "high": 4.988
-        },
-        "fiftyTwoWeekHighChange": -0.7010002,
-        "fiftyTwoWeekHighChangePercent": -0.14053734,
-        "fiftyTwoWeekLow": 3.282,
-        "fiftyTwoWeekHigh": 4.988,
-        "fiftyTwoWeekChangePercent": 30.485714,
-        "marketState": "POSTPOST",
-        "shortName": "Treasury Yield 5 Years",
-        "longName": "Treasury Yield 5 Years",
-        "corporateActions": [],
         "symbol": "^FVX"
       },
       "yahooTnx": {
@@ -489,10 +489,24 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
-        "shortName": "CBOE Interest Rate 10 Year T No",
+        "marketState": "REGULAR",
+        "hasPrePostMarketData": false,
+        "firstTradeDateMilliseconds": "1962-01-02T13:20:00.000Z",
+        "priceHint": 4,
+        "regularMarketChange": 0.006000042,
+        "regularMarketDayHigh": 4.41,
+        "regularMarketDayRange": {
+          "low": 4.388,
+          "high": 4.41
+        },
+        "regularMarketDayLow": 4.388,
+        "regularMarketVolume": 0,
         "longName": "CBOE Interest Rate 10 Year T No",
+        "regularMarketChangePercent": 0.13661298,
+        "regularMarketPrice": 4.398,
+        "shortName": "CBOE Interest Rate 10 Year T No",
         "corporateActions": [],
-        "regularMarketTime": "2026-06-22T18:59:53.000Z",
+        "regularMarketTime": "2026-06-26T13:32:05.000Z",
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXTNX",
         "exchangeTimezoneName": "America/Chicago",
@@ -500,50 +514,36 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
-        "regularMarketChangePercent": 1.30308,
-        "regularMarketPrice": 4.509,
-        "hasPrePostMarketData": false,
-        "firstTradeDateMilliseconds": "1962-01-02T13:20:00.000Z",
-        "priceHint": 4,
-        "tradeable": false,
-        "cryptoTradeable": false,
-        "regularMarketChange": 0.058000088,
-        "regularMarketDayHigh": 4.5150003,
-        "regularMarketDayRange": {
-          "low": 4.481,
-          "high": 4.5150003
-        },
-        "regularMarketDayLow": 4.481,
-        "regularMarketVolume": 0,
-        "regularMarketPreviousClose": 4.4509997,
+        "regularMarketPreviousClose": 4.3919997,
         "bid": 0,
         "ask": 0,
         "bidSize": 0,
         "askSize": 0,
         "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 4.495,
+        "regularMarketOpen": 4.388,
         "averageDailyVolume3Month": 0,
         "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 1.1639998,
-        "fiftyTwoWeekLowChangePercent": 0.347982,
+        "fiftyTwoWeekLowChange": 1.0529997,
+        "fiftyTwoWeekLowChangePercent": 0.31479812,
         "fiftyTwoWeekRange": {
           "low": 3.345,
           "high": 4.997
         },
-        "fiftyTwoWeekHighChange": -0.4880004,
-        "fiftyTwoWeekHighChangePercent": -0.09765867,
+        "fiftyTwoWeekHighChange": -0.59900045,
+        "fiftyTwoWeekHighChangePercent": -0.11987201,
         "fiftyTwoWeekLow": 3.345,
         "fiftyTwoWeekHigh": 4.997,
         "fiftyTwoWeekChangePercent": 29.821074,
         "fiftyDayAverage": 4.37796,
-        "fiftyDayAverageChange": 0.13103962,
-        "fiftyDayAverageChangePercent": 0.02993166,
+        "fiftyDayAverageChange": 0.020039558,
+        "fiftyDayAverageChangePercent": 0.004577373,
         "twoHundredDayAverage": 4.307575,
-        "twoHundredDayAverageChange": 0.2014246,
-        "twoHundredDayAverageChangePercent": 0.04676055,
+        "twoHundredDayAverageChange": 0.09042454,
+        "twoHundredDayAverageChangePercent": 0.020991981,
         "sourceInterval": 15,
         "exchangeDataDelayedBy": 0,
-        "marketState": "POSTPOST",
+        "tradeable": false,
+        "cryptoTradeable": false,
         "symbol": "^TNX"
       },
       "yahooTyx": {
@@ -554,48 +554,11 @@
         "triggerable": false,
         "customPriceAlertConfidence": "LOW",
         "currency": "USD",
+        "marketState": "REGULAR",
         "tradeable": false,
         "cryptoTradeable": false,
-        "hasPrePostMarketData": false,
-        "priceHint": 4,
-        "regularMarketChange": 0.046000004,
-        "regularMarketDayHigh": 4.9560003,
-        "regularMarketDayRange": {
-          "low": 4.92,
-          "high": 4.9560003
-        },
-        "regularMarketDayLow": 4.92,
-        "regularMarketVolume": 0,
-        "regularMarketPreviousClose": 4.901,
-        "bid": 0,
-        "ask": 0,
-        "bidSize": 0,
-        "askSize": 0,
-        "fullExchangeName": "Cboe Indices",
-        "regularMarketOpen": 4.932,
-        "averageDailyVolume3Month": 0,
-        "averageDailyVolume10Day": 0,
-        "fiftyTwoWeekLowChange": 1.23,
-        "fiftyTwoWeekLowChangePercent": 0.33091202,
-        "fiftyTwoWeekRange": {
-          "low": 3.717,
-          "high": 5.152
-        },
-        "fiftyTwoWeekHighChange": -0.20499992,
-        "fiftyTwoWeekHighChangePercent": -0.03979036,
-        "fiftyTwoWeekLow": 3.717,
-        "fiftyTwoWeekHigh": 5.152,
-        "fiftyTwoWeekChangePercent": 23.024773,
-        "fiftyDayAverage": 4.5123,
-        "fiftyDayAverageChange": 0.4347,
-        "fiftyDayAverageChangePercent": 0.096336685,
-        "twoHundredDayAverage": 4.44611,
-        "twoHundredDayAverageChange": 0.50089025,
-        "twoHundredDayAverageChangePercent": 0.11265809,
-        "sourceInterval": 15,
-        "exchangeDataDelayedBy": 0,
-        "corporateActions": [],
-        "regularMarketTime": "2026-06-22T18:59:53.000Z",
+        "regularMarketChangePercent": 0.57648504,
+        "regularMarketPrice": 4.886,
         "exchange": "CGI",
         "messageBoardId": "finmb_INDEXTYX",
         "exchangeTimezoneName": "America/Chicago",
@@ -603,12 +566,49 @@
         "gmtOffSetMilliseconds": -18000000,
         "market": "usir_market",
         "esgPopulated": false,
-        "shortName": "Treasury Yield 30 Years",
         "longName": "Treasury Yield 30 Years",
-        "regularMarketChangePercent": 0.938584,
-        "regularMarketPrice": 4.947,
+        "corporateActions": [],
+        "regularMarketTime": "2026-06-26T13:32:05.000Z",
+        "hasPrePostMarketData": false,
         "firstTradeDateMilliseconds": "1977-02-15T13:20:00.000Z",
-        "marketState": "POSTPOST",
+        "priceHint": 4,
+        "regularMarketChange": 0.027999878,
+        "regularMarketDayHigh": 4.896,
+        "regularMarketDayRange": {
+          "low": 4.871,
+          "high": 4.896
+        },
+        "regularMarketDayLow": 4.871,
+        "regularMarketVolume": 0,
+        "bid": 0,
+        "regularMarketPreviousClose": 4.8580003,
+        "ask": 0,
+        "bidSize": 0,
+        "askSize": 0,
+        "fullExchangeName": "Cboe Indices",
+        "regularMarketOpen": 4.871,
+        "averageDailyVolume3Month": 0,
+        "averageDailyVolume10Day": 0,
+        "fiftyTwoWeekLowChange": 1.1690001,
+        "fiftyTwoWeekLowChangePercent": 0.314501,
+        "fiftyTwoWeekRange": {
+          "low": 3.717,
+          "high": 5.152
+        },
+        "fiftyTwoWeekHighChange": -0.2659998,
+        "fiftyTwoWeekHighChangePercent": -0.051630396,
+        "fiftyTwoWeekLow": 3.717,
+        "fiftyTwoWeekHigh": 5.152,
+        "fiftyTwoWeekChangePercent": 23.024773,
+        "fiftyDayAverage": 4.5123,
+        "fiftyDayAverageChange": 0.37370014,
+        "fiftyDayAverageChangePercent": 0.082818106,
+        "twoHundredDayAverage": 4.44611,
+        "twoHundredDayAverageChange": 0.43989038,
+        "twoHundredDayAverageChangePercent": 0.098938264,
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "shortName": "Treasury Yield 30 Years",
         "symbol": "^TYX"
       },
       "yahooMain": [
@@ -620,7 +620,11 @@
           "quoteSourceName": "Nasdaq Real Time Price",
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
+          "regularMarketChangePercent": -0.71496665,
+          "regularMarketPrice": 729.05,
           "currency": "USD",
+          "marketState": "REGULAR",
+          "regularMarketTime": "2026-06-26T13:47:14.000Z",
           "exchange": "PCX",
           "messageBoardId": "finmb_6160262",
           "exchangeTimezoneName": "America/New_York",
@@ -628,68 +632,64 @@
           "gmtOffSetMilliseconds": -14400000,
           "market": "us_market",
           "esgPopulated": false,
-          "regularMarketChange": -3.2349854,
-          "regularMarketDayHigh": 750.18,
+          "corporateActions": [],
+          "shortName": "State Street SPDR S&P 500 ETF T",
+          "longName": "State Street SPDR S&P 500 ETF Trust",
+          "epsTrailingTwelveMonths": 27.921679,
+          "sharesOutstanding": 917782016,
+          "bookValue": 429.22,
+          "fiftyDayAverage": 733.7704,
+          "fiftyDayAverageChange": -4.720398,
+          "fiftyDayAverageChangePercent": -0.0064330725,
+          "twoHundredDayAverage": 690.1424,
+          "twoHundredDayAverageChange": 38.907593,
+          "twoHundredDayAverageChangePercent": 0.05637618,
+          "netExpenseRatio": 0.0945,
+          "priceToBook": 1.6985462,
+          "sourceInterval": 15,
+          "exchangeDataDelayedBy": 0,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "1993-01-29T14:30:00.000Z",
+          "priceHint": 2,
+          "regularMarketChange": -5.25,
+          "regularMarketDayHigh": 729.65,
           "regularMarketDayRange": {
-            "low": 743.15,
-            "high": 750.18
+            "low": 726.86,
+            "high": 729.65
           },
-          "regularMarketDayLow": 743.15,
-          "regularMarketVolume": 31456251,
-          "regularMarketPreviousClose": 746.74,
-          "bid": 743.91,
-          "ask": 743.92,
+          "regularMarketDayLow": 726.86,
+          "regularMarketVolume": 4273839,
+          "regularMarketPreviousClose": 734.3,
+          "bid": 728.4,
+          "ask": 728.44,
           "bidSize": 4320,
-          "askSize": 280,
+          "askSize": 200,
           "fullExchangeName": "NYSEArca",
           "financialCurrency": "USD",
-          "regularMarketOpen": 747.7,
-          "averageDailyVolume3Month": 61627638,
-          "averageDailyVolume10Day": 72883370,
-          "fiftyTwoWeekLowChange": 151.61499,
-          "fiftyTwoWeekLowChangePercent": 0.256154,
+          "regularMarketOpen": 728.945,
+          "averageDailyVolume3Month": 58505709,
+          "averageDailyVolume10Day": 66234920,
+          "fiftyTwoWeekLowChange": 118.21997,
+          "fiftyTwoWeekLowChangePercent": 0.19353989,
           "fiftyTwoWeekRange": {
-            "low": 591.89,
+            "low": 610.83,
             "high": 760.4
           },
-          "fiftyTwoWeekHighChange": -16.89502,
-          "fiftyTwoWeekHighChangePercent": -0.022218594,
-          "fiftyTwoWeekLow": 591.89,
+          "fiftyTwoWeekHighChange": -31.350037,
+          "fiftyTwoWeekHighChangePercent": -0.041228347,
+          "fiftyTwoWeekLow": 610.83,
           "fiftyTwoWeekHigh": 760.4,
-          "fiftyTwoWeekChangePercent": 24.425566,
+          "fiftyTwoWeekChangePercent": 19.415855,
           "trailingAnnualDividendRate": 5.662,
-          "trailingPE": 26.628235,
-          "trailingAnnualDividendYield": 0.0075822915,
+          "trailingPE": 26.110537,
+          "trailingAnnualDividendYield": 0.007710745,
           "dividendYield": 0.98,
           "ytdReturn": 11.22979,
           "trailingThreeMonthReturns": 10.49599,
           "trailingThreeMonthNavReturns": 10.49599,
           "netAssets": 783796400000,
-          "epsTrailingTwelveMonths": 27.921679,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "1993-01-29T14:30:00.000Z",
-          "priceHint": 2,
-          "corporateActions": [],
-          "regularMarketTime": "2026-06-22T19:30:12.000Z",
-          "sharesOutstanding": 917782016,
-          "bookValue": 429.22,
-          "fiftyDayAverage": 729.6588,
-          "fiftyDayAverageChange": 13.846191,
-          "fiftyDayAverageChangePercent": 0.018976254,
-          "twoHundredDayAverage": 688.3595,
-          "twoHundredDayAverageChange": 55.145508,
-          "twoHundredDayAverageChangePercent": 0.080111496,
-          "netExpenseRatio": 0.0945,
-          "priceToBook": 1.7322236,
-          "sourceInterval": 15,
-          "exchangeDataDelayedBy": 0,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "shortName": "State Street SPDR S&P 500 ETF T",
-          "longName": "State Street SPDR S&P 500 ETF Trust",
-          "regularMarketChangePercent": -0.43321443,
-          "regularMarketPrice": 743.505,
-          "marketState": "REGULAR",
           "symbol": "SPY"
         },
         {
@@ -700,7 +700,11 @@
           "quoteSourceName": "Nasdaq Real Time Price",
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
+          "regularMarketChangePercent": -1.4489523,
+          "regularMarketPrice": 706,
           "currency": "USD",
+          "marketState": "REGULAR",
+          "regularMarketTime": "2026-06-26T13:47:15.000Z",
           "exchange": "NGM",
           "messageBoardId": "finmb_8108558",
           "exchangeTimezoneName": "America/New_York",
@@ -708,68 +712,64 @@
           "gmtOffSetMilliseconds": -14400000,
           "market": "us_market",
           "esgPopulated": false,
-          "regularMarketChange": -4.9699707,
-          "regularMarketDayHigh": 745.43,
+          "corporateActions": [],
+          "shortName": "Invesco QQQ Trust, Series 1",
+          "longName": "Invesco QQQ Trust",
+          "epsTrailingTwelveMonths": 21.780146,
+          "sharesOutstanding": 393100000,
+          "bookValue": 357.774,
+          "fiftyDayAverage": 701.411,
+          "fiftyDayAverageChange": 4.5889893,
+          "fiftyDayAverageChangePercent": 0.006542511,
+          "twoHundredDayAverage": 631.52386,
+          "twoHundredDayAverageChange": 74.476135,
+          "twoHundredDayAverageChangePercent": 0.11793083,
+          "netExpenseRatio": 0.18,
+          "priceToBook": 1.9733129,
+          "sourceInterval": 15,
+          "exchangeDataDelayedBy": 0,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "1999-03-10T14:30:00.000Z",
+          "priceHint": 2,
+          "regularMarketChange": -10.380005,
+          "regularMarketDayHigh": 707.38,
           "regularMarketDayRange": {
-            "low": 734.39,
-            "high": 745.43
+            "low": 702.81,
+            "high": 707.38
           },
-          "regularMarketDayLow": 734.39,
-          "regularMarketVolume": 28391505,
-          "regularMarketPreviousClose": 740.62,
-          "bid": 735.27,
-          "ask": 735.72,
-          "bidSize": 43,
-          "askSize": 1,
+          "regularMarketDayLow": 702.81,
+          "regularMarketVolume": 5349767,
+          "regularMarketPreviousClose": 716.38,
+          "bid": 705.28,
+          "ask": 727.48,
+          "bidSize": 1,
+          "askSize": 44,
           "fullExchangeName": "NasdaqGM",
           "financialCurrency": "USD",
-          "regularMarketOpen": 742.02,
-          "averageDailyVolume3Month": 48558587,
-          "averageDailyVolume10Day": 62112470,
-          "fiftyTwoWeekLowChange": 212,
-          "fiftyTwoWeekLowChangePercent": 0.40485054,
+          "regularMarketOpen": 707.09,
+          "averageDailyVolume3Month": 47096758,
+          "averageDailyVolume10Day": 51587130,
+          "fiftyTwoWeekLowChange": 161.46002,
+          "fiftyTwoWeekLowChangePercent": 0.2965072,
           "fiftyTwoWeekRange": {
-            "low": 523.65,
+            "low": 544.54,
             "high": 748.65
           },
-          "fiftyTwoWeekHighChange": -13,
-          "fiftyTwoWeekHighChangePercent": -0.01736459,
-          "fiftyTwoWeekLow": 523.65,
+          "fiftyTwoWeekHighChange": -42.650024,
+          "fiftyTwoWeekHighChangePercent": -0.05696924,
+          "fiftyTwoWeekLow": 544.54,
           "fiftyTwoWeekHigh": 748.65,
-          "fiftyTwoWeekChangePercent": 39.30594,
+          "fiftyTwoWeekChangePercent": 30.704807,
           "trailingAnnualDividendRate": 1.77,
-          "trailingPE": 33.776176,
-          "trailingAnnualDividendYield": 0.0023898894,
+          "trailingPE": 32.414845,
+          "trailingAnnualDividendYield": 0.0024707557,
           "dividendYield": 0.38,
           "ytdReturn": 20.35716,
           "trailingThreeMonthReturns": 21.67859,
           "trailingThreeMonthNavReturns": 21.67859,
           "netAssets": 493987529000,
-          "epsTrailingTwelveMonths": 21.780146,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "1999-03-10T14:30:00.000Z",
-          "priceHint": 2,
-          "corporateActions": [],
-          "regularMarketTime": "2026-06-22T19:30:12.000Z",
-          "sharesOutstanding": 393100000,
-          "bookValue": 357.774,
-          "fiftyDayAverage": 693.184,
-          "fiftyDayAverageChange": 42.466003,
-          "fiftyDayAverageChangePercent": 0.061262235,
-          "twoHundredDayAverage": 628.632,
-          "twoHundredDayAverageChange": 107.018005,
-          "twoHundredDayAverageChangePercent": 0.17023951,
-          "netExpenseRatio": 0.18,
-          "priceToBook": 2.0561864,
-          "sourceInterval": 15,
-          "exchangeDataDelayedBy": 0,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "shortName": "Invesco QQQ Trust, Series 1",
-          "longName": "Invesco QQQ Trust",
-          "regularMarketChangePercent": -0.67104644,
-          "regularMarketPrice": 735.65,
-          "marketState": "REGULAR",
           "symbol": "QQQ"
         },
         {
@@ -780,7 +780,11 @@
           "quoteSourceName": "Nasdaq Real Time Price",
           "triggerable": true,
           "customPriceAlertConfidence": "HIGH",
+          "regularMarketChangePercent": -0.42822212,
+          "regularMarketPrice": 297.63,
           "currency": "USD",
+          "marketState": "REGULAR",
+          "regularMarketTime": "2026-06-26T13:47:15.000Z",
           "exchange": "PCX",
           "messageBoardId": "finmb_8797658",
           "exchangeTimezoneName": "America/New_York",
@@ -788,85 +792,81 @@
           "gmtOffSetMilliseconds": -14400000,
           "market": "us_market",
           "esgPopulated": false,
-          "regularMarketChange": 2.4899902,
-          "regularMarketDayHigh": 299.49,
+          "corporateActions": [],
+          "shortName": "iShares Russell 2000 Index Fund",
+          "longName": "iShares Russell 2000 ETF",
+          "epsTrailingTwelveMonths": 14.957145,
+          "sharesOutstanding": 281049984,
+          "bookValue": 218.694,
+          "fiftyDayAverage": 283.9978,
+          "fiftyDayAverageChange": 13.632202,
+          "fiftyDayAverageChangePercent": 0.048001084,
+          "twoHundredDayAverage": 259.22025,
+          "twoHundredDayAverageChange": 38.40976,
+          "twoHundredDayAverageChangePercent": 0.14817423,
+          "netExpenseRatio": 0.19,
+          "priceToBook": 1.3609427,
+          "sourceInterval": 15,
+          "exchangeDataDelayedBy": 0,
+          "tradeable": false,
+          "cryptoTradeable": false,
+          "hasPrePostMarketData": true,
+          "firstTradeDateMilliseconds": "2000-05-26T13:30:00.000Z",
+          "priceHint": 2,
+          "regularMarketChange": -1.2799988,
+          "regularMarketDayHigh": 297.79,
           "regularMarketDayRange": {
-            "low": 296.16,
-            "high": 299.49
+            "low": 295.74,
+            "high": 297.79
           },
-          "regularMarketDayLow": 296.16,
-          "regularMarketVolume": 18190917,
-          "regularMarketPreviousClose": 295.59,
-          "bid": 298.05,
-          "ask": 298.07,
-          "bidSize": 40,
+          "regularMarketDayLow": 295.74,
+          "regularMarketVolume": 2196914,
+          "regularMarketPreviousClose": 298.91,
+          "bid": 296.54,
+          "ask": 296.57,
+          "bidSize": 200,
           "askSize": 240,
           "fullExchangeName": "NYSEArca",
           "financialCurrency": "USD",
-          "regularMarketOpen": 297.13,
-          "averageDailyVolume3Month": 31452419,
-          "averageDailyVolume10Day": 34010050,
-          "fiftyTwoWeekLowChange": 91.26999,
-          "fiftyTwoWeekLowChangePercent": 0.4413229,
+          "regularMarketOpen": 296.6,
+          "averageDailyVolume3Month": 29668925,
+          "averageDailyVolume10Day": 30184670,
+          "fiftyTwoWeekLowChange": 85.29001,
+          "fiftyTwoWeekLowChangePercent": 0.40166718,
           "fiftyTwoWeekRange": {
-            "low": 206.81,
-            "high": 299.49
+            "low": 212.34,
+            "high": 301.5
           },
-          "fiftyTwoWeekHighChange": -1.4100037,
-          "fiftyTwoWeekHighChangePercent": -0.004708016,
-          "fiftyTwoWeekLow": 206.81,
-          "fiftyTwoWeekHigh": 299.49,
-          "fiftyTwoWeekChangePercent": 39.58068,
+          "fiftyTwoWeekHighChange": -3.869995,
+          "fiftyTwoWeekHighChangePercent": -0.012835804,
+          "fiftyTwoWeekLow": 212.34,
+          "fiftyTwoWeekHigh": 301.5,
+          "fiftyTwoWeekChangePercent": 38.718212,
           "trailingAnnualDividendRate": 2.017,
-          "trailingPE": 19.928936,
-          "trailingAnnualDividendYield": 0.006823641,
+          "trailingPE": 19.898851,
+          "trailingAnnualDividendYield": 0.00674785,
           "dividendYield": 0.87,
           "ytdReturn": 18.10537,
           "trailingThreeMonthReturns": 11.20481,
           "trailingThreeMonthNavReturns": 11.20481,
           "netAssets": 80933364000,
-          "epsTrailingTwelveMonths": 14.957145,
-          "hasPrePostMarketData": true,
-          "firstTradeDateMilliseconds": "2000-05-26T13:30:00.000Z",
-          "priceHint": 2,
-          "corporateActions": [],
-          "regularMarketTime": "2026-06-22T19:30:11.000Z",
-          "sharesOutstanding": 281049984,
-          "bookValue": 218.694,
-          "fiftyDayAverage": 281.3568,
-          "fiftyDayAverageChange": 16.723175,
-          "fiftyDayAverageChangePercent": 0.059437606,
-          "twoHundredDayAverage": 258.00616,
-          "twoHundredDayAverageChange": 40.073822,
-          "twoHundredDayAverageChangePercent": 0.15532118,
-          "netExpenseRatio": 0.19,
-          "priceToBook": 1.3630003,
-          "sourceInterval": 15,
-          "exchangeDataDelayedBy": 0,
-          "tradeable": false,
-          "cryptoTradeable": false,
-          "shortName": "iShares Russell 2000 Index Fund",
-          "longName": "iShares Russell 2000 ETF",
-          "regularMarketChangePercent": 0.84237975,
-          "regularMarketPrice": 298.08,
-          "marketState": "REGULAR",
           "symbol": "IWM"
         }
       ],
       "breadthInternals": {
-        "above20": 32,
-        "above50": 46,
-        "above200": 56
+        "above20": 48,
+        "above50": 54,
+        "above200": 58
       }
     },
-    "cachedAt": "2026-06-22T19:30:15.853Z"
+    "cachedAt": "2026-06-26T13:47:15.884Z"
   },
   "SPY_POSITIONAL": {
     "benchmark": "SPY",
     "mode": "POSITIONAL",
-    "totalScore": 82,
+    "totalScore": 63,
     "deployCapital": "DEPLOY",
-    "positionSize": "SCALE IN",
+    "positionSize": "REDUCED EXPOSURE",
     "marketStatus": {
       "isOpen": true,
       "label": "LIVE"
@@ -874,16 +874,16 @@
     "scoringWeights": [
       {
         "label": "Daily Trend",
-        "score": 80,
+        "score": 40,
         "weight": 20,
-        "contribution": 16,
-        "type": "positive"
+        "contribution": 8,
+        "type": "warning"
       },
       {
         "label": "Weekly Trend",
-        "score": 100,
+        "score": 80,
         "weight": 20,
-        "contribution": 20,
+        "contribution": 16,
         "type": "positive"
       },
       {
@@ -895,24 +895,24 @@
       },
       {
         "label": "Volatility",
-        "score": 83,
+        "score": 65,
         "weight": 15,
-        "contribution": 13,
+        "contribution": 10,
         "type": "positive"
       },
       {
         "label": "Breadth",
-        "score": 55,
+        "score": 52,
         "weight": 15,
         "contribution": 8,
         "type": "warning"
       },
       {
         "label": "Macro",
-        "score": 81,
+        "score": 55,
         "weight": 15,
-        "contribution": 12,
-        "type": "positive"
+        "contribution": 8,
+        "type": "warning"
       }
     ],
     "signalReadiness": [
@@ -924,9 +924,9 @@
       },
       {
         "question": "Structure Intact?",
-        "answer": "Yes",
-        "status": "positive",
-        "detail": "Above Key EMAs"
+        "answer": "No",
+        "status": "negative",
+        "detail": "Below Key EMAs"
       },
       {
         "question": "Dip Demand Active?",
@@ -936,16 +936,14 @@
       },
       {
         "question": "Sector Rotation Healthy?",
-        "answer": "Weak",
-        "status": "warning",
-        "detail": "5/11 sectors trending"
+        "answer": "Yes",
+        "status": "positive",
+        "detail": "7/11 sectors trending"
       }
     ],
     "eventAlert": null,
     "scoreDelta": 0,
     "scoreHistory": [
-      31,
-      38,
       38,
       33,
       44,
@@ -973,7 +971,9 @@
       37,
       35,
       82,
-      82
+      82,
+      63,
+      63
     ],
     "emaDivergence": false,
     "multiDivergence": {
@@ -990,7 +990,7 @@
     "checklist": [
       {
         "label": "Price > Daily EMA50",
-        "met": true
+        "met": false
       },
       {
         "label": "Price > Weekly EMA50",
@@ -998,7 +998,7 @@
       },
       {
         "label": "VIX < 20",
-        "met": true
+        "met": false
       },
       {
         "label": "RSI 40–70 (Healthy)",
@@ -1023,8 +1023,35 @@
     ],
     "metrics": {
       "dailyTrend": {
+        "value": 40,
+        "status": "Neutral",
+        "type": "warning",
+        "subMetrics": [
+          {
+            "label": "EMA Stack",
+            "value": "2/5 Bullish",
+            "status": "warning"
+          },
+          {
+            "label": "Short (9/21: $737)",
+            "value": "Broken",
+            "status": "negative"
+          },
+          {
+            "label": "Mid (50/100: $730)",
+            "value": "Below",
+            "status": "negative"
+          },
+          {
+            "label": "Long (200: $687)",
+            "value": "Above",
+            "status": "positive"
+          }
+        ]
+      },
+      "weeklyTrend": {
         "value": 80,
-        "status": "Tactical Bull",
+        "status": "Structural Bull",
         "type": "positive",
         "subMetrics": [
           {
@@ -1033,39 +1060,12 @@
             "status": "positive"
           },
           {
-            "label": "Short (9/21: $745)",
-            "value": "Broken",
-            "status": "negative"
-          },
-          {
-            "label": "Mid (50/100: $729)",
-            "value": "Above",
-            "status": "positive"
-          },
-          {
-            "label": "Long (200: $686)",
-            "value": "Above",
-            "status": "positive"
-          }
-        ]
-      },
-      "weeklyTrend": {
-        "value": 100,
-        "status": "Structural Bull",
-        "type": "positive",
-        "subMetrics": [
-          {
-            "label": "EMA Stack",
-            "value": "5/5 Bullish",
-            "status": "positive"
-          },
-          {
-            "label": "Intermediate (21: $714)",
+            "label": "Intermediate (21: $713)",
             "value": "Bullish",
             "status": "positive"
           },
           {
-            "label": "Structural (50: $681)",
+            "label": "Structural (50: $680)",
             "value": "Holding",
             "status": "positive"
           },
@@ -1078,12 +1078,12 @@
       },
       "momentum": {
         "value": 85,
-        "status": "Rising",
-        "type": "positive",
+        "status": "Declining",
+        "type": "negative",
         "subMetrics": [
           {
             "label": "RSI(14)",
-            "value": "51.9",
+            "value": "43.2",
             "status": "positive"
           },
           {
@@ -1093,7 +1093,7 @@
           },
           {
             "label": "Rel Volume",
-            "value": "0.54x",
+            "value": "0.07x",
             "status": "neutral"
           },
           {
@@ -1104,94 +1104,94 @@
         ]
       },
       "volatility": {
-        "value": 83,
-        "status": "Stable",
-        "type": "positive",
+        "value": 65,
+        "status": "Elevated",
+        "type": "warning",
         "subMetrics": [
           {
             "label": "VIX Level",
-            "value": "17.49",
-            "status": "positive"
+            "value": "20.21",
+            "status": "warning"
           },
           {
             "label": "VIX Percentile",
-            "value": "0th %ile",
-            "statusLabel": "Low Fear",
-            "status": "positive"
+            "value": "81th %ile",
+            "statusLabel": "Extreme",
+            "status": "negative"
           },
           {
             "label": "Put/Call Ratio",
-            "value": "1.03",
+            "value": "1.87",
             "statusLabel": "Bearish Bias",
             "status": "negative"
           },
           {
             "label": "BB Width",
-            "value": "4.74%",
-            "status": "warning"
+            "value": "5.51%",
+            "status": "neutral"
           }
         ]
       },
       "breadth": {
-        "value": 55,
+        "value": 52,
         "status": "Healthy",
         "type": "positive",
         "subMetrics": [
           {
             "label": "Sectors Positive",
-            "value": "6/11",
+            "value": "5/11",
             "status": "positive"
           },
           {
             "label": "Trending > 20d",
-            "value": "5/11",
-            "status": "warning"
+            "value": "7/11",
+            "status": "positive"
           },
           {
             "label": "% > 20MA (S&P)",
-            "value": "32.0%",
+            "value": "48.0%",
             "status": "negative"
           },
           {
             "label": "% > 50MA (S&P)",
-            "value": "46.0%",
-            "status": "negative"
+            "value": "54.0%",
+            "status": "positive"
           },
           {
             "label": "% > 200MA (S&P)",
-            "value": "56.0%",
+            "value": "58.0%",
             "status": "positive"
           }
         ]
       },
       "macro": {
-        "value": 81,
-        "status": "Supportive",
-        "type": "positive",
+        "value": 55,
+        "status": "Headwind",
+        "type": "warning",
         "subMetrics": [
           {
             "label": "2Y Yield",
-            "value": "3.68%",
-            "status": "negative"
+            "value": "3.67%",
+            "status": "positive"
           },
           {
             "label": "5Y Yield",
-            "value": "4.29%",
-            "status": "negative"
+            "value": "4.15%",
+            "status": "positive"
           },
           {
             "label": "10Y Yield",
-            "value": "4.51%",
+            "value": "4.40%",
             "status": "negative"
           },
           {
             "label": "30Y Yield",
-            "value": "4.95%",
+            "value": "4.89%",
             "status": "negative"
           },
           {
             "label": "US Dollar (DXY)",
-            "value": "101.05",
+            "value": "101.09",
             "status": "positive"
           }
         ]
@@ -1199,58 +1199,58 @@
     },
     "sectors": [
       {
-        "name": "XLE",
-        "change": 0.4837209302325544,
-        "trending": false
-      },
-      {
-        "name": "XLRE",
-        "change": 0.46750285062713404,
-        "trending": false
-      },
-      {
-        "name": "XLI",
-        "change": 0.29577620521892783,
-        "trending": true
-      },
-      {
         "name": "XLV",
-        "change": 0.2744678002409939,
-        "trending": false
-      },
-      {
-        "name": "XLF",
-        "change": 0.13069454817027684,
-        "trending": true
-      },
-      {
-        "name": "XLK",
-        "change": 0.005227118289682141,
-        "trending": true
-      },
-      {
-        "name": "XLU",
-        "change": -0.03351206434316481,
-        "trending": true
-      },
-      {
-        "name": "XLB",
-        "change": -0.6756756756756647,
+        "change": 1.8950343675724397,
         "trending": true
       },
       {
         "name": "XLP",
-        "change": -1.1586024732861129,
-        "trending": false
+        "change": 1.1197141155449646,
+        "trending": true
+      },
+      {
+        "name": "XLRE",
+        "change": 0.6169377453729636,
+        "trending": true
       },
       {
         "name": "XLY",
-        "change": -1.8769729545260547,
+        "change": 0.2249173098125649,
         "trending": false
       },
       {
+        "name": "XLU",
+        "change": 0.2180074122520197,
+        "trending": true
+      },
+      {
         "name": "XLC",
-        "change": -2.4346793349168574,
+        "change": -0.03314237015293859,
+        "trending": false
+      },
+      {
+        "name": "XLF",
+        "change": -0.224466891133553,
+        "trending": true
+      },
+      {
+        "name": "XLE",
+        "change": -0.24034017378443806,
+        "trending": false
+      },
+      {
+        "name": "XLB",
+        "change": -0.25072324011572333,
+        "trending": true
+      },
+      {
+        "name": "XLI",
+        "change": -1.1347594744271927,
+        "trending": true
+      },
+      {
+        "name": "XLK",
+        "change": -1.9503738216491615,
         "trending": false
       }
     ],
@@ -1261,37 +1261,37 @@
       "score": 5,
       "signal": "NEUTRAL",
       "executionAction": "WAIT",
-      "entryPrice": 743.51,
+      "entryPrice": 729.07,
       "entryReason": "Await confluence confirmation.",
       "techDetails": null
     },
     "topBar": [
       {
         "symbol": "SPY",
-        "price": 743.51,
-        "change": -0.4338801473049895,
-        "changeAmount": -3.240000000000009
+        "price": 729.07,
+        "change": -0.5809117314169597,
+        "changeAmount": -4.259999999999991
       },
       {
         "symbol": "QQQ",
-        "price": 735.64,
-        "change": -0.5650022978562439,
-        "changeAmount": -4.180000000000064
+        "price": 706.19,
+        "change": -1.4134842911289027,
+        "changeAmount": -10.125
       },
       {
         "symbol": "IWM",
-        "price": 298.07,
-        "change": 0.8628857606930196,
-        "changeAmount": 2.5500000000000114
+        "price": 297.69,
+        "change": -0.39482049051427265,
+        "changeAmount": -1.1800000000000068
       },
       {
         "symbol": "VIX",
-        "price": 17.49,
-        "change": 4.233745,
-        "changeAmount": 0.7099991
+        "price": 20.21,
+        "change": 6.973057,
+        "changeAmount": 1.3199997
       }
     ],
-    "cachedAt": "2026-06-22T19:30:17.547Z"
+    "cachedAt": "2026-06-26T13:47:15.885Z"
   },
   "QQQ_POSITIONAL": {
     "benchmark": "QQQ",

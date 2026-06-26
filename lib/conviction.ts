@@ -9,6 +9,10 @@ import { getSectorMap, SCANNER_WATCHLIST, CONVICTION_SCORE_THRESHOLD, MAX_STOCKS
 import { generateOptionSignal } from './options';
 import { logger } from './logger';
 import { isCacheStaleBy930AM } from './refresh-utils';
+import { saveToBlob, getFromBlob } from './blob-storage';
+
+export const RELATIVE_CONVICTION_CACHE_PATH = 'data/conviction_cache.json';
+export const RELATIVE_ALPHA_CACHE_PATH = 'data/alpha_hunter_cache.json';
 
 
 // Import and re-export types for backwards compatibility
@@ -132,6 +136,14 @@ function calcVolStats(data: any[]): { avg: number; diff: number } {
 
 export async function scanConviction(forceRefresh = false, returnAll = false): Promise<ConvictionStock[]> {
     const marketSession = publicClient.getMarketSession();
+
+    // Load from Vercel Blob / Local Storage on cold start
+    if (!global._megaCapCacheV9 && !forceRefresh) {
+        global._megaCapCacheV9 = await getFromBlob<{ data: ConvictionStock[], rawData: ConvictionStock[], timestamp: number } | null>(
+            RELATIVE_CONVICTION_CACHE_PATH,
+            null
+        );
+    }
 
     // Logic: If market is OFF, only scan if cache is empty (one-time baseline fetch).
     // Otherwise, always serve cache during OFF hours to prevent redundant load.
@@ -620,6 +632,7 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
         rawData: sortedRaw,
         timestamp: Date.now()
     };
+    await saveToBlob(RELATIVE_CONVICTION_CACHE_PATH, global._megaCapCacheV9);
     isScanning = false;
     console.log(`🏁 [Scanner] Scan complete. Found ${sortedRaw.length} total → ${sortedFiltered.length} Top Picks (quality + sector + score filtered).`);
     return returnAll ? sortedRaw : sortedFiltered;
@@ -628,6 +641,14 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
 // Alpha Hunter - Broader Market Scan with Smart Discovery
 export async function scanAlphaHunter(forceRefresh = false, returnAll = false): Promise<ConvictionStock[]> {
     const marketSession = publicClient.getMarketSession();
+
+    // Load from Vercel Blob / Local Storage on cold start
+    if (!global._alphaHunterCacheV8 && !forceRefresh) {
+        global._alphaHunterCacheV8 = await getFromBlob<{ data: ConvictionStock[], rawData: ConvictionStock[], timestamp: number } | null>(
+            RELATIVE_ALPHA_CACHE_PATH,
+            null
+        );
+    }
 
     // Logic: If market is OFF, only scan if cache is empty.
     if (marketSession === 'OFF' && global._alphaHunterCacheV8 && !forceRefresh) {
@@ -1095,6 +1116,7 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
         rawData: sortedRaw,
         timestamp: Date.now()
     };
+    await saveToBlob(RELATIVE_ALPHA_CACHE_PATH, global._alphaHunterCacheV8);
     isScanning = false;
 
     const finalReturn = returnAll ? sortedRaw : sortedFiltered;

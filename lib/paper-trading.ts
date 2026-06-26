@@ -6,10 +6,11 @@ import { getEarningsInfo } from './options';
 import { getLatestPrice } from './alpaca-trading';
 import { getSectorMap } from './constants';
 import { sendEmailAlert } from './notifications';
+import { saveToBlob, getFromBlob } from './blob-storage';
 
 const yahooFinance = new YahooFinance();
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'paper_trading.json');
+const RELATIVE_DATA_PATH = 'data/paper_trading.json';
 
 export interface PaperPosition {
     symbol: string;
@@ -62,16 +63,7 @@ export interface PaperPortfolio {
 }
 
 // Initialize paper portfolio JSON file
-export function loadPaperPortfolio(): PaperPortfolio {
-    try {
-        if (fs.existsSync(DATA_FILE)) {
-            const content = fs.readFileSync(DATA_FILE, 'utf-8');
-            return JSON.parse(content);
-        }
-    } catch (e) {
-        console.error('[Paper-Trading] Error reading portfolio file, initializing new one:', e);
-    }
-
+export async function loadPaperPortfolio(): Promise<PaperPortfolio> {
     const initial: PaperPortfolio = {
         account: {
             cash: 1000.0,
@@ -84,18 +76,14 @@ export function loadPaperPortfolio(): PaperPortfolio {
         dailyLog: []
     };
 
-    savePaperPortfolio(initial);
-    return initial;
+    const portfolio = await getFromBlob<PaperPortfolio>(RELATIVE_DATA_PATH, initial);
+    return portfolio;
 }
 
-export function savePaperPortfolio(portfolio: PaperPortfolio) {
+export async function savePaperPortfolio(portfolio: PaperPortfolio) {
     try {
-        const dir = path.dirname(DATA_FILE);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
         portfolio.account.lastUpdated = new Date().toISOString();
-        fs.writeFileSync(DATA_FILE, JSON.stringify(portfolio, null, 2), 'utf-8');
+        await saveToBlob(RELATIVE_DATA_PATH, portfolio);
     } catch (e) {
         console.error('[Paper-Trading] Failed to save paper portfolio:', e);
     }
@@ -105,7 +93,7 @@ export function savePaperPortfolio(portfolio: PaperPortfolio) {
  * Checks open positions for Stop Loss or Take Profit hits
  */
 export async function updatePositionsAndExits(): Promise<{ closedTrades: PaperHistoryEntry[] }> {
-    const portfolio = loadPaperPortfolio();
+    const portfolio = await loadPaperPortfolio();
     const closedTrades: PaperHistoryEntry[] = [];
     const remainingPositions: PaperPosition[] = [];
     let updatedCash = portfolio.account.cash;
@@ -203,7 +191,7 @@ export async function updatePositionsAndExits(): Promise<{ closedTrades: PaperHi
     portfolio.account.cash = updatedCash;
     portfolio.account.equity = updatedCash + positionsValue;
 
-    savePaperPortfolio(portfolio);
+    await savePaperPortfolio(portfolio);
     return { closedTrades };
 }
 
@@ -211,7 +199,7 @@ export async function updatePositionsAndExits(): Promise<{ closedTrades: PaperHi
  * Execute automated morning scan after 9:45 AM
  */
 export async function runSimulatedMorningScan(): Promise<{ enteredTrades: PaperHistoryEntry[] }> {
-    const portfolio = loadPaperPortfolio();
+    const portfolio = await loadPaperPortfolio();
     const enteredTrades: PaperHistoryEntry[] = [];
 
     // Max 4 concurrent positions
@@ -359,7 +347,7 @@ export async function runSimulatedMorningScan(): Promise<{ enteredTrades: PaperH
     }
     portfolio.account.equity = portfolio.account.cash + positionsValue;
 
-    savePaperPortfolio(portfolio);
+    await savePaperPortfolio(portfolio);
     return { enteredTrades };
 }
 
@@ -372,7 +360,7 @@ export async function executeSimulatedManualTrade(params: {
     stopLoss?: number;
     targetProfit?: number;
 }): Promise<{ success: boolean; error?: string; order?: PaperHistoryEntry }> {
-    const portfolio = loadPaperPortfolio();
+    const portfolio = await loadPaperPortfolio();
     const symbol = params.symbol.toUpperCase();
 
     const price = await getLatestPrice(symbol);
@@ -439,7 +427,7 @@ export async function executeSimulatedManualTrade(params: {
     }
     portfolio.account.equity = portfolio.account.cash + positionsValue;
 
-    savePaperPortfolio(portfolio);
+    await savePaperPortfolio(portfolio);
     console.log(`[Paper-Trading] 🚀 ENTERED simulated MANUAL position: Buy ${params.qty} shares of ${symbol} @ $${price.toFixed(2)}. Stop: $${stopLoss.toFixed(2)}, Target: $${targetProfit.toFixed(2)}`);
 
     return { success: true, order: historyEntry };
@@ -448,7 +436,7 @@ export async function executeSimulatedManualTrade(params: {
 /**
  * Reset simulated paper portfolio
  */
-export function resetPaperPortfolio() {
+export async function resetPaperPortfolio() {
     const initial: PaperPortfolio = {
         account: {
             cash: 1000.0,
@@ -460,7 +448,7 @@ export function resetPaperPortfolio() {
         history: [],
         dailyLog: []
     };
-    savePaperPortfolio(initial);
+    await savePaperPortfolio(initial);
     console.log('[Paper-Trading] Reset virtual portfolio back to $1,000 cash.');
 }
 
@@ -468,7 +456,7 @@ export function resetPaperPortfolio() {
  * Log daily performance at market close
  */
 export async function logDailyPerformance(): Promise<PaperDailyLog> {
-    const portfolio = loadPaperPortfolio();
+    const portfolio = await loadPaperPortfolio();
     
     // Update prices & check exits first
     const { closedTrades } = await updatePositionsAndExits();
@@ -497,7 +485,7 @@ export async function logDailyPerformance(): Promise<PaperDailyLog> {
         portfolio.dailyLog.push(dailyLogEntry);
     }
 
-    savePaperPortfolio(portfolio);
+    await savePaperPortfolio(portfolio);
     console.log(`[Paper-Trading] Daily log recorded for ${today}. Equity: $${currentEquity.toFixed(2)}, PnL: $${totalPnl.toFixed(2)} (${totalPnlPercent.toFixed(2)}%)`);
     
     return dailyLogEntry;
@@ -507,7 +495,7 @@ export async function logDailyPerformance(): Promise<PaperDailyLog> {
  * Send email or log summary
  */
 export async function sendDailySummary(timePeriod: 'morning' | 'close', details: any) {
-    const portfolio = loadPaperPortfolio();
+    const portfolio = await loadPaperPortfolio();
     const today = new Date().toLocaleDateString();
 
     let subject = '';
