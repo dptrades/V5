@@ -31,6 +31,83 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
     const [error, setError] = useState("");
     const [showFvgInfo, setShowFvgInfo] = useState(false);
 
+    // Simulated paper trading state variables
+    const [tradeQty, setTradeQty] = useState<number>(10);
+    const [stopLossInput, setStopLossInput] = useState<string>("");
+    const [targetProfitInput, setTargetProfitInput] = useState<string>("");
+    const [cash, setCash] = useState<number | null>(null);
+    const [tradeSuccess, setTradeSuccess] = useState<string | null>(null);
+    const [tradeError, setTradeError] = useState<string | null>(null);
+    const [buying, setBuying] = useState<boolean>(false);
+
+    // Auto-calculate stops based on ATR when data is loaded/updated
+    useEffect(() => {
+        if (data) {
+            const price = data.displayPrice || data.headerPrice || 0;
+            const atr = data.analysis.metrics.atr || (price * 0.02);
+            const ema50 = data.analysis.timeframes.find(t => t.timeframe === '1d')?.ema50;
+            const ema50Floor = (ema50 && ema50 < price && ema50 > price * 0.90) ? ema50 * 0.99 : price - atr;
+            const sl = Math.max(ema50Floor, price - atr * 1.5);
+            const tp = price + atr * 2.0;
+
+            setStopLossInput(sl.toFixed(2));
+            setTargetProfitInput(tp.toFixed(2));
+            setTradeSuccess(null);
+            setTradeError(null);
+        }
+    }, [data]);
+
+    const fetchCash = async () => {
+        try {
+            const res = await fetch('/api/auto-trade');
+            if (res.ok) {
+                const portfolio = await res.json();
+                setCash(portfolio.account.cash);
+            }
+        } catch (e) {}
+    };
+
+    useEffect(() => {
+        if (symbol) {
+            fetchCash();
+        }
+    }, [symbol, tradeSuccess]);
+
+    const handleSimulatedBuy = async () => {
+        if (!symbol || !data) return;
+        setBuying(true);
+        setTradeSuccess(null);
+        setTradeError(null);
+
+        try {
+            const res = await fetch('/api/auto-trade', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'manual',
+                    symbol,
+                    qty: tradeQty,
+                    stopLoss: parseFloat(stopLossInput),
+                    targetProfit: parseFloat(targetProfitInput)
+                })
+            });
+
+            const resData = await res.json();
+            if (!res.ok) {
+                throw new Error(resData.error || 'Failed to place manual simulated trade');
+            }
+
+            setTradeSuccess(`Simulated Order Filled: Bought ${tradeQty} shares of ${symbol} @ $${data.displayPrice.toFixed(2)}`);
+            fetchCash();
+        } catch (e: any) {
+            setTradeError(e.message || 'Manual execution failed');
+        } finally {
+            setBuying(false);
+        }
+    };
+
     useEffect(() => {
         if (symbol) {
             if (externalAnalysis && externalAnalysis.symbol === symbol) {
@@ -244,6 +321,95 @@ export default function DeepDiveContent({ symbol, showOptionsFlow = true, onRefr
                         icon={<Activity className="w-3 h-3" />}
                         centered={true}
                     />
+                </div>
+                
+                {/* 1.5. SIMULATED MANUAL TRADING PANEL */}
+                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800/50 pb-2">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-green-400" />
+                            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-100 font-sans">Simulate Manual Position (Long)</h4>
+                        </div>
+                        <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold font-mono">
+                            Available Simulated Cash: ${cash != null ? cash.toFixed(2) : '1,000.00'}
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-gray-300 font-bold uppercase text-[9px] tracking-wider">Shares Qty</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={tradeQty}
+                                onChange={(e) => setTradeQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                className="bg-gray-900 border border-gray-700 rounded p-1.5 text-white font-mono text-center focus:outline-none focus:border-blue-500"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-gray-300 font-bold uppercase text-[9px] tracking-wider">Stop Loss ($)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={stopLossInput}
+                                onChange={(e) => setStopLossInput(e.target.value)}
+                                className="bg-gray-900 border border-gray-700 rounded p-1.5 text-white font-mono text-center focus:outline-none focus:border-red-500"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-gray-300 font-bold uppercase text-[9px] tracking-wider">Profit Target ($)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={targetProfitInput}
+                                onChange={(e) => setTargetProfitInput(e.target.value)}
+                                className="bg-gray-900 border border-gray-700 rounded p-1.5 text-white font-mono text-center focus:outline-none focus:border-green-500"
+                            />
+                        </div>
+                        <div className="flex flex-col justify-end">
+                            <button
+                                onClick={handleSimulatedBuy}
+                                disabled={buying}
+                                className={`w-full py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-1 ${
+                                    buying
+                                        ? 'bg-gray-700/50 border-gray-600 text-gray-400 cursor-not-allowed'
+                                        : 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30 active:scale-95'
+                                }`}
+                            >
+                                {buying ? (
+                                    <>
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        Buying...
+                                    </>
+                                ) : (
+                                    <>
+                                        🚀 Buy Simulated
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between text-[11px] text-gray-400 gap-1">
+                        <div>
+                            Est. Cost: <span className="font-mono font-bold text-white">${(tradeQty * data.displayPrice).toFixed(2)}</span>
+                            {cash != null && (
+                                <span className="ml-1 opacity-70">({((tradeQty * data.displayPrice / cash) * 100).toFixed(0)}% of cash)</span>
+                            )}
+                        </div>
+                        <span className="text-[10px] text-gray-500 italic">Stops default to ATR indicators</span>
+                    </div>
+
+                    {tradeSuccess && (
+                        <div className="p-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs rounded font-medium">
+                            {tradeSuccess}
+                        </div>
+                    )}
+                    {tradeError && (
+                        <div className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded font-medium">
+                            {tradeError}
+                        </div>
+                    )}
                 </div>
 
                 {/* 2. MULTI-TIMEFRAME EMA MATRIX */}

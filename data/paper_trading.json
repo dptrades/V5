@@ -1,0 +1,127 @@
+{
+  "account": {
+    "cash": 67.63,
+    "equity": 1000.51,
+    "initialBalance": 1000,
+    "lastUpdated": "2026-06-26T13:18:45.522Z"
+  },
+  "positions": [
+    {
+      "symbol": "ABBV",
+      "qty": 1,
+      "entryPrice": 240.79000000000002,
+      "entryTime": "2026-06-26T13:18:26.869Z",
+      "stopLoss": 231.30319221930654,
+      "targetProfit": 253.43907704092467,
+      "currentPrice": 243.14,
+      "sector": "Health Care"
+    },
+    {
+      "symbol": "BAC",
+      "qty": 4,
+      "entryPrice": 58.650000000000006,
+      "entryTime": "2026-06-26T13:18:27.024Z",
+      "stopLoss": 56.869962383483376,
+      "targetProfit": 61.02338348868884,
+      "currentPrice": 58.19,
+      "sector": "Financials"
+    },
+    {
+      "symbol": "JNJ",
+      "qty": 1,
+      "entryPrice": 244.88,
+      "entryTime": "2026-06-26T13:18:27.258Z",
+      "stopLoss": 237.17514369918797,
+      "targetProfit": 255.15314173441604,
+      "currentPrice": 244.88,
+      "sector": "Health Care"
+    },
+    {
+      "symbol": "TECH",
+      "qty": 3,
+      "entryPrice": 70.7,
+      "entryTime": "2026-06-26T13:18:27.442Z",
+      "stopLoss": 67.57800027656964,
+      "targetProfit": 76.94399944686072,
+      "currentPrice": 70.7,
+      "sector": "Healthcare"
+    }
+  ],
+  "history": [
+    {
+      "id": "sim-enter-ABBV-1782479906869",
+      "symbol": "ABBV",
+      "side": "buy",
+      "qty": 1,
+      "entryPrice": 240.79000000000002,
+      "entryTime": "2026-06-26T13:18:26.869Z",
+      "exitPrice": null,
+      "exitTime": null,
+      "stopLoss": 231.30319221930654,
+      "targetProfit": 253.43907704092467,
+      "status": "filled",
+      "pnl": null,
+      "pnlPercent": null,
+      "createdAt": "2026-06-26T13:18:26.869Z"
+    },
+    {
+      "id": "sim-enter-BAC-1782479907024",
+      "symbol": "BAC",
+      "side": "buy",
+      "qty": 4,
+      "entryPrice": 58.650000000000006,
+      "entryTime": "2026-06-26T13:18:27.024Z",
+      "exitPrice": null,
+      "exitTime": null,
+      "stopLoss": 56.869962383483376,
+      "targetProfit": 61.02338348868884,
+      "status": "filled",
+      "pnl": null,
+      "pnlPercent": null,
+      "createdAt": "2026-06-26T13:18:27.024Z"
+    },
+    {
+      "id": "sim-enter-JNJ-1782479907258",
+      "symbol": "JNJ",
+      "side": "buy",
+      "qty": 1,
+      "entryPrice": 244.88,
+      "entryTime": "2026-06-26T13:18:27.258Z",
+      "exitPrice": null,
+      "exitTime": null,
+      "stopLoss": 237.17514369918797,
+      "targetProfit": 255.15314173441604,
+      "status": "filled",
+      "pnl": null,
+      "pnlPercent": null,
+      "createdAt": "2026-06-26T13:18:27.258Z"
+    },
+    {
+      "id": "sim-enter-TECH-1782479907442",
+      "symbol": "TECH",
+      "side": "buy",
+      "qty": 3,
+      "entryPrice": 70.7,
+      "entryTime": "2026-06-26T13:18:27.442Z",
+      "exitPrice": null,
+      "exitTime": null,
+      "stopLoss": 67.57800027656964,
+      "targetProfit": 76.94399944686072,
+      "status": "filled",
+      "pnl": null,
+      "pnlPercent": null,
+      "createdAt": "2026-06-26T13:18:27.442Z"
+    }
+  ],
+  "dailyLog": [
+    {
+      "date": "2026-06-26",
+      "equity": 1000.51,
+      "cash": 67.63,
+      "pnl": 0.5099999999999909,
+      "pnlPercent": 0.050999999999999095,
+      "openPositionsCount": 4,
+      "closedTradesCount": 0
+    }
+  ]
+}
