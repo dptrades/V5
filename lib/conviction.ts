@@ -179,7 +179,7 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
     console.log("🔑 Public.com API Status:", publicClient.isConfigured() ? "Configured (Live) ✅" : "Missing (Estimated) ⚠️");
 
     // Build symbol list - strictly use all tracked sector companies
-    let symbolsToScan: string[] = [...MEGA_CAP_WATCHLIST];
+    let symbolsToScan: string[] = [...CONVICTION_WATCHLIST];
     let discoveryMap = new Map<string, DiscoveredStock>();
 
     // TOP PICKS: Strictly S&P 500 & Nasdaq top companies
