@@ -21,6 +21,39 @@ if (!(globalThis as any)._earningsCache) {
 const PCR_CACHE_TTL = 15 * 60 * 1000; // 15 minutes (increased for reliability)
 const EARNINGS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
+/**
+ * Fetches (and 12h-caches) the next earnings date for a symbol, plus the number
+ * of calendar days until it (negative if in the past, -1 if unknown).
+ *
+ * Extracted so the equity auto-trade entry path (app/api/auto-trade/route.ts)
+ * can reuse the exact same cached lookup for its own earnings-blackout check,
+ * instead of duplicating this fetch logic — see CODE_AUDIT_AND_IMPROVEMENTS.md
+ * fix #1 ("port the earnings-blackout check from lib/options.ts into the
+ * equity entry path").
+ */
+export async function getEarningsInfo(symbol: string): Promise<{ earningsDateStr: string | null; daysUntilEarnings: number }> {
+    let earningsDateStr: string | null = null;
+    let daysUntilEarnings = -1;
+    try {
+        const cached = global._earningsCache.get(symbol);
+        if (cached && (Date.now() - cached.timestamp < EARNINGS_CACHE_TTL)) {
+            earningsDateStr = cached.date;
+        } else {
+            const summary = await yahooFinance.quoteSummary(symbol, { modules: ['calendarEvents'] }) as any;
+            earningsDateStr = summary?.calendarEvents?.earnings?.earningsDate?.[0] || null;
+            global._earningsCache.set(symbol, { date: earningsDateStr, timestamp: Date.now() });
+        }
+        if (earningsDateStr) {
+            const earningsDate = new Date(earningsDateStr);
+            const msDiff = earningsDate.getTime() - Date.now();
+            daysUntilEarnings = Math.ceil(msDiff / (1000 * 3600 * 24));
+        }
+    } catch (e) {
+        console.error(`[Options] Error fetching earnings for ${symbol}:`, e);
+    }
+    return { earningsDateStr, daysUntilEarnings };
+}
+
 // Force server rebuild: 1
 export function getNextMonthlyExpiry(): string {
     const d = new Date();
@@ -103,30 +136,12 @@ export async function generateOptionSignal(
     }
 
     // ── Earnings Calendar Protection ──
-    let earningsDateStr: string | null = null;
-    let daysUntilEarnings = -1;
+    // Fetch/cache logic lives in getEarningsInfo() so the equity auto-trade path
+    // can reuse the identical cached lookup for its own blackout check.
     let earningsFilterTriggered = false;
-
-    if (symbol) {
-        try {
-            const cached = global._earningsCache.get(symbol);
-            if (cached && (Date.now() - cached.timestamp < EARNINGS_CACHE_TTL)) {
-                earningsDateStr = cached.date;
-            } else {
-                const summary = await yahooFinance.quoteSummary(symbol, { modules: ['calendarEvents'] }) as any;
-                earningsDateStr = summary?.calendarEvents?.earnings?.earningsDate?.[0] || null;
-                global._earningsCache.set(symbol, { date: earningsDateStr, timestamp: Date.now() });
-            }
-
-            if (earningsDateStr) {
-                const earningsDate = new Date(earningsDateStr);
-                const msDiff = earningsDate.getTime() - Date.now();
-                daysUntilEarnings = Math.ceil(msDiff / (1000 * 3600 * 24));
-            }
-        } catch (e) {
-            console.error(`[Options] Error fetching earnings for ${symbol}:`, e);
-        }
-    }
+    const { earningsDateStr, daysUntilEarnings } = symbol
+        ? await getEarningsInfo(symbol)
+        : { earningsDateStr: null as string | null, daysUntilEarnings: -1 };
 
     // Strict Deferral Check (Earnings <= 7 days away)
     if (direction !== 'WAIT' && daysUntilEarnings >= 0 && daysUntilEarnings <= 7) {

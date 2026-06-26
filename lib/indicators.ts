@@ -248,6 +248,15 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
             const priceWindow = window.map(w => w.close);
 
             if (rsiWindow.length >= 15) {
+                // Audit fix #6: divergence is the highest-weighted confluence signal
+                // (was +20, now +12 below — see calculateConfluenceScore) but used to
+                // fire off any 3-bar local extrema with no minimum-significance check,
+                // so it could trigger on noise-level wiggles in choppy tape. Require a
+                // real lower-low/higher-high (≥1.5% price move) AND a real RSI gap
+                // (≥3 points) between the two compared extrema before counting it.
+                const MIN_PRICE_MOVE_PCT = 0.015;
+                const MIN_RSI_MOVE = 3;
+
                 // Bullish Divergence: Lower Low in Price, Higher Low in RSI
                 // Find local lows in price
                 const getLows = (arr: number[]) => {
@@ -278,7 +287,9 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
                     const prevRsi = window[prevLowIdx].rsi14;
 
                     if (lastRsi !== undefined && prevRsi !== undefined) {
-                        if (lastPrice < prevPrice && lastRsi > prevRsi && lastRsi < 40) {
+                        const priceMovePct = prevPrice > 0 ? (prevPrice - lastPrice) / prevPrice : 0;
+                        if (lastPrice < prevPrice && lastRsi > prevRsi && lastRsi < 40
+                            && priceMovePct >= MIN_PRICE_MOVE_PCT && (lastRsi - prevRsi) >= MIN_RSI_MOVE) {
                             d.divergence = { type: 'BULLISH', price: lastPrice, rsi: lastRsi };
                         }
                     }
@@ -295,7 +306,9 @@ import { calculateAnchoredVWAP, VWAPAnchor } from './vwap'; export const calcula
                     const prevRsi = window[prevHighIdx].rsi14;
 
                     if (lastRsi !== undefined && prevRsi !== undefined) {
-                        if (lastPrice > prevPrice && lastRsi < prevRsi && lastRsi > 60) {
+                        const priceMovePct = prevPrice > 0 ? (lastPrice - prevPrice) / prevPrice : 0;
+                        if (lastPrice > prevPrice && lastRsi < prevRsi && lastRsi > 60
+                            && priceMovePct >= MIN_PRICE_MOVE_PCT && (prevRsi - lastRsi) >= MIN_RSI_MOVE) {
                             d.divergence = { type: 'BEARISH', price: lastPrice, rsi: lastRsi };
                         }
                     }
@@ -357,20 +370,22 @@ export function calculateConfluenceScore(latest: IndicatorData): ConfluenceResul
     }
 
     // 2. MOMENTUM (RSI)
+    // Audit fix #6: RSI<30/RSI>80 used to cast a directional vote here (oversold=
+    // bearish, overbought=bullish — a "momentum keeps running" stance) while
+    // conviction.ts separately applies a -10 penalty when rsi>80 (an "overbought
+    // is a risk to chase" stance) — two parts of the pipeline encoding opposite
+    // theses on the same condition that partially canceled rather than reflecting
+    // one coherent view. calculateMultiTimeframeConfluence() below already treats
+    // RSI extremes the same way conviction.ts does — as an entry-timing risk
+    // (`rsiOverextended`), not a trend signal — so extreme RSI no longer votes
+    // bull/bear here; conviction.ts's overbought penalty remains the single,
+    // intentional place that flags it.
     if (rsi > 60 && rsi <= 70) {
         bullScore += 5;
         bullSignals.push('Strong Bullish Momentum');
     } else if (rsi >= 30 && rsi < 40) {
         bearScore += 5;
         bearSignals.push('Developing Bearish Momentum');
-    } else if (rsi < 30) {
-        // RSI < 30 is oversold (Price is dumping) - NOT a bull signal for Trend
-        bearScore += 5; 
-        bearSignals.push('RSI Oversold (Bearish Momentum) ⚠️');
-    } else if (rsi > 80) {
-        // RSI > 80 is overbought (Price is pumping) - NOT a bear signal for Trend
-        bullScore += 5;
-        bullSignals.push('RSI Overbought (Bullish Momentum) ⚠️');
     }
 
     // 3. TREND CONFIRMATION (MACD)
@@ -385,12 +400,19 @@ export function calculateConfluenceScore(latest: IndicatorData): ConfluenceResul
     }
 
     // 4. RSI DIVERGENCE (High Conviction)
+    // Audit fix #6: was +20 (more than double any other single factor) on top of a
+    // detector with no minimum-significance filter, so a noise-driven false
+    // positive could swing the score more than any other signal. The detector
+    // itself is now filtered (see the 1.5%-price / 3-point-RSI gates in the
+    // divergence-detection block above); the weight is down to +12 so a genuine
+    // divergence still meaningfully outranks MACD/Bollinger/pattern (10 each)
+    // without dominating the whole confluence score on its own.
     if (latest.divergence && latest.divergence.type !== 'NONE') {
         if (latest.divergence.type === 'BULLISH') {
-            bullScore += 20; // Strong signal
+            bullScore += 12;
             bullSignals.push('RSI Bullish Divergence 🎯');
         } else if (latest.divergence.type === 'BEARISH') {
-            bearScore += 20; // Strong signal
+            bearScore += 12;
             bearSignals.push('RSI Bearish Divergence 🎯');
         }
     }

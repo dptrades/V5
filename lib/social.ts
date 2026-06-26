@@ -1,6 +1,6 @@
 import { runSmartScan } from './smart-scanner';
 import { publicClient } from './public-api';
-import { finnhubClient } from './finnhub';
+import { finnhubClient, FinnhubSocialSentiment } from './finnhub';
 import { getSectorMap } from './constants';
 import YahooFinance from 'yahoo-finance2';
 const yahooFinance = new YahooFinance();
@@ -18,6 +18,12 @@ export interface SocialPulseItem {
     topPlatform: string;
     description: string;
     _isVerified: boolean;
+    // Audit fix #4: honesty flags. _isHeuristic=true means sentiment/retailBuyRatio/
+    // topPlatform below are the keyword+hash heuristic (computeSentiment), NOT real
+    // platform data — true whenever Finnhub's social-sentiment endpoint returned no
+    // data for this symbol (premium-gated key, illiquid name, or no recent chatter).
+    _isHeuristic: boolean;
+    mentionsSource: 'reddit_twitter' | 'news_articles';
 }
 
 // Global cache for Social Pulse
@@ -94,6 +100,35 @@ function computeSentiment(signalStr: string, source: string, seed: string): numb
     return 0.48 + seededScore(seed + 'neutral', 0.12);
 }
 
+/**
+ * Audit fix #4: aggregate Finnhub's real /stock/social-sentiment time series
+ * (Reddit + Twitter mention/sentiment counts) into a single [0,1] score, a
+ * total mention count, and the platform that drove the most chatter. Returns
+ * null when Finnhub has no real data for this symbol (premium-gated key,
+ * illiquid name, or no recent mentions) — callers must fall back to the
+ * computeSentiment() heuristic and flag the item as such, rather than
+ * presenting the fallback as if it were real platform data.
+ */
+function aggregateSocialSentiment(data: FinnhubSocialSentiment | null): { sentiment01: number; mentions: number; platform: 'Reddit' | 'Twitter/X' } | null {
+    if (!data) return null;
+    const sum = (arr: Array<{ mention: number; positiveMention: number; negativeMention: number }> = []) =>
+        arr.reduce((acc, p) => ({
+            mention: acc.mention + (p.mention || 0),
+            pos: acc.pos + (p.positiveMention || 0),
+            neg: acc.neg + (p.negativeMention || 0)
+        }), { mention: 0, pos: 0, neg: 0 });
+
+    const reddit = sum(data.reddit);
+    const twitter = sum(data.twitter);
+    const totalMention = reddit.mention + twitter.mention;
+    if (totalMention <= 0) return null;
+
+    const totalPos = reddit.pos + twitter.pos;
+    const totalNeg = reddit.neg + twitter.neg;
+    const sentiment01 = Math.max(0, Math.min(1, 0.5 + 0.5 * ((totalPos - totalNeg) / totalMention)));
+    return { sentiment01, mentions: totalMention, platform: reddit.mention >= twitter.mention ? 'Reddit' : 'Twitter/X' };
+}
+
 export async function scanSocialPulse(forceRefresh = false): Promise<SocialPulseItem[]> {
     const now = Date.now();
     const marketSession = publicClient.getMarketSession();
@@ -122,6 +157,7 @@ export async function scanSocialPulse(forceRefresh = false): Promise<SocialPulse
 
         const topSymbols = symbols.slice(0, 15);
         const newsMap = new Map<string, any[]>();
+        const socialMap = new Map<string, FinnhubSocialSentiment | null>();
 
         console.log(`[SocialPulse] Fetching news for symbols: ${topSymbols.join(',')}`);
 
@@ -142,8 +178,28 @@ export async function scanSocialPulse(forceRefresh = false): Promise<SocialPulse
             }));
         };
 
+        // Audit fix #4: attempt REAL Reddit/Twitter mention sentiment (Finnhub
+        // /stock/social-sentiment) for the leading batch only. This endpoint shares
+        // Finnhub's single rate-limited queue with getNews() above, so widening this
+        // to all 15 symbols would roughly double the route's run time — bounded to
+        // batch1 (5 symbols) to keep the added latency small (~5.5s) while still
+        // surfacing genuine platform data for the names most likely to be viewed.
+        // Symbols outside this batch keep the existing heuristic, honestly flagged
+        // via _isHeuristic below.
+        const fetchSocialBatch = async (batch: string[]) => {
+            await Promise.all(batch.map(async (s) => {
+                try {
+                    const data = await finnhubClient.getSocialSentiment(s);
+                    socialMap.set(s, data);
+                } catch (err) {
+                    console.error(`[SocialPulse] Error fetching social sentiment for ${s}:`, err);
+                    socialMap.set(s, null);
+                }
+            }));
+        };
+
         // FIX #3: Run all three batches in parallel (was sequential awaits before)
-        await Promise.all([fetchBatch(batch1), fetchBatch(batch2), fetchBatch(batch3)]);
+        await Promise.all([fetchBatch(batch1), fetchBatch(batch2), fetchBatch(batch3), fetchSocialBatch(batch1)]);
 
         const formattedData = discoveries
             .map(d => {
@@ -154,15 +210,24 @@ export async function scanSocialPulse(forceRefresh = false): Promise<SocialPulse
                 const tickerName = detail?.longName || detail?.shortName || detail?.displayName || d.name || d.symbol;
                 const sector = sectorMap[d.symbol] || 'Other';
 
+                // Audit fix #4: prefer REAL Reddit/Twitter mention sentiment when
+                // Finnhub returned any for this symbol; otherwise fall back to the
+                // keyword+hash heuristic and flag the item as heuristic so nothing
+                // downstream mistakes it for genuine platform data.
+                const realSocial = aggregateSocialSentiment(socialMap.get(d.symbol) || null);
+
                 // FIX #1: Deterministic sentiment — stable across page loads for the same stock+signal
                 const signalStr = (latestHeadline + ' ' + d.signal).toLowerCase();
                 const sentimentSeed = d.symbol + signalStr.slice(0, 40);
-                const sentiment = computeSentiment(signalStr, d.source, sentimentSeed);
+                const heuristicSentiment = computeSentiment(signalStr, d.source, sentimentSeed);
+                const sentiment = realSocial ? realSocial.sentiment01 : heuristicSentiment;
 
-                // retailBuyRatio is also seeded — clipped to ±0.1 of sentiment
-                const retailBuyRatio = Math.max(0.1, Math.min(0.95,
-                    sentiment + seededScore(sentimentSeed + 'retail', 0.2) - 0.1
-                ));
+                // retailBuyRatio: when we have real mention data, mirror the real
+                // sentiment directly (no synthetic noise layered on top); otherwise
+                // keep the existing seeded-noise heuristic.
+                const retailBuyRatio = realSocial
+                    ? Math.max(0.1, Math.min(0.95, realSocial.sentiment01))
+                    : Math.max(0.1, Math.min(0.95, heuristicSentiment + seededScore(sentimentSeed + 'retail', 0.2) - 0.1));
 
                 const hasVerifiedName = detail?.longName || detail?.shortName || detail?.displayName;
                 const isNoise = !hasVerifiedName || tickerName.toUpperCase() === d.symbol.toUpperCase();
@@ -180,11 +245,18 @@ export async function scanSocialPulse(forceRefresh = false): Promise<SocialPulse
                     change: quote?.changePercent || 0,
                     heat: d.strength,
                     sentiment: sentiment,
-                    mentions: newsSignalCount,   // Now = real article count, displayed as "News Signals" in card
+                    mentions: realSocial ? realSocial.mentions : newsSignalCount,
+                    mentionsSource: realSocial ? 'reddit_twitter' as const : 'news_articles' as const,
                     retailBuyRatio: retailBuyRatio,
-                    topPlatform: d.source === 'social' ? 'Twitter/X' : d.source === 'news' ? 'Google News' : d.source === 'options' ? 'Institutional Flow' : 'Market Screener',
+                    // Honest platform attribution: only name a specific social platform
+                    // when real Reddit/Twitter data backs it. Otherwise this is a
+                    // discovery-source label, not a claim about where the chatter lives.
+                    topPlatform: realSocial
+                        ? realSocial.platform
+                        : (d.source === 'news' ? 'Google News' : d.source === 'options' ? 'Institutional Flow' : d.source === 'social' ? 'Social Discovery (unverified)' : 'Market Screener'),
                     description: latestHeadline,
-                    _isVerified: !!hasVerifiedName
+                    _isVerified: !!hasVerifiedName,
+                    _isHeuristic: !realSocial
                 };
             })
             .filter((item): item is NonNullable<typeof item> => {

@@ -111,3 +111,17 @@ export const MIN_TECHNICAL_SCORE = 50;
 /** Minimum analyst sub-score for Top Picks quality gate */
 export const MIN_ANALYST_SCORE = 50;
 
+// ── Live Auto-Trade Risk Controls (audit fix #2) ────────────────────────────
+// Replaces flat $250/-10%/+25% sizing with ATR-anchored risk-based sizing, plus
+// a held-position sector cap distinct from MAX_STOCKS_PER_SECTOR above (that
+// one caps the *candidate pool*; this one caps the *live 4-slot book*).
+
+/** Dollar risk budgeted per trade — position size = this / (entry − ATR-anchored stop) */
+export const LIVE_TRADE_RISK_PER_TRADE = 25;
+
+/** Notional ceiling per trade — safety rail so a very tight ATR stop can't size a position up unboundedly */
+export const LIVE_TRADE_MAX_NOTIONAL = 400;
+
+/** Max held positions per sector in the live auto-trade book (out of MAX_POSITIONS total) */
+export const LIVE_PORTFOLIO_SECTOR_CAP = 2;
+

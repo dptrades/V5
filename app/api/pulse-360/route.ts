@@ -63,7 +63,8 @@ export async function GET(request: Request) {
                     mentions: item.mentions,
                     retailBuyRatio: item.retailBuyRatio,
                     topPlatform: item.topPlatform,
-                    description: item.description
+                    description: item.description,
+                    _isHeuristic: item._isHeuristic // audit fix #4: false only when backed by real Finnhub Reddit/Twitter data
                 });
             } else {
                 mergedMap.set(item.symbol, {
@@ -88,7 +89,8 @@ export async function GET(request: Request) {
                     mentions: item.mentions,
                     retailBuyRatio: item.retailBuyRatio,
                     topPlatform: item.topPlatform,
-                    description: item.description
+                    description: item.description,
+                    _isHeuristic: item._isHeuristic
                 });
             }
         }

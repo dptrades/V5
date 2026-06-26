@@ -13,6 +13,14 @@ interface NewsCacheEntry {
 const newsCache = new Map<string, NewsCacheEntry>();
 const NEWS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+// Audit fix #4 (honesty note): `type` is accepted for cache-keying and call-site
+// readability but is NOT actually branched on below — 'news', 'social', and
+// 'analyst' all run the identical Yahoo Finance headline search + Finnhub NLP
+// bias blend. There is no real social-media (Reddit/Twitter/StockTwits) or
+// analyst-specific data source wired in here. Callers passing type:'social'
+// (lib/conviction.ts's sentiment pillar) are really scoring news-headline
+// sentiment — see lib/social.ts's scanSocialPulse() for the one place that
+// does pull real Reddit/Twitter mention data (Finnhub /stock/social-sentiment).
 export async function getNewsData(symbol: string, type: 'news' | 'social' | 'analyst' = 'news'): Promise<NewsItem[]> {
     // Check Cache
     const cacheKey = `${symbol}-${type}`;

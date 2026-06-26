@@ -272,7 +272,7 @@ export default function ConvictionPage() {
                                             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                                                    <span className="font-bold text-emerald-400 text-sm">Fundamentals & Growth (10%)</span>
+                                                    <span className="font-bold text-emerald-400 text-sm">Fundamentals & Growth (20%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
                                                     Revenue Growth, Profit Margins, and healthy P/E ratios.
@@ -290,10 +290,19 @@ export default function ConvictionPage() {
                                             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
-                                                    <span className="font-bold text-purple-400 text-sm">Social & Sentiment (15%)</span>
+                                                    <span className="font-bold text-purple-400 text-sm">News Sentiment (15%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    NLP scan of news headlines and social buzz.
+                                                    NLP scan of recent news headlines — not live social-platform data. See Social Pulse for real Reddit/Twitter mention tracking.
+                                                </p>
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
+                                                    <span className="font-bold text-orange-400 text-sm">Smart Discovery (30%)</span>
+                                                </div>
+                                                <p className="text-sm text-gray-100 leading-relaxed">
+                                                    The single largest weight: a bonus for stocks the Smart Scanner actively surfaced (unusual volume, news catalysts, breakouts) rather than ones found only on a static watchlist.
                                                 </p>
                                             </div>
                                         </div>

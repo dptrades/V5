@@ -222,6 +222,10 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                 console.log(`[Conviction] Fetching data for ${symbol}...`);
                 const [quote, socialNews] = await Promise.all([
                     (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile', 'earningsTrend'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
+                    // Audit fix #4: despite the 'social' type arg, getNewsData() returns
+                    // news-headline sentiment (Yahoo + Finnhub NLP bias), not real
+                    // Reddit/Twitter/StockTwits data — see lib/news-service.ts. Labeled
+                    // "News Sentiment" (not "Social Sentiment") in the UI accordingly.
                     (getNewsData(symbol, 'social') as Promise<any>).catch(e => [])
                 ]);
 
@@ -269,7 +273,11 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                 const trend = confluence.trend;
                 const rsi = latest.rsi14 || 50;
 
-                // Overbought penalty: extreme RSI is a warning sign, not a strength
+                // Overbought penalty: extreme RSI is a warning sign, not a strength.
+                // Audit fix #6: this is now the SOLE place RSI>80 is scored — the
+                // confluence momentum block (lib/indicators.ts) no longer awards a
+                // "bullish momentum" vote for the same condition, which previously
+                // contradicted this penalty.
                 if (rsi > 80) techScore = Math.max(0, techScore - 10);
 
                 // 52-week high proximity bonus (+10 if within 5% of 52w high)
@@ -294,30 +302,68 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
 
 
                 // 3. Process Fundamentals (Graceful Fallback)
+                // Audit fix #8: fields below previously defaulted to 0 via `|| 0`
+                // whenever Yahoo had no data for them (common for foreign filers,
+                // recent IPOs, or unprofitable companies with no trailing PE) — making
+                // "missing" indistinguishable from "actually reported as zero". Every
+                // scoring check here is a one-directional threshold, so a 0 default
+                // happened not to fire a false bonus/penalty, but the *displayed*
+                // metrics (see `metrics` below) were showing a fabricated 0 as if it
+                // were real. Each field now tracks presence explicitly via `*Raw`
+                // (null when missing) and only contributes to fundScore when present.
                 const financialData = quote?.financialData || {};
                 const stats = quote?.defaultKeyStatistics || {};
                 let fundScore = 50;
-                const pe = financialData.trailingPE || stats.forwardPE || 0;
-                const revGrowth = financialData.revenueGrowth || 0;
+                const missingFundamentals: string[] = [];
 
-                if (revGrowth > 0.10) fundScore += 15;
-                if (pe > 0 && pe < 40) fundScore += 10;
-                if (pe > 100) fundScore -= 10;
-                const margins = financialData.profitMargins || 0;
-                if (margins > 0.20) fundScore += 10;
+                const peRaw: number | null = financialData.trailingPE ?? stats.forwardPE ?? null;
+                if (peRaw == null) missingFundamentals.push('pe');
+                const pe = peRaw ?? 0;
+                if (peRaw != null && pe > 0 && pe < 40) fundScore += 10;
+                if (peRaw != null && pe > 100) fundScore -= 10;
+
+                const revGrowthRaw: number | null = financialData.revenueGrowth ?? null;
+                if (revGrowthRaw == null) missingFundamentals.push('revenueGrowth');
+                const revGrowth = revGrowthRaw ?? 0;
+                if (revGrowthRaw != null && revGrowth > 0.10) fundScore += 15;
+
+                const marginsRaw: number | null = financialData.profitMargins ?? null;
+                if (marginsRaw == null) missingFundamentals.push('profitMargins');
+                const margins = marginsRaw ?? 0;
+                if (marginsRaw != null && margins > 0.20) fundScore += 10;
+
                 // EPS growth bonus
-                const epsGrowth = financialData.earningsGrowth || 0;
-                if (epsGrowth > 0.10) fundScore += 10;
+                const epsGrowthRaw: number | null = financialData.earningsGrowth ?? null;
+                if (epsGrowthRaw == null) missingFundamentals.push('earningsGrowth');
+                const epsGrowth = epsGrowthRaw ?? 0;
+                if (epsGrowthRaw != null && epsGrowth > 0.10) fundScore += 10;
+
                 // Free cash flow margin bonus (>15% FCF/Revenue = capital-efficient business)
-                const fcf = financialData.freeCashflow || 0;
-                const totalRevenue = financialData.totalRevenue || 0;
-                if (fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
-                // Debt-to-equity penalty (high leverage = risk)
-                const debtToEquity = financialData.debtToEquity || 0;
-                if (debtToEquity > 2.0) fundScore -= 10;
+                const fcfRaw: number | null = financialData.freeCashflow ?? null;
+                const totalRevenueRaw: number | null = financialData.totalRevenue ?? null;
+                if (fcfRaw == null || totalRevenueRaw == null) missingFundamentals.push('freeCashflow');
+                const fcf = fcfRaw ?? 0;
+                const totalRevenue = totalRevenueRaw ?? 0;
+                if (fcfRaw != null && totalRevenueRaw != null && fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
+
+                // Debt-to-equity penalty (high leverage = risk).
+                // Audit fix #3: Yahoo's financialData.debtToEquity is returned on a
+                // percentage scale (e.g. 150 means a 1.5x ratio), not a raw ratio. The
+                // old `> 2.0` check compared a percentage-scale value against a
+                // ratio-scale threshold, so it fired for nearly any company carrying
+                // even trivial debt (anything >= 2, i.e. a 0.02x ratio). Normalize to
+                // an actual ratio before comparing against the intended 2.0x threshold.
+                const debtToEquityRaw: number | null = financialData.debtToEquity ?? null;
+                if (debtToEquityRaw == null) missingFundamentals.push('debtToEquity');
+                const debtToEquity = (debtToEquityRaw ?? 0) / 100;
+                if (debtToEquityRaw != null && debtToEquity > 2.0) fundScore -= 10;
+
                 // Insider ownership bonus (aligned incentives)
-                const insiderPct = stats.heldPercentInsiders || 0;
-                if (insiderPct > 0.05) fundScore += 5;
+                const insiderPctRaw: number | null = stats.heldPercentInsiders ?? null;
+                if (insiderPctRaw == null) missingFundamentals.push('insiderOwnership');
+                const insiderPct = insiderPctRaw ?? 0;
+                if (insiderPctRaw != null && insiderPct > 0.05) fundScore += 5;
+
                 fundScore = Math.max(0, Math.min(100, fundScore));
 
 
@@ -334,6 +380,29 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                 const targetPrice = financialData.targetMeanPrice || 0;
                 // Use Alpaca price if we have it, else valid Yahoo price, else latest close
                 const finalPrice = usingAlpaca ? currentPrice : (financialData.currentPrice?.raw || currentPrice);
+
+                // Audit fix #8: cross-vendor price sanity check. `currentPrice` comes
+                // from Public.com (or an Alpaca bar close as fallback); Yahoo's
+                // financialData.currentPrice is an independent second snapshot. Neither
+                // vendor is checked against the other anywhere else in this pipeline, so
+                // a stale cache entry, a wrong symbol mapping, or an unadjusted stock
+                // split on one side could silently feed a bad price straight into the
+                // score and into suggestedOption's strike math. Large disagreement
+                // (>10%) is treated as a data error and the symbol is skipped; moderate
+                // disagreement (2-10%, plausible from quote-timing/after-hours staleness
+                // alone) is allowed through but flagged via _priceVerified so consumers
+                // know not to fully trust the price.
+                const yahooPriceCheck = financialData.currentPrice?.raw || 0;
+                let priceDisagreementPct: number | undefined;
+                let priceVerified = true;
+                if (currentPrice > 0 && yahooPriceCheck > 0) {
+                    priceDisagreementPct = Math.abs(currentPrice - yahooPriceCheck) / yahooPriceCheck;
+                    if (priceDisagreementPct > 0.10) {
+                        console.warn(`⚠️ [Conviction] Skipping ${symbol}: vendor price disagreement ${(priceDisagreementPct * 100).toFixed(1)}% (Public/Alpaca=$${currentPrice.toFixed(2)} vs Yahoo=$${yahooPriceCheck.toFixed(2)})`);
+                        return null;
+                    }
+                    priceVerified = priceDisagreementPct <= 0.02;
+                }
 
                 // Upside potential
                 if (targetPrice > finalPrice) {
@@ -442,15 +511,22 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
                     analystScore: Math.round(analystScore),
                     sentimentScore: Math.round(socialScore),
                     metrics: {
-                        pe: pe,
+                        // Audit fix #8: expose the raw (possibly null) value rather than
+                        // the zero-filled one, so "no data" isn't shown as "reported 0".
+                        pe: peRaw ?? undefined,
                         marketCap: (quote?.price as any)?.marketCap || 0,
-                        revenueGrowth: revGrowth,
+                        revenueGrowth: revGrowthRaw ?? undefined,
+                        missingFundamentals: missingFundamentals.length > 0 ? missingFundamentals : undefined,
                         rsi: Math.round(rsi),
                         trend,
                         analystRating: ratingText,
                         analystTarget: targetPrice,
-                        socialSentiment: socialLabel
+                        socialSentiment: socialLabel,
+                        atr14: atr,
+                        ema50: latest.ema50
                     },
+                    _priceVerified: priceVerified,
+                    priceDisagreementPct,
                     reasons,
                     discoverySource,
                     change24h,
@@ -500,7 +576,10 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
     );
     logger.log(`✅ [Top Picks] Quality gate: ${sortedRaw.length} → ${qualityGated.length} stocks (technicalScore ≥${MIN_TECHNICAL_SCORE} & analystScore ≥${MIN_ANALYST_SCORE})`);
 
-    // Sector diversity cap: max 3 stocks per sector
+    // Sector diversity cap: max MAX_STOCKS_PER_SECTOR (currently 6) stocks per sector
+    // (audit fix #7: this comment said "max 3" while the constant has been 6 for a
+    // while — drifted out of sync. Read MAX_STOCKS_PER_SECTOR in lib/constants.ts
+    // for the live value rather than trusting a hardcoded number in a comment.)
     const sectorCounts: Record<string, number> = {};
     const diversified = qualityGated.filter(r => {
         const sector = r.sector || 'Other';
@@ -509,7 +588,8 @@ export async function scanConviction(forceRefresh = false, returnAll = false): P
     });
     logger.log(`🏦 [Top Picks] Sector cap applied: ${qualityGated.length} → ${diversified.length} stocks (max ${MAX_STOCKS_PER_SECTOR} per sector)`);
 
-    // Score >= 75 threshold
+    // Score >= CONVICTION_SCORE_THRESHOLD (currently 50, not 75 — audit fix #7:
+    // this comment was stale; see lib/constants.ts for the live value)
     const sortedFiltered = diversified.filter(r => r.score >= CONVICTION_SCORE_THRESHOLD);
 
     // Update Cache
@@ -606,6 +686,10 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                 console.log(`[Alpha Hunter] Fetching data for ${symbol}...`);
                 const [quote, socialNews] = await Promise.all([
                     (yahooFinance.quoteSummary(symbol, { modules: ['financialData', 'defaultKeyStatistics', 'recommendationTrend', 'price', 'assetProfile'] }) as Promise<any>).catch(e => { console.error(`[Yahoo] Quote Error ${symbol}:`, e.message); return null; }),
+                    // Audit fix #4: despite the 'social' type arg, getNewsData() returns
+                    // news-headline sentiment (Yahoo + Finnhub NLP bias), not real
+                    // Reddit/Twitter/StockTwits data — see lib/news-service.ts. Labeled
+                    // "News Sentiment" (not "Social Sentiment") in the UI accordingly.
                     (getNewsData(symbol, 'social') as Promise<any>).catch(e => [])
                 ]);
 
@@ -653,7 +737,11 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                 const trend = confluence.trend;
                 const rsi = latest.rsi14 || 50;
 
-                // Overbought penalty: extreme RSI is a warning sign, not a strength
+                // Overbought penalty: extreme RSI is a warning sign, not a strength.
+                // Audit fix #6: this is now the SOLE place RSI>80 is scored — the
+                // confluence momentum block (lib/indicators.ts) no longer awards a
+                // "bullish momentum" vote for the same condition, which previously
+                // contradicted this penalty.
                 if (rsi > 80) techScore = Math.max(0, techScore - 10);
 
                 // 52-week high proximity bonus (+10 if within 5% of 52w high)
@@ -678,30 +766,68 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
 
 
                 // 3. Process Fundamentals (Graceful Fallback)
+                // Audit fix #8: fields below previously defaulted to 0 via `|| 0`
+                // whenever Yahoo had no data for them (common for foreign filers,
+                // recent IPOs, or unprofitable companies with no trailing PE) — making
+                // "missing" indistinguishable from "actually reported as zero". Every
+                // scoring check here is a one-directional threshold, so a 0 default
+                // happened not to fire a false bonus/penalty, but the *displayed*
+                // metrics (see `metrics` below) were showing a fabricated 0 as if it
+                // were real. Each field now tracks presence explicitly via `*Raw`
+                // (null when missing) and only contributes to fundScore when present.
                 const financialData = quote?.financialData || {};
                 const stats = quote?.defaultKeyStatistics || {};
                 let fundScore = 50;
-                const pe = financialData.trailingPE || stats.forwardPE || 0;
-                const revGrowth = financialData.revenueGrowth || 0;
+                const missingFundamentals: string[] = [];
 
-                if (revGrowth > 0.10) fundScore += 15;
-                if (pe > 0 && pe < 40) fundScore += 10;
-                if (pe > 100) fundScore -= 10;
-                const margins = financialData.profitMargins || 0;
-                if (margins > 0.20) fundScore += 10;
+                const peRaw: number | null = financialData.trailingPE ?? stats.forwardPE ?? null;
+                if (peRaw == null) missingFundamentals.push('pe');
+                const pe = peRaw ?? 0;
+                if (peRaw != null && pe > 0 && pe < 40) fundScore += 10;
+                if (peRaw != null && pe > 100) fundScore -= 10;
+
+                const revGrowthRaw: number | null = financialData.revenueGrowth ?? null;
+                if (revGrowthRaw == null) missingFundamentals.push('revenueGrowth');
+                const revGrowth = revGrowthRaw ?? 0;
+                if (revGrowthRaw != null && revGrowth > 0.10) fundScore += 15;
+
+                const marginsRaw: number | null = financialData.profitMargins ?? null;
+                if (marginsRaw == null) missingFundamentals.push('profitMargins');
+                const margins = marginsRaw ?? 0;
+                if (marginsRaw != null && margins > 0.20) fundScore += 10;
+
                 // EPS growth bonus
-                const epsGrowth = financialData.earningsGrowth || 0;
-                if (epsGrowth > 0.10) fundScore += 10;
+                const epsGrowthRaw: number | null = financialData.earningsGrowth ?? null;
+                if (epsGrowthRaw == null) missingFundamentals.push('earningsGrowth');
+                const epsGrowth = epsGrowthRaw ?? 0;
+                if (epsGrowthRaw != null && epsGrowth > 0.10) fundScore += 10;
+
                 // Free cash flow margin bonus (>15% FCF/Revenue = capital-efficient business)
-                const fcf = financialData.freeCashflow || 0;
-                const totalRevenue = financialData.totalRevenue || 0;
-                if (fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
-                // Debt-to-equity penalty (high leverage = risk)
-                const debtToEquity = financialData.debtToEquity || 0;
-                if (debtToEquity > 2.0) fundScore -= 10;
+                const fcfRaw: number | null = financialData.freeCashflow ?? null;
+                const totalRevenueRaw: number | null = financialData.totalRevenue ?? null;
+                if (fcfRaw == null || totalRevenueRaw == null) missingFundamentals.push('freeCashflow');
+                const fcf = fcfRaw ?? 0;
+                const totalRevenue = totalRevenueRaw ?? 0;
+                if (fcfRaw != null && totalRevenueRaw != null && fcf > 0 && totalRevenue > 0 && (fcf / totalRevenue) > 0.15) fundScore += 10;
+
+                // Debt-to-equity penalty (high leverage = risk).
+                // Audit fix #3: Yahoo's financialData.debtToEquity is returned on a
+                // percentage scale (e.g. 150 means a 1.5x ratio), not a raw ratio. The
+                // old `> 2.0` check compared a percentage-scale value against a
+                // ratio-scale threshold, so it fired for nearly any company carrying
+                // even trivial debt (anything >= 2, i.e. a 0.02x ratio). Normalize to
+                // an actual ratio before comparing against the intended 2.0x threshold.
+                const debtToEquityRaw: number | null = financialData.debtToEquity ?? null;
+                if (debtToEquityRaw == null) missingFundamentals.push('debtToEquity');
+                const debtToEquity = (debtToEquityRaw ?? 0) / 100;
+                if (debtToEquityRaw != null && debtToEquity > 2.0) fundScore -= 10;
+
                 // Insider ownership bonus (aligned incentives)
-                const insiderPct = stats.heldPercentInsiders || 0;
-                if (insiderPct > 0.05) fundScore += 5;
+                const insiderPctRaw: number | null = stats.heldPercentInsiders ?? null;
+                if (insiderPctRaw == null) missingFundamentals.push('insiderOwnership');
+                const insiderPct = insiderPctRaw ?? 0;
+                if (insiderPctRaw != null && insiderPct > 0.05) fundScore += 5;
+
                 fundScore = Math.max(0, Math.min(100, fundScore));
 
 
@@ -718,6 +844,29 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                 const targetPrice = financialData.targetMeanPrice || 0;
                 // Use Alpaca price if we have it, else valid Yahoo price, else latest close
                 const finalPrice = usingAlpaca ? currentPrice : (financialData.currentPrice?.raw || currentPrice);
+
+                // Audit fix #8: cross-vendor price sanity check. `currentPrice` comes
+                // from Public.com (or an Alpaca bar close as fallback); Yahoo's
+                // financialData.currentPrice is an independent second snapshot. Neither
+                // vendor is checked against the other anywhere else in this pipeline, so
+                // a stale cache entry, a wrong symbol mapping, or an unadjusted stock
+                // split on one side could silently feed a bad price straight into the
+                // score and into suggestedOption's strike math. Large disagreement
+                // (>10%) is treated as a data error and the symbol is skipped; moderate
+                // disagreement (2-10%, plausible from quote-timing/after-hours staleness
+                // alone) is allowed through but flagged via _priceVerified so consumers
+                // know not to fully trust the price.
+                const yahooPriceCheck = financialData.currentPrice?.raw || 0;
+                let priceDisagreementPct: number | undefined;
+                let priceVerified = true;
+                if (currentPrice > 0 && yahooPriceCheck > 0) {
+                    priceDisagreementPct = Math.abs(currentPrice - yahooPriceCheck) / yahooPriceCheck;
+                    if (priceDisagreementPct > 0.10) {
+                        console.warn(`⚠️ [Conviction] Skipping ${symbol}: vendor price disagreement ${(priceDisagreementPct * 100).toFixed(1)}% (Public/Alpaca=$${currentPrice.toFixed(2)} vs Yahoo=$${yahooPriceCheck.toFixed(2)})`);
+                        return null;
+                    }
+                    priceVerified = priceDisagreementPct <= 0.02;
+                }
 
                 // Upside potential
                 if (targetPrice > finalPrice) {
@@ -836,15 +985,22 @@ export async function scanAlphaHunter(forceRefresh = false, returnAll = false): 
                     analystScore: Math.round(analystScore),
                     sentimentScore: Math.round(socialScore),
                     metrics: {
-                        pe: pe,
+                        // Audit fix #8: expose the raw (possibly null) value rather than
+                        // the zero-filled one, so "no data" isn't shown as "reported 0".
+                        pe: peRaw ?? undefined,
                         marketCap: (quote?.price as any)?.marketCap || 0,
-                        revenueGrowth: revGrowth,
+                        revenueGrowth: revGrowthRaw ?? undefined,
+                        missingFundamentals: missingFundamentals.length > 0 ? missingFundamentals : undefined,
                         rsi: Math.round(rsi),
                         trend,
                         analystRating: ratingText,
                         analystTarget: targetPrice,
-                        socialSentiment: socialLabel
+                        socialSentiment: socialLabel,
+                        atr14: atr,
+                        ema50: latest.ema50
                     },
+                    _priceVerified: priceVerified,
+                    priceDisagreementPct,
                     reasons,
                     discoverySource,
                     change24h,

@@ -340,10 +340,10 @@ export default function TopPicksPage() {
                                             <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
-                                                    <span className="font-bold text-yellow-400 text-sm">Social Sentiment (20%)</span>
+                                                    <span className="font-bold text-yellow-400 text-sm">News Sentiment (20%)</span>
                                                 </div>
                                                 <p className="text-sm text-gray-100 leading-relaxed">
-                                                    Natural Language Processing scan of current news headlines and social buzz (X, WSB, StockTwits) focused purely on highest conviction institutional names.
+                                                    NLP scan of recent news headlines (Yahoo Finance + Finnhub bias correction). This is news-driven sentiment, not live data from X, WSB, or StockTwits — see Social Pulse for real Reddit/Twitter mention tracking on individual names.
                                                 </p>
                                             </div>
                                         </div>

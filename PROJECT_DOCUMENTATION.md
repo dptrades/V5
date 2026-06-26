@@ -61,16 +61,16 @@ Designed for aggressive growth and momentum discovery across the broader market.
 
 ### **A. Crowd Sentiment (`HeaderSentiment`)**
 Real-time "Mood Ring" for the active stock.
-- **Source**: `lib/news.ts` -> Google News / Reddit / StockTwits.
-- **Algorithm**: Keyword matching on last 48h headlines.
-  - **Green/Bullish**: > 60% positive keywords (*surge, rally, beat*).
-  - **Red/Bearish**: < 40% positive keywords (*crash, miss, dump*).
-  - **Grey/Neutral**: 40-60%.
+- **Source**: `app/page.tsx`'s `fetchStockNews()` → `/api/news` → `lib/news-service.ts`'s `getNewsData()`. This is Yahoo Finance headline search blended with Finnhub NLP bias — **not** Reddit or StockTwits; `lib/news.ts` is only the client-side fetch wrapper and `NewsItem` type, not a data source. (Audit fix #7: corrected — the previous text named Reddit/StockTwits, which aren't actually queried anywhere in this codebase.)
+- **Algorithm**: Starts at 50. Each of the last several headlines contributes ±5 (recency-weighted, most-recent headline weighted heaviest, decaying to ±2.5 for the oldest), based on per-headline keyword + Finnhub NLP sentiment — not a raw "% positive headlines" threshold.
+  - **Green/Bullish**: score ≥ 60.
+  - **Red/Bearish**: score ≤ 40.
+  - **Grey/Neutral**: 41-59.
 
 ### **B. Analyst Ratings (`HeaderAnalyst`)**
-Tracks the flow of institutional upgrades/downgrades.
-- **Source**: `lib/news.ts` (Analyst specific queries).
-- **Logic**: Counts headlines with "Upgrade"/"Raise" vs "Downgrade"/"Cut".
+Tracks the flow of institutional upgrades/downgrades for the active stock. **This is a separate, single-stock detail-page widget — it is not the same mechanism as the "Analyst Score" pillar used in the Conviction Score / Alpha Hunter formulas below (see §4.A.3 for that).**
+- **Source**: `app/page.tsx`'s `fetchAnalystRatings()` → `/api/news?type=analyst` → `lib/news-service.ts`'s `getNewsData()` (same Yahoo+Finnhub pipeline as Crowd Sentiment above, just news scoped toward analyst-related headlines).
+- **Logic**: Counts headlines with "upgrade"/"raise"/"buy"/"outperform" vs "downgrade"/"cut"/"sell"/"underperform"/"lower" (verified accurate against `components/HeaderAnalyst.tsx`).
   - **Net Bullish**: More Upgrades than Downgrades.
   - **Net Bearish**: More Downgrades than Upgrades.
   - **Visuals**: Displays green/red ticks for each recent rating change.
@@ -83,47 +83,62 @@ Visual representation of capital flow across market sectors (Tech, Energy, Finan
 ## 4. Decision Logic & Scoring Formulas
 
 ### **A. The Conviction Score (0-100)**
-The "Master Score" is a weighted sum of 5 distinct factors.
+The "Master Score" is a weighted sum of up to 5 factors. **Top Picks and Alpha Hunter use different weights** (`lib/conviction.ts`'s `scanConviction()` and `scanAlphaHunter()`, respectively) — Top Picks excludes the Discovery term entirely, since it scans a static watchlist rather than a smart-scanned universe.
 
-**Formula:**
-`Score = (Technical * 25%) + (Fundamental * 20%) + (Analyst * 15%) + (Social * 15%) + (Discovery * 25%)`
+**Formula (Top Picks):**
+`Score = (Technical * 30%) + (Fundamental * 25%) + (Analyst * 25%) + (Social * 20%)`
 
-#### **1. Technical Score (25%)** - *Trend & Momentum*
+**Formula (Alpha Hunter):**
+`Score = (Technical * 25%) + (Fundamental * 20%) + (Analyst * 10%) + (Social * 15%) + (Discovery * 30%)`
+
+*(Audit fix #7: corrected — the previous single formula, `25/20/15/15/25`, matched neither scanner's actual weights in code.)*
+
+#### **1. Technical Score** - *Trend & Momentum* (`lib/indicators.ts`'s `calculateConfluenceScore()`)
+Bull/bear "votes" are tallied and netted into a 0-100 score; a risk-overlay penalty in `conviction.ts` is then applied on top.
 | Condition | Points | Logic |
 |-----------|--------|-------|
-| **Uptrend** | +15 | Price > EMA50 > EMA200 (Golden alignment) |
-| **Downtrend** | -15 | Price < EMA50 (Weakness) |
-| **MACD Bull** | +10 | MACD Line > Signal Line (Momentum Shift) |
-| **RSI Bull** | +5 | RSI between 50-70 (Healthy Strength) |
-| **Oversold** | +10 | RSI < 30 (Bounce Potential) |
-| **Overbought** | -10 | RSI > 80 (Pullback Risk) |
-| **Bollinger** | +10 | Price Breaking Upper Band (Volatility Breakout) |
+| **Price vs EMA50** | ±15 | Price above/below the 50-period EMA |
+| **Price vs EMA200** | ±5 | Price above/below the 200-period EMA |
+| **EMA Stack** | ±10 | EMA9 > EMA21 > EMA50 (bullish) or fully inverted (bearish) |
+| **MACD Cross** | ±10 | MACD line above/below signal line |
+| **RSI Momentum** | ±5 | RSI 60-70 → bullish vote; RSI 30-40 → bearish vote (the 70-80 and 20-30 extremes intentionally cast **no** momentum vote — see Overbought/Oversold below) |
+| **RSI Divergence** | ±12 | Price vs. RSI moving in opposite directions over a 21-bar window, gated to require ≥1.5% price move and ≥3-point RSI move (tightened in audit fix #6 to suppress noise) |
+| **Bollinger Bands** | ±5 to ±10 | Price outside the bands (±10, mean-reversion fade) or testing band/midline support-resistance (±5) |
+| **Candlestick Pattern** | ±10 | Detected bullish/bearish reversal pattern (e.g. engulfing, hammer) |
+| **Overbought penalty** | -10 | RSI > 80 — applied once, in `conviction.ts`, as a pure entry-timing risk flag. *(Audit fix #6: previously `indicators.ts` also cast a +5 "bullish momentum" vote for the same RSI>80 condition, directly contradicting this penalty; that vote was removed so RSI extremes are scored as risk, not trend confirmation, in exactly one place.)* |
 
-#### **2. Fundamental Score (20%)** - *Quality & Value*
+#### **2. Fundamental Score** - *Quality & Value* (`lib/conviction.ts`)
 | Metric | Points | Condition |
 |--------|--------|-----------|
 | **Growth** | +15 | Revenue Growth > 10% YoY |
-| **Valuation** | +5 | PE Ratio < 40 (Reasonable) |
+| **Valuation** | +10 | PE Ratio between 0 and 40 |
 | **Overvalued** | -10 | PE Ratio > 100 |
-| **Value (PEG)** | +10 | PEG Ratio < 1.0 (Undervalued Growth) |
-| **Margins** | +10 | Profit Margins > 20% (Cash Cow) |
-| **Safety** | +5 | Debt-to-Equity < 100% |
+| **Margins** | +10 | Profit Margins > 20% |
+| **EPS Growth** | +10 | EPS Growth > 10% YoY |
+| **FCF Margin** | +10 | Free Cash Flow / Revenue > 15% |
+| **Insider Ownership** | +5 | Insider ownership > 5% |
+| **Leverage** | -10 | Debt-to-Equity > 2.0x (200%) |
 
-#### **3. Social Sentiment (15%)** - *Hype & Chatter*
-Scans Google News, Reddit, and StockTwits for recent headlines.
-- **Base**: Starts at 50 (Neutral).
-- **Keywords**:
-  - **Positive (+10)**: `surge`, `jump`, `soar`, `rally`, `beat`, `buy`, `upgrade`, `moon`, `yolo`, `calls`.
-  - **Negative (-10)**: `drop`, `fall`, `plunge`, `miss`, `downgrade`, `crash`, `puts`, `dumps`.
-- **Labeling**:
-  - **>75**: "Very Bullish"
-  - **>60**: "Bullish"
-  - **<40**: "Bearish"
+*(Audit fix #7: removed a "Value (PEG) +10, PEG < 1.0" row — no PEG-ratio logic exists anywhere in the codebase. Corrected "Valuation" from +5 to the actual +10. Removed a "Safety +5, Debt-to-Equity < 100%" row — no positive bonus for low leverage exists; only the negative penalty above does. Added the EPS Growth, FCF Margin, and Insider Ownership bonuses, and the Leverage penalty, none of which appeared in this table before. Audit fix #3 also corrected a units bug in the Leverage check: Yahoo Finance returns `debtToEquity` on a 0-100+ percentage scale, e.g. `150` means a 1.5x ratio — the code previously compared that raw percentage value against a `2.0` threshold meant for a ratio, so it almost never fired. It's now normalized to a true ratio before comparing.)*
 
-#### **4. Smart Discovery (25%)** - *Hidden Gems*
-Bonus points if the stock was "Discovered" by the Smart Scanner rather than just being on a static watchlist.
-- **Volume Spike**: +100 Strength (Normalized to score).
-- **News Catalyst**: "Earnings Beat" or "Upgrade" headlines.
+#### **3. Analyst Score** - *Wall Street Consensus* (`lib/conviction.ts`)
+Distinct from the `HeaderAnalyst` headline-keyword widget in §3.B — this pillar is computed entirely from Yahoo Finance's `financialData` and `earningsTrend` modules, with no headline counting involved.
+- **Base**: `financialData.recommendationMean` (1=Strong Buy ... 5=Sell) maps to a base score: ≤2.0 → 90 ("Strong Buy"), ≤3.0 → 70 ("Buy"), >4.0 → 20 ("Sell"), else → 50 ("Hold"). Defaults to 50 ("Neutral") if Yahoo has no coverage for the symbol.
+- **Price-target upside bonus**: +10 if the analyst mean target price implies more than 10% upside over the current price.
+- **EPS-surprise bonus**: +15 if the last 2+ quarters beat EPS estimates, +8 for exactly 1 beat (capped at 100 total).
+
+*(Audit fix #7: this pillar previously had no breakdown in this document at all — the only "analyst" mechanism described anywhere was §3.B's headline-keyword widget, which could be misread as describing this scoring pillar too. They are unrelated.)*
+
+#### **4. Social Sentiment** - *News-Headline NLP, not live social data*
+- **Source**: `lib/news-service.ts`'s `getNewsData(symbol, 'social')` — same Yahoo headline + Finnhub NLP pipeline as §3.A/§3.B, run over general (not analyst-scoped) news. Despite the `'social'` argument name, this is **not** Reddit, Twitter/X, or StockTwits data.
+- **Base**: Starts at 50 (Neutral); shifted by per-headline keyword/NLP sentiment, similar to §3.A.
+- **Labeling**: >75 "Very Bullish", >60 "Bullish", <40 "Bearish".
+
+*(Audit fix #4: real Reddit/Twitter mention data does exist in this codebase — via Finnhub's `/stock/social-sentiment` endpoint — but it's wired into the separate Social Pulse feature (`lib/social.ts`'s `scanSocialPulse()`), bounded to 5 symbols at a time for latency reasons, not into this scoring pillar. The UI labels for this pillar were relabeled "News Sentiment" accordingly.)*
+
+#### **5. Smart Discovery (Alpha Hunter only — 30% weight; not used by Top Picks)** - *Hidden Gems*
+Bonus points if the stock was "Discovered" by the Smart Scanner (`lib/smart-scanner.ts`) rather than just being on a static watchlist — the single largest weight in the Alpha Hunter formula.
+- **Volume Spike / News Catalyst / Breakout signals**: feed into a normalized `strength` score (0-100) from the scanner, used directly as this pillar's value.
 
 ---
 
