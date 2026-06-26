@@ -13,6 +13,9 @@ export const dynamic = 'force-dynamic';
  * GET: Returns simulated portfolio status
  */
 export async function GET() {
+    if (process.env.VERCEL === '1') {
+        return NextResponse.json({ error: 'Auto-trade is disabled in the Vercel production app' }, { status: 403 });
+    }
     try {
         // Automatically check if stop-loss or profit-target is hit on reload/fetch
         await updatePositionsAndExits();
@@ -55,6 +58,9 @@ export async function GET() {
  * POST: Triggers automated simulated trades OR manual override orders
  */
 export async function POST(request: Request) {
+    if (process.env.VERCEL === '1') {
+        return NextResponse.json({ error: 'Auto-trade is disabled in the Vercel production app' }, { status: 403 });
+    }
     try {
         let body: any = {};
         try {

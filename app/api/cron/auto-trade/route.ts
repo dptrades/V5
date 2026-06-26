@@ -13,6 +13,9 @@ export const dynamic = 'force-dynamic';
  * Protected by Vercel cron secret
  */
 export async function GET(request: Request) {
+    if (process.env.VERCEL === '1') {
+        return NextResponse.json({ error: 'Auto-trade is disabled in the Vercel production app' }, { status: 403 });
+    }
     // Verify cron secret (Vercel sends this header)
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
