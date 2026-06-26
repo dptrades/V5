@@ -61,7 +61,7 @@ export default function TopPicksPage() {
         
         // Timer for the visual clock
         const tick = setInterval(() => {
-            if (isMarketActive()) {
+            if (isMarketActive() && !document.hidden) {
                 setCountdown(prev => {
                     if (prev <= 1) {
                         runScan();

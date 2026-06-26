@@ -48,7 +48,7 @@ export default function SocialPulsePage() {
         fetchPulse();
 
         const tick = setInterval(() => {
-            if (isMarketActive()) {
+            if (isMarketActive() && !document.hidden) {
                 setCountdown(prev => {
                     if (prev <= 1) {
                         fetchPulse();
@@ -56,7 +56,7 @@ export default function SocialPulsePage() {
                     }
                     return prev - 1;
                 });
-            } else {
+            } else if (!isMarketActive()) {
                 setCountdown(3600); // 1h off-hours
             }
         }, 1000);

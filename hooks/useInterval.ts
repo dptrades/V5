@@ -18,7 +18,10 @@ export function useInterval(callback: () => void, delay: number | null) {
     useEffect(() => {
         if (delay === null) return;
 
-        const tick = () => savedCallback.current();
+        const tick = () => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            savedCallback.current();
+        };
         const id = setInterval(tick, delay);
 
         return () => clearInterval(id);
@@ -39,6 +42,7 @@ export function usePolling(
 
     const poll = useCallback(async () => {
         if (!isMounted.current) return;
+        if (typeof document !== 'undefined' && document.hidden) return;
         await fetchFn();
     }, [fetchFn]);
 

@@ -90,14 +90,19 @@ export interface MultiTimeframeAnalysis {
     lastUpdated: number;
 }
 
+// Memory cache to keep track of the last resolved price to prevent rapid flip-flopping between sources during rate-limiting/failures
+const priceSourceCache: Map<string, { price: number; source: string; timestamp: number }> = new Map();
+
 // 1. Live Price Waterfall: Public -> Schwab -> Alpaca -> Yahoo
 export async function fetchLivePrice(symbol: string): Promise<{ price: number, source: string, volume?: number, changePercent?: number } | null> {
     const start = Date.now();
+    const session = getMarketSession();
 
     // A. Public.com (Primary for Real-Time) - 60s Cache internal
     try {
         const publicQuote = await publicClient.getQuote(symbol);
         if (publicQuote && publicQuote.price > 0) {
+            priceSourceCache.set(symbol, { price: publicQuote.price, source: 'Public.com', timestamp: Date.now() });
             console.log(`[Waterfall] ${symbol} resolved via Public.com in ${Date.now() - start}ms`);
             return { 
                 price: publicQuote.price, 
@@ -108,6 +113,14 @@ export async function fetchLivePrice(symbol: string): Promise<{ price: number, s
         }
     } catch (e) {
         console.warn(`[Waterfall] Public.com failed for ${symbol}`);
+    }
+
+    // A2. Fallback check: If Public.com failed (e.g. rate limit), use the recently cached Public.com price (within 5 mins)
+    // if the market is closed (OFF) to prevent flip-flopping to static Yahoo close prices.
+    const cached = priceSourceCache.get(symbol);
+    if (cached && cached.source === 'Public.com' && (Date.now() - cached.timestamp) < 5 * 60 * 1000 && session === 'OFF') {
+        console.log(`[Waterfall] ${symbol} serving cached Public.com price from memory to prevent flip-flopping (${Date.now() - cached.timestamp}ms old)`);
+        return { price: cached.price, source: 'Public.com (Cached)' };
     }
 
     // B. Schwab (Professional Fallback)
@@ -218,7 +231,23 @@ async function fetchHistoricalData(symbol: string, alpacaTf: string, yahooTf: st
                 schwabConfig.frequency
             );
             if (bars && bars.length > 0) {
-                return { bars: bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close, volume: b.volume })), source: 'Schwab Professional' };
+                // Staleness guard: unlike Tier 2/3 below, this tier previously had NO
+                // freshness check at all, so a frozen/cached Schwab response (observed:
+                // bars over a week old, silently served as "current") would be returned
+                // unconditionally and corrupt currentPrice/headerPrice/EMA/RSI downstream.
+                // Threshold is generous enough to survive a normal long weekend
+                // (Fri close → Tue open is ~88h) but still rejects genuinely frozen data.
+                const lastBarTime = bars[bars.length - 1].time;
+                const staleHours = (Date.now() - lastBarTime) / (1000 * 60 * 60);
+                const maxStaleHours = (schwabConfig.frequencyType === 'daily') ? 100
+                    : (schwabConfig.frequencyType === 'weekly') ? 24 * 14
+                    : 100; // intraday Schwab pulls are also daily-bucketed in this app's usage today
+
+                if (staleHours > maxStaleHours) {
+                    console.warn(`[Waterfall] Schwab bars for ${symbol} are ${staleHours.toFixed(1)}h stale (max ${maxStaleHours}h). Rejecting, falling to Alpaca...`);
+                } else {
+                    return { bars: bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close, volume: b.volume })), source: 'Schwab Professional' };
+                }
             }
         } catch (e) {
             console.warn(`[Waterfall] Schwab historical failed for ${symbol}, falling to Alpaca...`);
@@ -687,8 +716,16 @@ async function _fetchMtaUncached(symbol: string): Promise<MultiTimeframeAnalysis
     const order: Record<string, number> = { '1h': 1, '4h': 2, '1d': 3, '1w': 4 };
     results.sort((a, b) => (order[a.timeframe] ?? 9) - (order[b.timeframe] ?? 9));
 
-    const headerPrice = latestDaily.close;
-    // For OFF sessions, currentPrice should be the post-market price from Yahoo if possible, 
+    // BUG FIX: `latestDaily` (above) is a snapshot computed from `dailyData` BEFORE the
+    // hybrid live-price merge at line ~411-434 mutates/appends to that same array. If the
+    // historical-bars vendor hasn't posted today's official close yet by the time this runs,
+    // `latestDaily.close` is actually YESTERDAY's close, not today's — e.g. observed showing
+    // AMAT's headerPrice as $588.97 (yesterday) while the real regular close was $668 (+13.5%),
+    // a swing big enough to look like a data error to anyone glancing at the dashboard.
+    // Read from `dailyData`'s last bar AFTER the merge instead, so headerPrice reflects the
+    // best available regular/extended close rather than a stale pre-merge snapshot.
+    const headerPrice = dailyData[dailyData.length - 1].close;
+    // For OFF sessions, currentPrice should be the post-market price from Yahoo if possible,
     // but the hybrid stitch logic already uses livePrice (which is post-market in OFF sessions)
 
     // Ensure currentPrice reflects the most recent data (Post-Market)

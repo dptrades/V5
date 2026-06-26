@@ -53,7 +53,8 @@ export class SchwabClient {
                 {
                     headers: {
                         'Authorization': `Basic ${authHeader}`,
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
                     }
                 }
             );
@@ -85,7 +86,10 @@ export class SchwabClient {
         try {
             const start = Date.now();
             const response = await axios.get(`${BASE_URL}/pricehistory`, {
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                },
                 params: {
                     symbol,
                     periodType,
@@ -162,7 +166,10 @@ export class SchwabClient {
             }
 
             const response = await axios.get(`${BASE_URL}/chains`, {
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                },
                 params
             });
 
@@ -306,7 +313,10 @@ export class SchwabClient {
         try {
             const start = Date.now();
             const response = await axios.get(`${BASE_URL}/${symbol}/quotes`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                }
             });
             if (response.data && response.data[symbol]) {
                 const quote = response.data[symbol];
@@ -331,6 +341,71 @@ export class SchwabClient {
             console.error(`[SchwabAPI] Failed to fetch Greeks for ${symbol}:`, error.message);
         }
         return null;
+    }
+
+    async getGreeksBatch(symbols: string[]): Promise<Record<string, any>> {
+        if (symbols.length === 0) return {};
+
+        const results: Record<string, any> = {};
+        const toFetch: string[] = [];
+
+        // Check cache first
+        for (const symbol of symbols) {
+            const cached = this.greeksCache.get(symbol);
+            if (cached && (Date.now() - cached.timestamp) < this.GREEKS_CACHE_TTL) {
+                results[symbol] = cached.data;
+            } else {
+                toFetch.push(symbol);
+            }
+        }
+
+        if (toFetch.length === 0) return results;
+
+        if (Date.now() < this.throttledUntil) return results;
+        const token = await this.refreshAccessToken();
+        if (!token) return results;
+
+        try {
+            const start = Date.now();
+            console.log(`[SchwabAPI] Batch fetching Greeks for ${toFetch.length} options...`);
+            const response = await axios.get(`${BASE_URL}/quotes`, {
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                },
+                params: {
+                    symbols: toFetch.join(',')
+                }
+            });
+
+            if (response.data) {
+                for (const symbol of toFetch) {
+                    const quote = response.data[symbol];
+                    if (quote) {
+                        const q = quote.quote;
+                        const result = {
+                            delta: q?.delta || 0,
+                            gamma: q?.gamma || 0,
+                            theta: q?.theta || 0,
+                            vega: q?.vega || 0,
+                            rho: q?.rho || 0,
+                            impliedVolatility: (q?.volatility || 0) / 100,
+                            lastPrice: quote.lastPrice || q?.lastPrice || 0
+                        };
+                        this.greeksCache.set(symbol, { data: result, timestamp: Date.now() });
+                        results[symbol] = result;
+                    }
+                }
+                console.log(`[SchwabAPI] Batch Greeks for ${toFetch.length} options in ${Date.now() - start}ms`);
+            }
+        } catch (error: any) {
+            if (error.response?.status === 429) {
+                this.throttledUntil = Date.now() + (30 * 1000);
+            }
+            console.error(`[SchwabAPI] Failed to fetch batch Greeks:`, error.message);
+        }
+
+        return results;
     }
 
     // Legacy method kept for backward compat (used in market-data.ts waterfall)

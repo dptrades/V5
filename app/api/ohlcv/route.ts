@@ -2,14 +2,63 @@ import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
 import { fetchAlpacaBars } from '@/lib/alpaca';
 import { calculateIndicators } from '@/lib/indicators';
+import { fetchLivePrice } from '@/lib/market-data';
 
 const yahooFinance = new YahooFinance();
 
 // ── Per-symbol OHLCV cache (15 min) ───────────────────────────────────────
 // Prevents re-fetching the same chart data on every page navigation.
 // Key: `${symbol}:${interval}`
+// NOTE: this caches the RAW bars (pre-indicator), not the computed indicator
+// payload. The live price is merged into the last bar and indicators are
+// recalculated on every request (cheap), so the header/chart technicals stay
+// in sync with the live-merged data used by /api/conviction's confluence
+// matrix instead of silently lagging behind it for up to 15 minutes.
 const OHLCV_CACHE_TTL = 15 * 60 * 1000;
-const ohlcvCache = new Map<string, { payload: any; timestamp: number }>();
+const ohlcvCache = new Map<string, { bars: any[]; companyName: string; timestamp: number }>();
+
+// Merge the latest live/extended-hours quote into the last bar of a daily
+// series before indicators are calculated, mirroring the hybrid-merge logic
+// in lib/market-data.ts's _fetchMtaUncached. Without this, RSI/EMA/MACD
+// shown in the header (sourced from this route) can disagree with the
+// Technical Confluence Matrix (sourced from /api/conviction), which already
+// does this merge.
+async function mergeLivePrice(ticker: string, bars: any[]): Promise<any[]> {
+    if (!bars || bars.length === 0) return bars;
+    try {
+        const live = await fetchLivePrice(ticker);
+        if (!live || !live.price || live.price <= 0) return bars;
+
+        const merged = [...bars];
+        const lastBar = merged[merged.length - 1];
+        const now = Date.now();
+        const isSameDay = new Date(lastBar.time).toDateString() === new Date(now).toDateString();
+
+        if (isSameDay) {
+            merged[merged.length - 1] = {
+                ...lastBar,
+                close: live.price,
+                high: Math.max(lastBar.high, live.price),
+                low: Math.min(lastBar.low, live.price),
+                volume: Math.max(lastBar.volume, live.volume || 0)
+            };
+        } else {
+            merged.push({
+                time: now,
+                open: lastBar.close,
+                high: Math.max(lastBar.close, live.price),
+                low: Math.min(lastBar.close, live.price),
+                close: live.price,
+                volume: live.volume || 0
+            });
+        }
+        return merged;
+    } catch {
+        // If the live-price waterfall fails, fall back to the unmerged bars
+        // rather than failing the whole chart request.
+        return bars;
+    }
+}
 
 // Check if ticker is a US stock (eligible for Alpaca)
 function isUSStock(ticker: string): boolean {
@@ -31,11 +80,18 @@ export async function GET(request: Request) {
     const ticker = symbol.toUpperCase();
     const cacheKey = `${ticker}:${interval}`;
 
-    // Serve from cache if fresh
+    // Serve from cache if fresh (bars only — live price is re-merged below on every request)
     const cached = ohlcvCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < OHLCV_CACHE_TTL) {
         console.log(`[OHLCV] ⚡ Cache hit for ${ticker} ${interval}`);
-        return NextResponse.json(cached.payload, {
+        if (interval === '4h') {
+            return NextResponse.json({ data: cached.bars, companyName: cached.companyName }, {
+                headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' }
+            });
+        }
+        const liveBars = await mergeLivePrice(ticker, cached.bars);
+        const indicators = calculateIndicators(liveBars);
+        return NextResponse.json({ data: indicators, companyName: cached.companyName }, {
             headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' }
         });
     }
@@ -98,17 +154,17 @@ export async function GET(request: Request) {
 
                     // 4H aggregation if needed
                     if (interval === '4h' && data.length > 0) {
-                        const payload = { data: aggregate4H(data), companyName };
-                        ohlcvCache.set(cacheKey, { payload, timestamp: Date.now() });
-                        return NextResponse.json(payload, {
+                        const bars4h = aggregate4H(data);
+                        ohlcvCache.set(cacheKey, { bars: bars4h, companyName, timestamp: Date.now() });
+                        return NextResponse.json({ data: bars4h, companyName }, {
                             headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' }
                         });
                     }
 
-                    const indicators = calculateIndicators(data);
-                    const payload = { data: indicators, companyName };
-                    ohlcvCache.set(cacheKey, { payload, timestamp: Date.now() });
-                    return NextResponse.json(payload, {
+                    ohlcvCache.set(cacheKey, { bars: data, companyName, timestamp: Date.now() });
+                    const liveBars = await mergeLivePrice(ticker, data);
+                    const indicators = calculateIndicators(liveBars);
+                    return NextResponse.json({ data: indicators, companyName }, {
                         headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' }
                     });
                 }
@@ -178,11 +234,11 @@ export async function GET(request: Request) {
         // Extract company name from Yahoo metadata
         const companyName = result.meta?.longName || result.meta?.shortName || ticker;
 
-        // Calculate indicators
-        const indicators = calculateIndicators(data);
-        const payload = { data: indicators, companyName };
-        ohlcvCache.set(cacheKey, { payload, timestamp: Date.now() });
-        return NextResponse.json(payload, {
+        // Calculate indicators (live price merged in first — see mergeLivePrice)
+        ohlcvCache.set(cacheKey, { bars: data, companyName, timestamp: Date.now() });
+        const liveBars = await mergeLivePrice(ticker, data);
+        const indicators = calculateIndicators(liveBars);
+        return NextResponse.json({ data: indicators, companyName }, {
             headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' }
         });
 

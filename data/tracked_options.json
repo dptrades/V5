@@ -17,9 +17,14 @@
         "date": "2026-06-22",
         "optionPremium": 18.725,
         "stockPrice": 547.02
+      },
+      {
+        "date": "2026-06-25",
+        "optionPremium": 3.175,
+        "stockPrice": 512.25
       }
     ],
-    "status": "ACTIVE"
+    "status": "LOSS"
   },
   {
     "id": "RSI260717C00030000",
@@ -46,6 +51,11 @@
         "date": "2026-06-22",
         "optionPremium": 2.025,
         "stockPrice": 30.56
+      },
+      {
+        "date": "2026-06-25",
+        "optionPremium": 1.65,
+        "stockPrice": 29.98
       }
     ],
     "status": "ACTIVE"

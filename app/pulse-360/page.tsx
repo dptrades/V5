@@ -110,7 +110,7 @@ export default function Pulse360Page() {
     // Auto-refresh timer during market hours
     useEffect(() => {
         const tick = setInterval(() => {
-            if (isMarketActive()) {
+            if (isMarketActive() && !document.hidden) {
                 setCountdown(prev => {
                     if (prev <= 1) {
                         console.log("🕒 Auto-refreshing Pulse 360 market data...");
@@ -119,7 +119,7 @@ export default function Pulse360Page() {
                     }
                     return prev - 1;
                 });
-            } else {
+            } else if (!isMarketActive()) {
                 setCountdown(3600); // 1 hour cooldown when closed
             }
         }, 1000);

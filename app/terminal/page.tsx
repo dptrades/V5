@@ -95,6 +95,7 @@ export default function TerminalPage() {
 
   useEffect(() => {
     const tick = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       const status = getMarketStatus();
       setMarketStatus(status);
       const interval = getRefreshInterval(mode, status);

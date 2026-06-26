@@ -109,7 +109,7 @@ export default function ConvictionPage() {
     useEffect(() => {
         // Timer for the visual clock
         const tick = setInterval(() => {
-            if (isMarketActive()) {
+            if (isMarketActive() && !document.hidden) {
                 setCountdown(prev => {
                     if (prev <= 1) {
                         console.log("🕒 Auto-refreshing Alpha Hunter market hours...");

@@ -60,7 +60,7 @@ export default function ConvictionCard({ stock, onSelect }: Props) {
                 <ScoreBar label="Technicals" score={stock.technicalScore} icon={<TrendingUp className="w-3 h-3" />} />
                 <ScoreBar label="Fundamentals" score={stock.fundamentalScore} icon={<PieChart className="w-3 h-3" />} />
                 <ScoreBar label="Analyst Ratings" score={stock.analystScore} icon={<BarChart3 className="w-3 h-3" />} />
-                <ScoreBar label="Social Sentiment" score={stock.sentimentScore} icon={<Users className="w-3 h-3" />} />
+                <ScoreBar label="News Sentiment" score={stock.sentimentScore} icon={<Users className="w-3 h-3" />} />
             </div>
 
             {/* Deep Dive Details */}
@@ -77,8 +77,8 @@ export default function ConvictionCard({ stock, onSelect }: Props) {
                 </div>
                 <div className="flex justify-between">
                     <span className="text-gray-200">Rev Growth (YoY)</span>
-                    <span className="text-green-400 font-mono">
-                        {stock.metrics.revenueGrowth ? `+${(stock.metrics.revenueGrowth * 100).toFixed(1)}%` : 'N/A'}
+                    <span className={`font-mono ${stock.metrics.revenueGrowth != null && stock.metrics.revenueGrowth < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        {stock.metrics.revenueGrowth != null ? `${stock.metrics.revenueGrowth >= 0 ? '+' : ''}${(stock.metrics.revenueGrowth * 100).toFixed(1)}%` : 'N/A'}
                     </span>
                 </div>
                 <div className="flex justify-between">

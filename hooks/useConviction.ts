@@ -60,7 +60,10 @@ export function useConviction(options: UseConvictionOptions = {}): UseConviction
     useEffect(() => {
         if (!refreshInterval) return;
 
-        const interval = setInterval(refetch, refreshInterval);
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            refetch();
+        }, refreshInterval);
         return () => clearInterval(interval);
     }, [refreshInterval, refetch]);
 
