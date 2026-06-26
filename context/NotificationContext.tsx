@@ -11,6 +11,7 @@ export interface NotificationItem {
     timestamp: string;
     read: boolean;
     severity: 'NORMAL' | 'HIGH';
+    createdAt?: number;
 }
 
 interface NotificationContextProps {
@@ -74,6 +75,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const prevPositions = useRef<string[]>([]);
     const lastAlertedTimes = useRef<Record<string, number>>({}); // Key: alertKey -> timestamp
 
+    const notificationsRef = useRef<NotificationItem[]>([]);
+    useEffect(() => {
+        notificationsRef.current = notifications;
+    }, [notifications]);
+
     // Load initial state and notifications from localStorage
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -121,6 +127,68 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         severity: 'NORMAL' | 'HIGH' = 'NORMAL'
     ) => {
         const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const now = Date.now();
+
+        // Check for duplicate notification to prevent redundant entries in the UI list
+        const isDuplicate = notificationsRef.current.some(n => {
+            if (n.type !== type || n.symbol !== symbol) return false;
+            
+            const elapsedMs = now - (n.createdAt || 0);
+            
+            if (type === 'PRICE_MOVE') {
+                // Deduplicate same direction and severity within 12 hours
+                const thisDir = message.includes('moved +') || message.includes('up') ? 'UP' : 'DOWN';
+                const otherDir = n.message.includes('moved +') || n.message.includes('up') ? 'UP' : 'DOWN';
+                if (thisDir === otherDir && n.severity === severity && elapsedMs < 12 * 60 * 60 * 1000) {
+                    return true;
+                }
+            }
+            
+            if (type === 'VOLUME_SURGE') {
+                // Deduplicate volume surge within 12 hours
+                if (elapsedMs < 12 * 60 * 60 * 1000) return true;
+            }
+            
+            if (type === 'RSI_EXTREME') {
+                // Deduplicate same RSI extreme direction (overbought/oversold) within 1 hour
+                const thisOverbought = message.toLowerCase().includes('overbought');
+                const otherOverbought = n.message.toLowerCase().includes('overbought');
+                if (thisOverbought === otherOverbought && elapsedMs < 60 * 60 * 1000) {
+                    return true;
+                }
+            }
+            
+            if (type === 'EMA_CROSS') {
+                // Deduplicate same EMA cross direction (above/below) within 1 hour
+                const thisDir = message.toLowerCase().includes('above') ? 'above' : 'below';
+                const otherDir = n.message.toLowerCase().includes('above') ? 'above' : 'below';
+                if (thisDir === otherDir && elapsedMs < 60 * 60 * 1000) {
+                    return true;
+                }
+            }
+
+            if (type === 'TERMINAL_CROSS' || type === 'VIX_SPIKE') {
+                // Deduplicate identical crosses/spikes within 1 hour
+                if (n.message === message && elapsedMs < 60 * 60 * 1000) {
+                    return true;
+                }
+            }
+
+            if (type === 'POSITION_CHANGE') {
+                // Deduplicate identical position changes within 5 minutes
+                if (n.message === message && elapsedMs < 5 * 60 * 1000) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (isDuplicate) {
+            console.log(`[NotificationContext] Suppressed duplicate alert: ${type} for ${symbol || 'global'}`);
+            return;
+        }
+
         const newNotif: NotificationItem = {
             id,
             type,
@@ -129,7 +197,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             symbol,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             read: false,
-            severity
+            severity,
+            createdAt: now
         };
 
         setNotifications(prev => [newNotif, ...prev].slice(0, 100)); // Cap history at 100 items
@@ -137,7 +206,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Cooldown notification logic (15 minutes limit for duplicates)
         const cooldownKey = `${type}-${symbol || 'global'}-${title}`;
         const lastAlertTime = lastAlertedTimes.current[cooldownKey] || 0;
-        const now = Date.now();
 
         if (now - lastAlertTime > 15 * 60 * 1000) {
             lastAlertedTimes.current[cooldownKey] = now;

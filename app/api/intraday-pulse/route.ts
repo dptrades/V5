@@ -3,7 +3,7 @@ import YahooFinance from 'yahoo-finance2';
 import { fetchMultiAlpacaBars } from '@/lib/alpaca';
 import { calculateIndicators } from '@/lib/indicators';
 import { scanConviction, RELATIVE_CONVICTION_CACHE_PATH, RELATIVE_ALPHA_CACHE_PATH } from '@/lib/conviction';
-import { getFromBlob } from '@/lib/blob-storage';
+import { getFromBlob, saveToBlob } from '@/lib/blob-storage';
 
 const yahooFinance = new YahooFinance();
 
@@ -46,6 +46,22 @@ export async function GET() {
 
         console.log(`[Intraday Pulse] Running check on ${symbols.length} symbols...`);
 
+        // Load triggered alerts to prevent duplicates
+        const RELATIVE_ALERTS_PATH = 'data/triggered_alerts.json';
+        const rawTriggered = await getFromBlob<Record<string, number>>(RELATIVE_ALERTS_PATH, {});
+        
+        // Expire records older than 24 hours
+        const nowMs = Date.now();
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        const triggeredAlerts: Record<string, number> = {};
+        for (const [key, ts] of Object.entries(rawTriggered)) {
+            if (nowMs - ts < oneDayMs) {
+                triggeredAlerts[key] = ts;
+            }
+        }
+        let alertsUpdated = false;
+        const today = new Date().toISOString().split('T')[0];
+
         // 2. Fetch live quotes in a single request from Yahoo Finance
         let quotes: any[] = [];
         try {
@@ -81,24 +97,38 @@ export async function GET() {
             if (cachedStock && cachedStock.price > 0) {
                 const changePct = ((livePrice - cachedStock.price) / cachedStock.price) * 100;
                 if (Math.abs(changePct) >= 1.5) {
-                    alerts.push({
-                        type: 'PRICE_MOVE',
-                        symbol,
-                        message: `${symbol} moved ${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% since last scan (Live: $${livePrice.toFixed(2)}, Cached: $${cachedStock.price.toFixed(2)})`,
-                        severity: Math.abs(changePct) >= 3.0 ? 'HIGH' : 'NORMAL'
-                    });
+                    const severity = Math.abs(changePct) >= 3.0 ? 'HIGH' : 'NORMAL';
+                    const direction = changePct > 0 ? 'UP' : 'DOWN';
+                    const alertKey = `${symbol}_PRICE_MOVE_${direction}_${severity}_${today}`;
+                    const highAlertKey = `${symbol}_PRICE_MOVE_${direction}_HIGH_${today}`;
+                    
+                    if (!triggeredAlerts[alertKey] && !(severity === 'NORMAL' && triggeredAlerts[highAlertKey])) {
+                        alerts.push({
+                            type: 'PRICE_MOVE',
+                            symbol,
+                            message: `${symbol} moved ${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% since last scan (Live: $${livePrice.toFixed(2)}, Cached: $${cachedStock.price.toFixed(2)})`,
+                            severity
+                        });
+                        triggeredAlerts[alertKey] = nowMs;
+                        alertsUpdated = true;
+                    }
                 }
             }
 
             // B. Volume Surge Detection (> 3x 1y average volume)
             const avgVolume = cachedStock?.volumeAvg1y || (quote.averageDailyVolume10Day || 5000000);
             if (avgVolume > 0 && liveVolume > 3 * avgVolume) {
-                alerts.push({
-                    type: 'VOLUME_SURGE',
-                    symbol,
-                    message: `${symbol} Volume Surge: ${(liveVolume / 1_000_000).toFixed(1)}M vs 1y Avg ${(avgVolume / 1_000_000).toFixed(1)}M (3.0x+)`,
-                    severity: 'HIGH'
-                });
+                const alertKey = `${symbol}_VOLUME_SURGE_${today}`;
+                if (!triggeredAlerts[alertKey]) {
+                    alerts.push({
+                        type: 'VOLUME_SURGE',
+                        symbol,
+                        message: `${symbol} Volume Surge: ${(liveVolume / 1_000_000).toFixed(1)}M vs 1y Avg ${(avgVolume / 1_000_000).toFixed(1)}M (3.0x+)`,
+                        severity: 'HIGH'
+                    });
+                    triggeredAlerts[alertKey] = nowMs;
+                    alertsUpdated = true;
+                }
             }
 
             // C. 1H Timeframe indicators (RSI & EMA crossover)
@@ -115,13 +145,16 @@ export async function GET() {
 
                 // Append the latest live price to simulate the current uncompleted bar
                 const lastBar = h1Data[h1Data.length - 1];
-                const nowMs = Date.now();
                 
                 // If the last bar is older than 1 hour, push a new bar. Otherwise update the last one.
                 const oneHourMs = 60 * 60 * 1000;
                 if (nowMs - lastBar.time > oneHourMs) {
+                    const nowHourStart = new Date(nowMs);
+                    nowHourStart.setMinutes(0, 0, 0);
+                    const barTime = nowHourStart.getTime();
+
                     h1Data.push({
-                        time: nowMs,
+                        time: barTime,
                         open: livePrice,
                         high: livePrice,
                         low: livePrice,
@@ -142,19 +175,29 @@ export async function GET() {
                     // C1. RSI Extreme (< 30 or > 70)
                     if (curr.rsi14 !== undefined) {
                         if (curr.rsi14 > 70) {
-                            alerts.push({
-                                type: 'RSI_EXTREME',
-                                symbol,
-                                message: `${symbol} 1H RSI Overbought at ${curr.rsi14.toFixed(1)}`,
-                                severity: curr.rsi14 > 75 ? 'HIGH' : 'NORMAL'
-                            });
+                            const alertKey = `${symbol}_RSI_EXTREME_OVERBOUGHT_${curr.time}`;
+                            if (!triggeredAlerts[alertKey]) {
+                                alerts.push({
+                                    type: 'RSI_EXTREME',
+                                    symbol,
+                                    message: `${symbol} 1H RSI Overbought at ${curr.rsi14.toFixed(1)}`,
+                                    severity: curr.rsi14 > 75 ? 'HIGH' : 'NORMAL'
+                                });
+                                triggeredAlerts[alertKey] = nowMs;
+                                alertsUpdated = true;
+                            }
                         } else if (curr.rsi14 < 30) {
-                            alerts.push({
-                                type: 'RSI_EXTREME',
-                                symbol,
-                                message: `${symbol} 1H RSI Oversold at ${curr.rsi14.toFixed(1)}`,
-                                severity: curr.rsi14 < 25 ? 'HIGH' : 'NORMAL'
-                            });
+                            const alertKey = `${symbol}_RSI_EXTREME_OVERSOLD_${curr.time}`;
+                            if (!triggeredAlerts[alertKey]) {
+                                alerts.push({
+                                    type: 'RSI_EXTREME',
+                                    symbol,
+                                    message: `${symbol} 1H RSI Oversold at ${curr.rsi14.toFixed(1)}`,
+                                    severity: curr.rsi14 < 25 ? 'HIGH' : 'NORMAL'
+                                });
+                                triggeredAlerts[alertKey] = nowMs;
+                                alertsUpdated = true;
+                            }
                         }
                     }
 
@@ -165,16 +208,26 @@ export async function GET() {
 
                         if (prevDiff * currDiff < 0) {
                             const direction = currDiff > 0 ? 'above' : 'below';
-                            alerts.push({
-                                type: 'EMA_CROSS',
-                                symbol,
-                                message: `${symbol} 1H EMA9 crossed ${direction} EMA21 (Price: $${livePrice.toFixed(2)})`,
-                                severity: 'HIGH'
-                            });
+                            const alertKey = `${symbol}_EMA_CROSS_${direction}_${curr.time}`;
+                            if (!triggeredAlerts[alertKey]) {
+                                alerts.push({
+                                    type: 'EMA_CROSS',
+                                    symbol,
+                                    message: `${symbol} 1H EMA9 crossed ${direction} EMA21 (Price: $${livePrice.toFixed(2)})`,
+                                    severity: 'HIGH'
+                                });
+                                triggeredAlerts[alertKey] = nowMs;
+                                alertsUpdated = true;
+                            }
                         }
                     }
                 }
             }
+        }
+
+        // Save updated alerts cache back to Blob
+        if (alertsUpdated || Object.keys(rawTriggered).length !== Object.keys(triggeredAlerts).length) {
+            await saveToBlob(RELATIVE_ALERTS_PATH, triggeredAlerts);
         }
 
         return NextResponse.json({
